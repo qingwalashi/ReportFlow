@@ -54,6 +54,55 @@
             ],
             "unit": ""
           }
+        },
+        {
+          "type": "table",
+          "title": "各产品线 Q2 业绩对比",
+          "caption": "数据来源：CRM · 含代理返点",
+          "spec": {
+            "columns": [
+              { "key": "c0", "header": "产品线", "align": "left", "format": null },
+              { "key": "c1", "header": "签约额（万元）", "align": "right", "format": { "kind": "number", "decimals": 0, "thousands": true } },
+              { "key": "c2", "header": "目标完成率", "align": "right", "format": { "kind": "percent", "decimals": 1, "thousands": false } },
+              { "key": "c3", "header": "毛利润（万元）", "align": "right", "format": { "kind": "number", "decimals": 0, "thousands": true } },
+              { "key": "c4", "header": "毛利率", "align": "right", "format": { "kind": "percent", "decimals": 0, "thousands": false } }
+            ],
+            "rows": [
+              [
+                { "v": "政企云", "rowspan": 1, "colspan": 1, "hidden": false, "style": { "bold": true }, "format": null },
+                { "v": 186, "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null },
+                { "v": 1.08, "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null },
+                { "v": 78, "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null },
+                { "v": 0.42, "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null }
+              ],
+              [
+                { "v": "中小企业服务", "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null },
+                { "v": 142, "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null },
+                { "v": 0.95, "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null },
+                { "v": 52, "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null },
+                { "v": 0.37, "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null }
+              ],
+              [
+                { "v": "数据中台", "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null },
+                { "v": 88, "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null },
+                { "v": 0.72, "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null },
+                { "v": 38, "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null },
+                { "v": 0.43, "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null }
+              ],
+              [
+                { "v": "开放平台", "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null },
+                { "v": 54, "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null },
+                { "v": 0.88, "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null },
+                { "v": 29, "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null },
+                { "v": 0.54, "rowspan": 1, "colspan": 1, "hidden": false, "style": {}, "format": null }
+              ]
+            ],
+            "headerRows": 1,
+            "footerRows": 0,
+            "merges": [],
+            "defaultAlign": "left",
+            "unit": "万元"
+          }
         }
       ]
     },

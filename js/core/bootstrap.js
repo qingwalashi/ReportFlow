@@ -55,11 +55,16 @@
     bindButton("rf-btn-parse",          onParse);
     bindButton("rf-btn-load-sample",    onLoadSample);
     bindButton("rf-btn-clear-input",    onClearInput);
+    bindButton("rf-btn-clear",          onClearReport);
     if (window.RF_InputRewrite) window.RF_InputRewrite.init();
     bindButton("rf-btn-export-zip",     function () { window.RF_ExportZip.exportZip(); });
     bindButton("rf-btn-export-pdf",     function () { window.RF_ExportPdf.exportPdf(); });
     bindButton("rf-btn-fullscreen-preview", toggleFullscreenPreview);
     bindButton("rf-btn-help",           openHelp);
+
+    // ===== 表格粘贴（三处入口的 A、B 在 bootstrap 里统一接） =====
+    bindLeftPaneTablePaste();
+    bindButton("rf-btn-paste-table",    onPasteTableButton);
 
     // ===== Keyboard shortcuts =====
     document.addEventListener("keydown", function (e) {
@@ -217,6 +222,125 @@
   function onClearInput() {
     var ta = document.getElementById("rf-input-text");
     if (ta) ta.value = "";
+  }
+
+  function onClearReport() {
+    window.RF_UI.confirm({
+      title: "清空当前报告",
+      body: "确认清空当前报告的所有内容？此操作将重置为空白报告，且无法撤销。",
+      danger: true,
+      confirmLabel: "确认清空"
+    }).then(function (ok) {
+      if (!ok) return;
+      window.RF_State.set("report", window.RF_Schema.empty());
+      try { window.RF_Storage.remove("draft", "current"); } catch (e) {}
+      var ta = document.getElementById("rf-input-text");
+      if (ta) ta.value = "";
+      window.RF_UI.toast.ok("已清空");
+    });
+  }
+
+  // ===== 表格粘贴入口 A：左侧自然语言框智能识别 =====
+  function bindLeftPaneTablePaste() {
+    var ta = document.getElementById("rf-input-text");
+    if (!ta || !window.RF_TablePaste) return;
+    ta.addEventListener("paste", function (e) {
+      var dt = e.clipboardData;
+      if (!dt) return;
+      var html = dt.getData("text/html") || "";
+      var text = dt.getData("text/plain") || "";
+      var kind = window.RF_TablePaste.detectKind(html, text);
+      if (!kind) return;       // 不像表格就让默认粘贴接管
+
+      // 阻止默认粘贴
+      e.preventDefault();
+      var result = window.RF_TablePaste.fromStrings(html, text);
+      if (!result.ok) {
+        // 兜底：还是把 text 粘进去
+        insertAtCaret(ta, text);
+        return;
+      }
+      var spec = result.spec;
+      window.RF_UI.confirm({
+        title: "检测到表格",
+        body: "剪贴板中是 " + spec.rows.length + " 行 × " + spec.columns.length +
+              " 列的表格。要直接作为表格块插入到当前报告，还是按文本粘贴到输入框继续编辑？",
+        confirmLabel: "插入为表格块",
+        cancelLabel: "按文本粘贴"
+      }).then(function (asTable) {
+        if (asTable) {
+          injectTableBlockAtEnd(spec);
+          window.RF_UI.toast.ok("已作为表格块插入");
+        } else {
+          insertAtCaret(ta, text);
+          ta.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      });
+    });
+  }
+
+  // ===== 表格粘贴入口 B：中栏「📋 粘贴表格」按钮 =====
+  function onPasteTableButton() {
+    if (!window.RF_TablePaste) {
+      window.RF_UI.toast.warn("表格粘贴模块未加载");
+      return;
+    }
+    // textarea 拿不到 text/html，用一个隐藏 contentEditable div 接 paste
+    var sink = document.createElement("div");
+    sink.contentEditable = "true";
+    sink.style.cssText = "position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;";
+    document.body.appendChild(sink);
+    sink.focus();
+    var done = false;
+    sink.addEventListener("paste", function (e) {
+      if (done) return;
+      done = true;
+      var result = window.RF_TablePaste.fromClipboardEvent(e);
+      e.preventDefault();
+      if (sink.parentNode) sink.parentNode.removeChild(sink);
+      if (!result.ok) {
+        window.RF_UI.toast.warn("剪贴板内没有可识别的表格");
+        return;
+      }
+      injectTableBlockAtEnd(result.spec);
+      window.RF_UI.toast.ok("已作为表格块插入（" + result.spec.rows.length + " 行 × " + result.spec.columns.length + " 列）");
+    }, { once: true });
+    window.RF_UI.toast.show("请按 Ctrl/Cmd+V 粘贴…");
+    // 5 秒超时清理
+    setTimeout(function () {
+      if (done) return;
+      if (sink.parentNode) sink.parentNode.removeChild(sink);
+    }, 5000);
+  }
+
+  function injectTableBlockAtEnd(spec) {
+    var rep = window.RF_State.get("report");
+    if (!rep) rep = window.RF_Schema.empty();
+    var rep2 = JSON.parse(JSON.stringify(rep));
+    if (!rep2.sections || !rep2.sections.length) {
+      rep2.sections = [{
+        id: window.RF_Schema.uid("s-"),
+        heading: "数据",
+        level: 1,
+        blocks: []
+      }];
+    }
+    var lastSec = rep2.sections[rep2.sections.length - 1];
+    lastSec.blocks.push({
+      type: "table",
+      title: "",
+      caption: "",
+      spec: spec
+    });
+    var v = window.RF_Schema.validate(rep2);
+    window.RF_State.set("report", v.normalized);
+  }
+
+  function insertAtCaret(ta, text) {
+    var start = ta.selectionStart, end = ta.selectionEnd;
+    var v = ta.value;
+    ta.value = v.slice(0, start) + text + v.slice(end);
+    ta.selectionStart = ta.selectionEnd = start + text.length;
   }
 
   function toggleFullscreenPreview() {

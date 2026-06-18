@@ -77,6 +77,17 @@
       }
       if (blk.caption) h(fig, "figcaption", "rf-img__caption", "fig: " + blk.caption);
     }
+
+    if (blk.type === "table") {
+      if (window.RF_TableFormat && window.RF_TableFormat.renderTableHtml) {
+        wrap.insertAdjacentHTML("beforeend", window.RF_TableFormat.renderTableHtml(blk, {
+          figClass:   "rf-tpl-tech-minimal-table",
+          tableClass: "rf-table"
+        }));
+      } else {
+        wrap.textContent = "（表格模块未加载）";
+      }
+    }
   }
 
   function h(parent, tag, cls, text) {

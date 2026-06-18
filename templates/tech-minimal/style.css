@@ -151,3 +151,63 @@
   color: var(--tpl-muted);
   letter-spacing: 2px;
 }
+
+/* ===== Table（科技简约：暗色 + 极细灰线 + 强调色块） ===== */
+.rf-tpl-tech-minimal .rf-tpl-tech-minimal-table {
+  margin: 20px 0;
+  background: var(--tpl-bg-elev);
+  border-left: 3px solid var(--tpl-accent);
+  padding: 16px;
+  border-radius: 4px;
+}
+.rf-tpl-tech-minimal .rf-table-title {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+  color: var(--tpl-accent);
+  margin-bottom: 10px;
+  letter-spacing: 0.05em;
+}
+.rf-tpl-tech-minimal .rf-table-title::before {
+  content: "▸ ";
+}
+.rf-tpl-tech-minimal .rf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color: var(--tpl-text);
+}
+.rf-tpl-tech-minimal .rf-table th,
+.rf-tpl-tech-minimal .rf-table td {
+  padding: 7px 10px;
+  border: none;
+  border-bottom: 1px solid var(--tpl-line);
+}
+.rf-tpl-tech-minimal .rf-table thead th {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 11px;
+  color: var(--tpl-accent-2);
+  font-weight: 600;
+  border-bottom: 1px solid var(--tpl-accent-2);
+  background: transparent;
+  text-align: left;
+}
+.rf-tpl-tech-minimal .rf-table tbody tr:hover td {
+  background: rgba(0, 212, 164, 0.05);
+}
+.rf-tpl-tech-minimal .rf-table tfoot td {
+  border-top: 1px solid var(--tpl-accent);
+  color: var(--tpl-accent);
+  font-weight: 600;
+}
+.rf-tpl-tech-minimal .rf-table-caption {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: var(--tpl-muted);
+  margin-top: 8px;
+}
+.rf-tpl-tech-minimal .rf-table-caption::before {
+  content: "// ";
+  color: var(--tpl-accent);
+}

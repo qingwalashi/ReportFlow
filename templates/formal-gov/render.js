@@ -87,6 +87,18 @@
       if (blk.assetId) img.setAttribute("data-rf-asset", blk.assetId);
       return;
     }
+
+    if (blk.type === "table") {
+      if (window.RF_TableFormat && window.RF_TableFormat.renderTableHtml) {
+        wrap.insertAdjacentHTML("beforeend", window.RF_TableFormat.renderTableHtml(blk, {
+          figClass:   "rf-tpl-formal-gov-table",
+          tableClass: "rf-table"
+        }));
+      } else {
+        wrap.textContent = "（表格模块未加载）";
+      }
+      return;
+    }
   }
 
   function h(parent, tag, cls, text) {

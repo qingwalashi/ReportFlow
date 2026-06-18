@@ -111,7 +111,7 @@
 
     var row = el("div", "rf-field-row");
     row.appendChild(field("作者", text(meta.author, function (v) { patchMeta({ author: v }); })));
-    row.appendChild(field("日期", text(meta.date,   function (v) { patchMeta({ date: v }); }, { placeholder: "YYYY-MM-DD" })));
+    row.appendChild(field("日期", buildDatePicker(meta, function (v) { patchMeta({ date: v }); })));
     body.appendChild(row);
 
     body.appendChild(field("标签 (逗号分隔)",
@@ -157,6 +157,7 @@
     var addRow = el("div", "rf-row");
     addRow.appendChild(btn("ghost", "+ 文本",  function () { addBlock(secIdx, { type: "text", format: "markdown", content: "" }); }));
     addRow.appendChild(btn("ghost", "+ 图表",  function () { addBlock(secIdx, defaultChart()); }));
+    addRow.appendChild(btn("ghost", "+ 表格",  function () { addBlock(secIdx, defaultTable()); }));
     addRow.appendChild(btn("ghost", "+ 图片",  function () { addBlock(secIdx, { type: "image", assetId: null, caption: "" }); }));
     body.appendChild(addRow);
 
@@ -168,6 +169,28 @@
     return {
       type: "chart", title: "新图表",
       spec: { kind: "bar", categories: ["A", "B", "C"], series: [{ name: "数值", data: [10, 20, 15] }], unit: "" }
+    };
+  }
+
+  function defaultTable() {
+    return {
+      type: "table", title: "新表格", caption: "",
+      spec: {
+        columns: [
+          { key: "c0", header: "项目", width: "auto", align: "left",   format: null },
+          { key: "c1", header: "Q1",   width: "auto", align: "right",  format: null },
+          { key: "c2", header: "Q2",   width: "auto", align: "right",  format: null }
+        ],
+        rows: [
+          [ { v: "示例 A", rowspan:1, colspan:1, hidden:false, style:{}, format:null },
+            { v: 100,      rowspan:1, colspan:1, hidden:false, style:{}, format:null },
+            { v: 120,      rowspan:1, colspan:1, hidden:false, style:{}, format:null } ],
+          [ { v: "示例 B", rowspan:1, colspan:1, hidden:false, style:{}, format:null },
+            { v: 80,       rowspan:1, colspan:1, hidden:false, style:{}, format:null },
+            { v: 90,       rowspan:1, colspan:1, hidden:false, style:{}, format:null } ]
+        ],
+        headerRows: 1, footerRows: 0, merges: [], defaultAlign: "left", unit: ""
+      }
     };
   }
 
@@ -196,7 +219,10 @@
   function renderBlock(blk, secIdx, blkIdx, total) {
     var box = el("div", "rf-blk rf-blk--" + blk.type);
     var head = el("div", "rf-blk__head");
-    var label = blk.type === "text" ? "文本" : blk.type === "chart" ? "图表" : "图片";
+    var label = blk.type === "text" ? "文本"
+              : blk.type === "chart" ? "图表"
+              : blk.type === "table" ? "表格"
+              : "图片";
     head.appendChild(el("span", "rf-blk__type", label));
 
     var actions = el("div", "rf-blk__actions");
@@ -207,10 +233,17 @@
     box.appendChild(head);
 
     if (blk.type === "text") {
+      var taWrap = el("div", "rf-text-edit");
       var ta = textarea(blk.content, function (v) { patchBlock(secIdx, blkIdx, { content: v }); });
       ta.placeholder = "支持 Markdown：**加粗**、列表、`代码`...";
       ta.rows = 4;
-      box.appendChild(ta);
+      taWrap.appendChild(ta);
+      var expandBtn = btn("ghost", "⛶", function () {
+        openTextFullscreen(secIdx, blkIdx, ta);
+      }, "全屏编辑");
+      expandBtn.classList.add("rf-text-edit__expand");
+      taWrap.appendChild(expandBtn);
+      box.appendChild(taWrap);
     }
     else if (blk.type === "chart") {
       box.appendChild(renderChartEditor(blk, secIdx, blkIdx));
@@ -218,7 +251,52 @@
     else if (blk.type === "image") {
       box.appendChild(renderImageEditor(blk, secIdx, blkIdx));
     }
+    else if (blk.type === "table") {
+      mountTableEditor(blk, secIdx, blkIdx, box);
+    }
     return box;
+  }
+
+  function mountTableEditor(blk, secIdx, blkIdx, box) {
+    if (!window.RF_TableEditor) {
+      box.appendChild(el("div", "rf-empty", "（table-editor.js 未加载）"));
+      return;
+    }
+    window.RF_TableEditor.mount(box, blk, secIdx, blkIdx, {
+      onChange: function (newBlk, opts) {
+        // 把表格的 spec/title/caption 整体回写。
+        // structural=true 会触发 editor 重建表单 —— 但 table-editor 内部已自管 DOM，
+        // 重建会再调一次 mount，table-editor 接受新 blk 并重渲网格。
+        patchBlock(secIdx, blkIdx, {
+          title: newBlk.title,
+          caption: newBlk.caption,
+          spec: newBlk.spec
+        }, opts);
+      }
+    });
+  }
+
+  // 在大弹窗中编辑文本块。大 textarea 与小框共用 patchBlock 回写，
+  // 因 commit() 内 selfCommitting 守卫，输入不会重渲表单也不会丢焦点。
+  // 同步把值回写到小 textarea，关闭弹窗后小框立即显示新内容。
+  function openTextFullscreen(secIdx, blkIdx, sourceTa) {
+    var rep = state.get("report");
+    var content = (rep && rep.sections[secIdx] && rep.sections[secIdx].blocks[blkIdx] &&
+                   rep.sections[secIdx].blocks[blkIdx].content) || "";
+    var bigTa = document.createElement("textarea");
+    bigTa.className = "rf-textarea rf-textarea--fullscreen";
+    bigTa.value = content;
+    bigTa.placeholder = "支持 Markdown：**加粗**、列表、`代码`...";
+    bigTa.addEventListener("input", function () {
+      patchBlock(secIdx, blkIdx, { content: bigTa.value });
+      if (sourceTa) sourceTa.value = bigTa.value;
+    });
+    window.RF_UI.modal.open({
+      title: "编辑文本",
+      bodyEl: bigTa,
+      size: "lg"
+    });
+    setTimeout(function () { bigTa.focus(); }, 0);
   }
 
   function renderChartEditor(blk, secIdx, blkIdx) {
@@ -394,6 +472,104 @@
     b.addEventListener("click", onClick);
     return b;
   }
+
+  // 日期快捷下拉：input + 📅 按钮 + 下拉菜单（今天/本周/本月/本季度/本年/自定义）。
+  // 选中后写入 input 并调用 onChange；菜单点击外部关闭。
+  function buildDatePicker(meta, onChange) {
+    var wrap = el("div", "rf-date-picker");
+    var input = text(meta.date, function (v) { onChange(v); }, { placeholder: "可空。点击 📅 选择" });
+    wrap.appendChild(input);
+
+    var trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.className = "rf-btn rf-btn--ghost rf-date-picker__btn";
+    trigger.title = "选择日期";
+    trigger.textContent = "📅";
+    wrap.appendChild(trigger);
+
+    var menu = el("div", "rf-date-picker__menu");
+    menu.hidden = true;
+    wrap.appendChild(menu);
+
+    var d = new Date();
+    var pad = function (n) { return n < 10 ? "0" + n : "" + n; };
+    var iso = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+    // ISO 8601 周（以周四锚定）
+    var t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+    var yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+    var weekNo = Math.ceil(((t - yearStart) / 86400000 + 1) / 7);
+    var qNames = ["第一", "第二", "第三", "第四"];
+    var fmt = {
+      today:   iso,
+      week:    t.getUTCFullYear() + " 年第 " + weekNo + " 周",
+      month:   d.getFullYear() + " 年 " + (d.getMonth() + 1) + " 月",
+      quarter: d.getFullYear() + " 年" + qNames[Math.floor(d.getMonth() / 3)] + "季度",
+      year:    d.getFullYear() + " 年"
+    };
+
+    var items = [
+      { label: "今天 (" + fmt.today + ")",       value: fmt.today   },
+      { label: "本周 (" + fmt.week + ")",         value: fmt.week    },
+      { label: "本月 (" + fmt.month + ")",        value: fmt.month   },
+      { label: "本季度 (" + fmt.quarter + ")",    value: fmt.quarter },
+      { label: "本年 (" + fmt.year + ")",         value: fmt.year    },
+      { label: "自定义日期…",                      value: "__custom__" }
+    ];
+    items.forEach(function (it) {
+      var rowEl = el("div", "rf-date-picker__item", it.label);
+      rowEl.addEventListener("click", function (e) {
+        e.stopPropagation();
+        closeMenu();
+        if (it.value === "__custom__") {
+          var picker = document.createElement("input");
+          picker.type = "date";
+          picker.style.position = "fixed";
+          picker.style.left = "-9999px";
+          document.body.appendChild(picker);
+          var cleanup = function () {
+            if (picker.parentNode) picker.parentNode.removeChild(picker);
+          };
+          picker.addEventListener("change", function () {
+            if (picker.value) { input.value = picker.value; onChange(picker.value); }
+            cleanup();
+          });
+          picker.addEventListener("blur", cleanup);
+          try {
+            if (typeof picker.showPicker === "function") picker.showPicker();
+            else picker.click();
+          } catch (_) { picker.click(); }
+        } else {
+          input.value = it.value;
+          onChange(it.value);
+        }
+      });
+      menu.appendChild(rowEl);
+    });
+
+    var onDocClick = null;
+    function closeMenu() {
+      menu.hidden = true;
+      if (onDocClick) {
+        document.removeEventListener("click", onDocClick);
+        onDocClick = null;
+      }
+    }
+    function openMenu() {
+      menu.hidden = false;
+      onDocClick = function (e) { if (!wrap.contains(e.target)) closeMenu(); };
+      // 延后到下一轮事件循环再挂，避免与触发本次打开的 click 冒泡冲突
+      setTimeout(function () { document.addEventListener("click", onDocClick); }, 0);
+    }
+
+    trigger.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (menu.hidden) openMenu(); else closeMenu();
+    });
+
+    return wrap;
+  }
+
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
   window.RF_Editor = { init: init, render: render };

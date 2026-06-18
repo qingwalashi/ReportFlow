@@ -190,3 +190,52 @@
 }
 .rf-rewrite__foot .rf-btn { min-width: 72px; justify-content: center; }
 
+/* === 日期快捷选择 === */
+.rf-date-picker { position: relative; display: flex; align-items: stretch; gap: 4px; }
+.rf-date-picker > .rf-input { flex: 1; min-width: 0; }
+.rf-date-picker__btn { padding: 4px 10px; font-size: 14px; line-height: 1; }
+.rf-date-picker__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 30;
+  min-width: 220px;
+  background: var(--rf-bg, #fff);
+  border: 1px solid var(--rf-line, #d6dbe3);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(20, 30, 60, 0.12);
+  padding: 4px;
+}
+.rf-date-picker__item {
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.rf-date-picker__item:hover { background: var(--rf-bg-hover, #eef2f8); }
+
+/* === 文本块全屏编辑 === */
+.rf-text-edit { position: relative; }
+.rf-text-edit > .rf-textarea { width: 100%; padding-right: 36px; }
+.rf-text-edit__expand {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 2px 8px !important;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.55;
+  z-index: 1;
+}
+.rf-text-edit__expand:hover { opacity: 1; }
+.rf-textarea--fullscreen {
+  width: 100%;
+  min-height: 60vh;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+}
+

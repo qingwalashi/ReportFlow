@@ -17,7 +17,7 @@
     var sections = (data && data.sections) || [];
 
     var header = h(container, "div", "rf-doc-header");
-    h(header, "div", "rf-eyebrow", "REPORT · " + (meta.date || ""));
+    h(header, "div", "rf-eyebrow", meta.date ? "REPORT · " + meta.date : "REPORT");
     h(header, "h1", "rf-doc-title", meta.title || "未命名报告");
     if (meta.subtitle) h(header, "div", "rf-doc-subtitle", meta.subtitle);
 
@@ -80,6 +80,17 @@
         img.src = blk.src;
       }
       if (blk.caption) h(fig, "figcaption", "rf-img__caption", blk.caption);
+    }
+
+    if (blk.type === "table") {
+      if (window.RF_TableFormat && window.RF_TableFormat.renderTableHtml) {
+        wrap.insertAdjacentHTML("beforeend", window.RF_TableFormat.renderTableHtml(blk, {
+          figClass:   "rf-tpl-minimal-business-table",
+          tableClass: "rf-table"
+        }));
+      } else {
+        wrap.textContent = "（表格模块未加载）";
+      }
     }
   }
 

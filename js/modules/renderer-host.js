@@ -45,6 +45,11 @@
         return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
           return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
         });
+      },
+      formatCell: function (value, format) {
+        return window.RF_TableFormat
+          ? window.RF_TableFormat.formatCell(value, format)
+          : String(value == null ? "" : value);
       }
     };
   }

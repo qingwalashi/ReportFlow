@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="css/reset.css" />
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/table.css" />
   <link rel="stylesheet" href="css/app.css" />
 </head>
 <body>
@@ -26,6 +27,9 @@
     </div>
 
     <nav class="rf-topbar__actions">
+      <button class="rf-btn rf-btn--danger" id="rf-btn-clear" title="清空当前报告所有内容">
+        <span class="rf-icon">🗑</span><span>清空</span>
+      </button>
       <button class="rf-btn rf-btn--ghost" id="rf-btn-history" title="历史报告 (Ctrl+H)">
         <span class="rf-icon">⏱</span><span>历史</span>
       </button>
@@ -76,6 +80,7 @@
       </div>
       <div class="rf-pane__foot">
         <button class="rf-btn rf-btn--ghost" id="rf-btn-add-section">+ 新增章节</button>
+        <button class="rf-btn rf-btn--ghost" id="rf-btn-paste-table" title="从剪贴板粘贴 Excel 表格">📋 粘贴表格</button>
         <button class="rf-btn rf-btn--ghost" id="rf-btn-snapshot" title="保存到历史 (Ctrl+S)">📌 存为快照</button>
       </div>
     </section>
@@ -143,6 +148,9 @@
   <script defer src="js/modules/template-registry.js"></script>
   <script defer src="js/modules/chart-adapter.js"></script>
   <script defer src="js/modules/image-manager.js"></script>
+  <script defer src="js/modules/table-format.js"></script>
+  <script defer src="js/modules/table-paste.js"></script>
+  <script defer src="js/modules/table-editor.js"></script>
   <script defer src="js/modules/renderer-host.js"></script>
   <script defer src="js/modules/preview.js"></script>
   <script defer src="js/modules/editor.js"></script>

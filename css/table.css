@@ -1,0 +1,219 @@
+/* ============================================================================
+ * table.css — 中栏表格编辑器（rf-table-edit）。
+ * 与模板预览的表格样式无关；模板各自维护 .rf-table 样式。
+ * ============================================================================ */
+
+.rf-table-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: var(--rf-text-sm);
+}
+
+/* 标题 */
+.rf-table-edit__title.rf-input {
+  font-weight: 600;
+}
+
+/* ---------- 工具栏 ---------- */
+
+.rf-table-edit__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--rf-bg-soft);
+  border: 1px solid var(--rf-line);
+  border-radius: var(--rf-radius-sm);
+}
+
+.rf-tbar-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  background: var(--rf-bg-elev);
+  border: 1px solid var(--rf-line);
+  border-radius: var(--rf-radius-sm);
+}
+
+.rf-tbar-group__label {
+  font-size: var(--rf-text-xs);
+  color: var(--rf-text-dim);
+  margin-right: 4px;
+  user-select: none;
+}
+
+.rf-tbar-btn {
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 3px 8px;
+  font-size: var(--rf-text-xs);
+  color: var(--rf-text);
+  border-radius: var(--rf-radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  line-height: 1.4;
+}
+.rf-tbar-btn:hover {
+  background: var(--rf-bg-hover);
+  border-color: var(--rf-line);
+}
+.rf-tbar-btn:active {
+  background: var(--rf-accent-soft);
+}
+
+.rf-tbar-select {
+  border: 1px solid var(--rf-line);
+  background: var(--rf-bg-elev);
+  border-radius: var(--rf-radius-sm);
+  padding: 2px 4px;
+  font-size: var(--rf-text-xs);
+  font-family: inherit;
+  color: var(--rf-text);
+  cursor: pointer;
+}
+
+/* 颜色选择 */
+.rf-tbar-color {
+  position: relative;
+  display: inline-block;
+}
+.rf-tbar-color__pop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px;
+  background: var(--rf-bg-elev);
+  border: 1px solid var(--rf-line);
+  border-radius: var(--rf-radius-sm);
+  box-shadow: var(--rf-shadow);
+  width: 132px;
+}
+.rf-tbar-color__sw {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  border: 1px solid var(--rf-line);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--rf-text-dim);
+  background: #fff;
+}
+.rf-tbar-color__sw:hover {
+  outline: 2px solid var(--rf-accent);
+}
+
+/* ---------- 粘贴提示 ---------- */
+.rf-table-edit__paste-hint {
+  font-size: var(--rf-text-xs);
+  color: var(--rf-text-dim);
+  padding: 0 4px;
+}
+
+/* ---------- 网格 ---------- */
+.rf-table-edit__grid-wrap {
+  overflow: auto;
+  max-width: 100%;
+  border: 1px solid var(--rf-line);
+  border-radius: var(--rf-radius-sm);
+  background: var(--rf-bg-elev);
+}
+
+.rf-table-edit__grid {
+  border-collapse: collapse;
+  font-size: var(--rf-text-sm);
+  table-layout: auto;
+  min-width: 100%;
+}
+
+.rf-table-edit__grid th,
+.rf-table-edit__grid td {
+  border: 1px solid var(--rf-line);
+  padding: 4px 8px;
+  vertical-align: middle;
+  min-width: 80px;
+  position: relative;
+}
+
+/* 列号行（A B C…） */
+.rf-table-edit__col-letters th {
+  background: var(--rf-bg-soft);
+  color: var(--rf-text-dim);
+  font-weight: normal;
+  font-size: var(--rf-text-xs);
+  text-align: center;
+  user-select: none;
+  padding: 2px 8px;
+  min-width: 0;
+}
+
+/* 行号格 */
+.rf-table-edit__rownum {
+  background: var(--rf-bg-soft);
+  color: var(--rf-text-dim);
+  font-weight: normal;
+  font-size: var(--rf-text-xs);
+  text-align: center;
+  user-select: none;
+  width: 36px;
+  min-width: 36px;
+  padding: 2px 4px;
+}
+
+/* 表头行 */
+.rf-table-edit__header th.rf-table-edit__th {
+  background: var(--rf-accent-soft);
+  font-weight: 600;
+  outline: none;
+}
+
+/* tbody td */
+.rf-table-edit__td {
+  outline: none;
+  cursor: cell;
+  background: var(--rf-bg-elev);
+  min-height: 22px;
+  transition: background 60ms;
+}
+.rf-table-edit__td:focus {
+  cursor: text;
+  background: #fffdf3;
+}
+
+/* 选中态 */
+.rf-table-edit__td.is-selected {
+  background: var(--rf-accent-soft) !important;
+}
+.rf-table-edit__td.is-active {
+  outline: 2px solid var(--rf-accent);
+  outline-offset: -2px;
+  background: #fffdf3 !important;
+}
+
+/* 子级表头行 / 合计行 */
+.rf-table-edit__row--header td {
+  background: var(--rf-bg-soft);
+  font-weight: 600;
+}
+.rf-table-edit__row--footer td {
+  background: var(--rf-bg-soft);
+  font-style: italic;
+}
+
+/* ---------- caption 行 ---------- */
+.rf-table-edit__caprow {
+  display: flex;
+  gap: 8px;
+}
+.rf-table-edit__caprow .rf-input {
+  flex: 1;
+}

@@ -134,3 +134,50 @@
   color: var(--tpl-muted);
   font-family: "PingFang SC", sans-serif;
 }
+
+/* ===== Table（公务正式：实线深蓝边框 + 浅蓝表头） ===== */
+.rf-tpl-formal-gov .rf-tpl-formal-gov-table {
+  margin: 18px 0;
+}
+.rf-tpl-formal-gov .rf-table-title {
+  text-align: center;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--tpl-accent);
+  margin-bottom: 8px;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+.rf-tpl-formal-gov .rf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  border: 2px solid var(--tpl-accent);
+}
+.rf-tpl-formal-gov .rf-table th,
+.rf-tpl-formal-gov .rf-table td {
+  border: 1px solid var(--tpl-line);
+  padding: 8px 12px;
+  vertical-align: middle;
+}
+.rf-tpl-formal-gov .rf-table thead th {
+  background: var(--tpl-accent-soft);
+  color: var(--tpl-accent);
+  font-weight: 600;
+  border-bottom: 2px solid var(--tpl-accent);
+}
+.rf-tpl-formal-gov .rf-table tfoot td {
+  background: var(--tpl-bg-soft);
+  font-weight: 600;
+  border-top: 2px solid var(--tpl-accent);
+}
+.rf-tpl-formal-gov .rf-table tbody tr:nth-child(even) td {
+  background: #fafbfd;
+}
+.rf-tpl-formal-gov .rf-table-caption {
+  text-align: right;
+  font-size: 12px;
+  color: var(--tpl-muted);
+  margin-top: 6px;
+  font-family: "PingFang SC", sans-serif;
+}
