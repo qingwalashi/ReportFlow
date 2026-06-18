@@ -1,0 +1,153 @@
+/* Template: tech-minimal — 科技简约 (深色) */
+
+.rf-tpl-tech-minimal {
+  --tpl-bg: #0e1218;
+  --tpl-bg-elev: #161c25;
+  --tpl-accent: #00d4a4;
+  --tpl-accent-2: #4f8cff;
+  --tpl-text: #e6eaf2;
+  --tpl-muted: #8794a8;
+  --tpl-line: #232b39;
+
+  background: var(--tpl-bg);
+  color: var(--tpl-text);
+  font-family: "PingFang SC", "Inter", "SF Pro Text", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+  line-height: 1.75;
+  padding-bottom: 60px;
+}
+
+/* The preview iframe sets <body> bg #fff, so we paint our own surface here */
+.rf-tpl-tech-minimal::before {
+  content: "";
+  position: fixed; inset: 0;
+  background: var(--tpl-bg);
+  z-index: -1;
+}
+
+.rf-tpl-tech-minimal .rf-doc-header {
+  padding: 28px 0;
+  margin-bottom: 32px;
+  position: relative;
+  border-bottom: 1px solid var(--tpl-line);
+}
+.rf-tpl-tech-minimal .rf-doc-header::after {
+  content: "";
+  position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+  background: linear-gradient(90deg, var(--tpl-accent), transparent 60%);
+}
+
+.rf-tpl-tech-minimal .rf-eyebrow {
+  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-size: 11px;
+  color: var(--tpl-accent);
+  letter-spacing: 3px;
+  margin-bottom: 12px;
+}
+.rf-tpl-tech-minimal .rf-doc-title {
+  font-size: 30px; font-weight: 700;
+  letter-spacing: -.3px;
+  margin-bottom: 6px;
+  color: #fff;
+}
+.rf-tpl-tech-minimal .rf-doc-subtitle {
+  font-size: 15px;
+  color: var(--tpl-muted);
+}
+.rf-tpl-tech-minimal .rf-doc-byline {
+  display: flex; gap: 18px; flex-wrap: wrap;
+  margin-top: 18px;
+  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-size: 12px;
+  color: var(--tpl-muted);
+}
+.rf-tpl-tech-minimal .rf-doc-byline span::before {
+  content: "› "; color: var(--tpl-accent); margin-right: 4px;
+}
+
+.rf-tpl-tech-minimal .rf-tags { margin-top: 14px; display: flex; gap: 6px; flex-wrap: wrap; }
+.rf-tpl-tech-minimal .rf-tag {
+  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-size: 11px;
+  padding: 2px 9px;
+  border: 1px solid var(--tpl-accent);
+  color: var(--tpl-accent);
+  border-radius: 3px;
+  background: rgba(0, 212, 164, .07);
+}
+
+.rf-tpl-tech-minimal .rf-section { margin-bottom: 36px; page-break-inside: avoid; }
+.rf-tpl-tech-minimal .rf-section__heading {
+  font-size: 18px; font-weight: 600;
+  color: #fff;
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.rf-tpl-tech-minimal .rf-section__heading::before {
+  content: "■";
+  color: var(--tpl-accent);
+  font-size: 14px;
+}
+
+.rf-tpl-tech-minimal .rf-block { margin-bottom: 18px; }
+
+.rf-tpl-tech-minimal .rf-text { color: #d3d8e2; }
+.rf-tpl-tech-minimal .rf-text p { margin-bottom: 10px; }
+.rf-tpl-tech-minimal .rf-text strong { color: var(--tpl-accent); font-weight: 600; }
+.rf-tpl-tech-minimal .rf-text ul,
+.rf-tpl-tech-minimal .rf-text ol { padding-left: 22px; margin: 6px 0 12px; }
+.rf-tpl-tech-minimal .rf-text ul li::marker { color: var(--tpl-accent-2); }
+.rf-tpl-tech-minimal .rf-text code {
+  background: #1f2630;
+  padding: 1px 6px; border-radius: 3px;
+  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-size: 90%;
+  color: var(--tpl-accent);
+}
+
+.rf-tpl-tech-minimal .rf-chart-card {
+  background: var(--tpl-bg-elev);
+  border: 1px solid var(--tpl-line);
+  border-radius: 8px;
+  padding: 14px 16px 8px;
+  position: relative;
+  overflow: hidden;
+}
+.rf-tpl-tech-minimal .rf-chart-card::before {
+  content: ""; position: absolute; left: 0; top: 0; width: 4px; bottom: 0;
+  background: linear-gradient(180deg, var(--tpl-accent), var(--tpl-accent-2));
+}
+.rf-tpl-tech-minimal .rf-chart-card__title {
+  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-size: 12px;
+  color: var(--tpl-muted);
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.rf-tpl-tech-minimal .rf-chart-card__body {
+  width: 100%; height: 320px;
+}
+
+.rf-tpl-tech-minimal .rf-img { margin: 8px 0; }
+.rf-tpl-tech-minimal .rf-img img {
+  max-width: 100%;
+  border-radius: 6px;
+  border: 1px solid var(--tpl-line);
+}
+.rf-tpl-tech-minimal .rf-img__caption {
+  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-size: 11px;
+  color: var(--tpl-muted);
+  margin-top: 6px;
+  letter-spacing: 1px;
+}
+
+.rf-tpl-tech-minimal .rf-doc-footer {
+  margin-top: 40px;
+  padding-top: 14px;
+  border-top: 1px solid var(--tpl-line);
+  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-size: 11px;
+  color: var(--tpl-muted);
+  letter-spacing: 2px;
+}

@@ -1,0 +1,14 @@
+{
+  "id": "formal-gov",
+  "name": "公务正式",
+  "version": "1.0.0",
+  "author": "ReportFlow",
+  "description": "深蓝主色 + 宋体衬线，适配公文风格的工作汇报、述职报告。",
+  "stylesheet": "style.css",
+  "preview": "preview.png",
+  "capabilities": {
+    "charts": ["pie", "bar", "line"],
+    "images": true,
+    "pdfSafe": true
+  }
+}

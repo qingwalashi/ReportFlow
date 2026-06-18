@@ -1,0 +1,14 @@
+{
+  "id": "minimal-business",
+  "name": "极简商务",
+  "version": "1.0.0",
+  "author": "ReportFlow",
+  "description": "灰白衬线 + 大留白，适合简洁的商务汇报、阶段总结。",
+  "stylesheet": "style.css",
+  "preview": "preview.png",
+  "capabilities": {
+    "charts": ["pie", "bar", "line"],
+    "images": true,
+    "pdfSafe": true
+  }
+}

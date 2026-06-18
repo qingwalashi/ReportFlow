@@ -1,0 +1,14 @@
+{
+  "id": "tech-minimal",
+  "name": "科技简约",
+  "version": "1.0.0",
+  "author": "ReportFlow",
+  "description": "深色背景 + 青绿强调 + 等宽数字，适合数据驱动的技术汇报。",
+  "stylesheet": "style.css",
+  "preview": "preview.png",
+  "capabilities": {
+    "charts": ["pie", "bar", "line"],
+    "images": true,
+    "pdfSafe": false
+  }
+}

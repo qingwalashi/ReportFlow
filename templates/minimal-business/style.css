@@ -1,0 +1,136 @@
+/* Template: minimal-business — 极简商务 */
+
+.rf-tpl-minimal-business {
+  --tpl-accent: #d4a64a;
+  --tpl-accent-soft: #fbf4e2;
+  --tpl-text: #222;
+  --tpl-muted: #6b7280;
+  --tpl-line: #e5e5e5;
+
+  font-family: "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  color: var(--tpl-text);
+  font-size: 15px;
+  line-height: 1.8;
+  letter-spacing: .01em;
+}
+
+.rf-tpl-minimal-business .rf-doc-header {
+  padding: 20px 0 32px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid var(--tpl-line);
+}
+.rf-tpl-minimal-business .rf-eyebrow {
+  font-size: 11px; letter-spacing: 5px; color: var(--tpl-accent);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+.rf-tpl-minimal-business .rf-doc-title {
+  font-size: 32px; font-weight: 300; line-height: 1.25;
+  letter-spacing: -.5px;
+  color: var(--tpl-text);
+  margin-bottom: 8px;
+}
+.rf-tpl-minimal-business .rf-doc-subtitle {
+  font-size: 16px;
+  color: var(--tpl-muted);
+  font-weight: 300;
+}
+.rf-tpl-minimal-business .rf-doc-byline {
+  display: flex; gap: 24px; flex-wrap: wrap;
+  margin-top: 22px;
+  font-size: 12px;
+  color: var(--tpl-muted);
+}
+.rf-tpl-minimal-business .rf-doc-byline span { display: inline-flex; align-items: center; gap: 6px; }
+.rf-tpl-minimal-business .rf-doc-byline .rf-key {
+  text-transform: uppercase; letter-spacing: 2px;
+  font-size: 10px; color: #9aa0aa;
+}
+.rf-tpl-minimal-business .rf-tags {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-top: 16px;
+}
+.rf-tpl-minimal-business .rf-tag {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--tpl-accent-soft);
+  color: #8a6a18;
+}
+
+.rf-tpl-minimal-business .rf-section {
+  margin-bottom: 40px;
+  page-break-inside: avoid;
+}
+.rf-tpl-minimal-business .rf-section__heading {
+  font-size: 13px; letter-spacing: 4px;
+  color: var(--tpl-muted);
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+.rf-tpl-minimal-business .rf-section__heading::before {
+  content: ""; width: 24px; height: 2px;
+  background: var(--tpl-accent);
+  display: inline-block;
+}
+
+.rf-tpl-minimal-business .rf-block { margin-bottom: 18px; }
+
+.rf-tpl-minimal-business .rf-text { color: #333; }
+.rf-tpl-minimal-business .rf-text p { margin-bottom: 10px; }
+.rf-tpl-minimal-business .rf-text strong {
+  color: var(--tpl-text);
+  font-weight: 600;
+  border-bottom: 2px solid var(--tpl-accent-soft);
+}
+.rf-tpl-minimal-business .rf-text ul,
+.rf-tpl-minimal-business .rf-text ol {
+  padding-left: 20px;
+  margin: 6px 0 12px;
+}
+.rf-tpl-minimal-business .rf-text ul li::marker { color: var(--tpl-accent); }
+.rf-tpl-minimal-business .rf-text code {
+  background: #f6f6f6; padding: 1px 6px; border-radius: 3px;
+  font-size: 92%;
+  color: #555;
+}
+
+.rf-tpl-minimal-business .rf-chart-card {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 18px 20px 12px;
+}
+.rf-tpl-minimal-business .rf-chart-card__title {
+  font-size: 13px;
+  color: var(--tpl-muted);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+.rf-tpl-minimal-business .rf-chart-card__body {
+  width: 100%; height: 320px;
+}
+
+.rf-tpl-minimal-business .rf-img { margin: 8px 0; }
+.rf-tpl-minimal-business .rf-img img {
+  max-width: 100%;
+  border-radius: 4px;
+}
+.rf-tpl-minimal-business .rf-img__caption {
+  font-size: 12px;
+  color: var(--tpl-muted);
+  margin-top: 6px;
+}
+
+.rf-tpl-minimal-business .rf-doc-footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--tpl-line);
+  font-size: 11px;
+  color: #9aa0aa;
+  letter-spacing: 2px;
+  text-align: center;
+  text-transform: uppercase;
+}

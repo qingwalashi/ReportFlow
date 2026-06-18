@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ReportFlow — 通用智能汇报报告系统</title>
+
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <header class="rf-topbar">
+    <div class="rf-brand">
+      <span class="rf-brand__mark">RF</span>
+      <span class="rf-brand__name">ReportFlow</span>
+      <span class="rf-brand__tag">通用智能汇报</span>
+    </div>
+
+    <div class="rf-topbar__center">
+      <label class="rf-template-picker">
+        <span class="rf-template-picker__label">模板</span>
+        <select id="rf-template-select" class="rf-select"></select>
+      </label>
+    </div>
+
+    <nav class="rf-topbar__actions">
+      <button class="rf-btn rf-btn--ghost" id="rf-btn-history" title="历史报告 (Ctrl+H)">
+        <span class="rf-icon">⏱</span><span>历史</span>
+      </button>
+      <button class="rf-btn rf-btn--ghost" id="rf-btn-settings" title="大模型设置">
+        <span class="rf-icon">⚙</span><span>设置</span>
+      </button>
+      <button class="rf-btn rf-btn--ghost" id="rf-btn-help" title="帮助">
+        <span class="rf-icon">?</span><span>帮助</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="rf-workspace">
+    <!-- 左：自然语言录入 -->
+    <section class="rf-pane rf-pane--input" aria-label="自然语言录入">
+      <div class="rf-pane__head">
+        <h2 class="rf-pane__title">自然语言录入</h2>
+        <div class="rf-pane__hint">粘贴或键入任意排版文本，点击「解析」自动结构化。</div>
+      </div>
+      <textarea
+        id="rf-input-text"
+        class="rf-input-text"
+        spellcheck="false"
+        placeholder="例如：本季度市场部完成华东、华南两个大区的渠道拓展，营收同比增长 18%；客户满意度 92 分；下季度计划……"></textarea>
+      <div class="rf-pane__foot">
+        <button class="rf-btn rf-btn--primary" id="rf-btn-parse" title="解析 (Ctrl+Enter)">
+          <span class="rf-icon">⚡</span><span>解析</span>
+        </button>
+        <button class="rf-btn rf-btn--ghost" id="rf-btn-rewrite-sel"
+                title="请先在文本框中选中要改写的内容" disabled>
+          <span class="rf-icon">✎</span><span>AI 改写选区</span>
+        </button>
+        <button class="rf-btn rf-btn--ghost" id="rf-btn-load-sample">载入示例</button>
+        <button class="rf-btn rf-btn--ghost" id="rf-btn-clear-input">清空</button>
+      </div>
+    </section>
+
+    <div class="rf-splitter" data-target="prev"></div>
+
+    <!-- 中：结构化编辑 -->
+    <section class="rf-pane rf-pane--edit" aria-label="结构化编辑">
+      <div class="rf-pane__head">
+        <h2 class="rf-pane__title">结构化编辑</h2>
+        <div class="rf-pane__hint">所见即所得，修改后右侧实时预览。</div>
+      </div>
+      <div class="rf-edit-scroll">
+        <div id="rf-editor-root" class="rf-editor"></div>
+      </div>
+      <div class="rf-pane__foot">
+        <button class="rf-btn rf-btn--ghost" id="rf-btn-add-section">+ 新增章节</button>
+        <button class="rf-btn rf-btn--ghost" id="rf-btn-snapshot" title="保存到历史 (Ctrl+S)">📌 存为快照</button>
+      </div>
+    </section>
+
+    <div class="rf-splitter" data-target="next"></div>
+
+    <!-- 右：实时预览 -->
+    <section class="rf-pane rf-pane--preview" aria-label="实时预览">
+      <div class="rf-pane__head">
+        <h2 class="rf-pane__title">实时预览</h2>
+        <div class="rf-pane__hint" id="rf-preview-hint">公务正式 · 桌面视图</div>
+      </div>
+      <div class="rf-preview-frame-wrap">
+        <iframe
+          id="rf-preview-frame"
+          class="rf-preview-frame"
+          title="报告预览"
+          sandbox="allow-same-origin allow-scripts allow-popups"></iframe>
+      </div>
+      <div class="rf-pane__foot">
+        <button class="rf-btn rf-btn--primary" id="rf-btn-export-zip">
+          <span class="rf-icon">📦</span><span>导出 ZIP</span>
+        </button>
+        <button class="rf-btn rf-btn--ghost" id="rf-btn-export-pdf">
+          <span class="rf-icon">📄</span><span>导出 PDF</span>
+        </button>
+        <button class="rf-btn rf-btn--ghost" id="rf-btn-fullscreen-preview" title="全屏预览">⛶</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="rf-statusbar">
+    <span class="rf-status rf-status--ok" id="rf-status-save">●&nbsp;已保存</span>
+    <span class="rf-status" id="rf-status-template">模板：—</span>
+    <span class="rf-status" id="rf-status-storage">存储：—</span>
+    <span class="rf-status rf-status--right" id="rf-status-version">v0.1 · 纯静态</span>
+  </footer>
+
+  <!-- 模态根 -->
+  <div id="rf-modal-root" class="rf-modal-root" hidden></div>
+  <!-- Toast 根 -->
+  <div id="rf-toast-root" class="rf-toast-root" aria-live="polite"></div>
+
+  <!-- ============ 第三方依赖（vendored） ============ -->
+  <script defer src="libs/echarts.min.js"></script>
+  <script defer src="libs/jszip.min.js"></script>
+  <script defer src="libs/html2pdf.bundle.min.js"></script>
+  <script defer src="libs/marked.min.js"></script>
+
+  <!-- 启动前自检 -->
+  <script defer src="js/vendor-shim.js"></script>
+
+  <!-- ============ Core ============ -->
+  <script defer src="js/core/event-bus.js"></script>
+  <script defer src="js/core/state.js"></script>
+  <script defer src="js/core/storage.js"></script>
+  <script defer src="js/core/asset-store.js"></script>
+  <script defer src="js/core/logger.js"></script>
+  <script defer src="js/core/schema.js"></script>
+
+  <!-- ============ Modules ============ -->
+  <script defer src="js/modules/ui/modal.js"></script>
+  <script defer src="js/modules/ui/toast.js"></script>
+  <script defer src="js/modules/ui/confirm.js"></script>
+  <script defer src="js/modules/template-registry.js"></script>
+  <script defer src="js/modules/chart-adapter.js"></script>
+  <script defer src="js/modules/image-manager.js"></script>
+  <script defer src="js/modules/renderer-host.js"></script>
+  <script defer src="js/modules/preview.js"></script>
+  <script defer src="js/modules/editor.js"></script>
+  <script defer src="js/modules/config-manager.js"></script>
+  <script defer src="js/modules/llm-client.js"></script>
+  <script defer src="js/modules/prompt-builder.js"></script>
+  <script defer src="js/modules/input-rewrite.js"></script>
+  <script defer src="js/modules/parser.js"></script>
+  <script defer src="js/modules/history.js"></script>
+  <script defer src="js/modules/exporter-zip.js"></script>
+  <script defer src="js/modules/exporter-pdf.js"></script>
+
+  <!-- ============ Templates（自注册；新增模板在此追加一行） ============ -->
+  <script defer src="templates/formal-gov/render.js"></script>
+  <script defer src="templates/minimal-business/render.js"></script>
+  <script defer src="templates/tech-minimal/render.js"></script>
+
+  <!-- ============ 入口（最后） ============ -->
+  <script defer src="js/core/bootstrap.js"></script>
+</body>
+</html>

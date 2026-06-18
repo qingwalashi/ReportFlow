@@ -1,0 +1,88 @@
+/* ReportFlow — design tokens & base typography */
+
+:root {
+  /* Color — neutral surface */
+  --rf-bg:        #f6f7f9;
+  --rf-bg-elev:   #ffffff;
+  --rf-bg-soft:   #eef0f4;
+  --rf-bg-hover:  #e6eaf0;
+  --rf-line:      #dfe3ea;
+  --rf-line-strong: #c8cfdb;
+
+  /* Color — text */
+  --rf-text:      #1a1f2c;
+  --rf-text-muted:#5b6473;
+  --rf-text-dim:  #8a93a3;
+
+  /* Color — accent (app shell — distinct from any template) */
+  --rf-accent:    #2d5cf6;
+  --rf-accent-strong: #1f43c0;
+  --rf-accent-soft:   #e8efff;
+  --rf-focus:     #4c8bf5;
+
+  /* Semantic */
+  --rf-ok:        #29a36a;
+  --rf-warn:      #d18b00;
+  --rf-err:       #d13c3c;
+
+  /* Type */
+  --rf-font:
+    "PingFang SC", "Microsoft YaHei", "Source Han Sans SC",
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --rf-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  --rf-text-xs:   12px;
+  --rf-text-sm:   13px;
+  --rf-text-base: 14px;
+  --rf-text-md:   15px;
+  --rf-text-lg:   17px;
+  --rf-text-xl:   20px;
+
+  /* Radius / shadow */
+  --rf-radius-sm: 4px;
+  --rf-radius:    8px;
+  --rf-radius-lg: 12px;
+  --rf-shadow-sm: 0 1px 2px rgba(20, 30, 50, .06);
+  --rf-shadow:    0 4px 16px rgba(20, 30, 50, .08);
+  --rf-shadow-lg: 0 12px 40px rgba(20, 30, 50, .14);
+
+  /* Layout */
+  --rf-topbar-h:  52px;
+  --rf-statusbar-h: 28px;
+  --rf-pane-head-h: 56px;
+  --rf-pane-foot-h: 52px;
+  --rf-gap:       12px;
+  --rf-pad:       14px;
+}
+
+html { color-scheme: light; }
+body {
+  background: var(--rf-bg);
+  color: var(--rf-text);
+  font-family: var(--rf-font);
+  font-size: var(--rf-text-base);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4 { font-weight: 600; letter-spacing: -.005em; }
+
+::selection { background: var(--rf-accent-soft); color: var(--rf-accent-strong); }
+
+/* Scrollbars (subtle, webkit only) */
+.rf-scroll::-webkit-scrollbar,
+textarea::-webkit-scrollbar,
+.rf-edit-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.rf-scroll::-webkit-scrollbar-thumb,
+textarea::-webkit-scrollbar-thumb,
+.rf-edit-scroll::-webkit-scrollbar-thumb {
+  background: var(--rf-line-strong); border-radius: 8px;
+  border: 2px solid transparent; background-clip: padding-box;
+}
+.rf-scroll::-webkit-scrollbar-thumb:hover,
+.rf-edit-scroll::-webkit-scrollbar-thumb:hover { background: #aab4c5; background-clip: padding-box; }
