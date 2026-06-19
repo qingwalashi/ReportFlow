@@ -105,6 +105,12 @@
   box-shadow: 0 0 0 3px #FBEDED;
 }
 
+/* Eye-toggle button used inside password inputs (e.g. API key field). */
+.rf-input-eye { border-radius: 4px; transition: background-color .12s, color .12s; }
+.rf-input-eye:hover { background: var(--rf-bg-elev) !important; color: var(--rf-text) !important; }
+.rf-input-eye:focus-visible { outline: 2px solid var(--rf-accent); outline-offset: 1px; }
+.rf-input-eye[aria-pressed="true"] { color: var(--rf-accent-strong) !important; }
+
 .rf-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
 .rf-field__label {
   font-size: var(--rf-text-xs);
@@ -198,6 +204,68 @@
   from { transform: translateY(8px); opacity: 0 }
   to   { transform: none; opacity: 1 }
 }
+
+/* ============ Parse progress panel (LLM streaming) ============ */
+/* Sits above the status bar and below toasts; its own stacking context so
+   the body's pre doesn't bleed into the page when scrolled. */
+.rf-parse-progress {
+  position: fixed; right: 16px; bottom: 80px; z-index: 190;
+  width: 320px; max-width: calc(100vw - 32px);
+  background: #161A24; color: #F5F7FB;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: var(--rf-radius);
+  box-shadow: var(--rf-shadow);
+  font-size: var(--rf-text-sm);
+  overflow: hidden;
+  animation: rf-toast-in .18s ease;
+}
+.rf-pp__head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+.rf-pp__dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--rf-accent, #5B8DEF);
+  box-shadow: 0 0 0 0 currentColor;
+  animation: rf-pp-pulse 1.2s ease-in-out infinite;
+  flex: none;
+}
+@keyframes rf-pp-pulse {
+  0%, 100% { opacity: .55; transform: scale(.9); }
+  50%      { opacity: 1;   transform: scale(1.15); }
+}
+.rf-pp__phase  { flex: 1; min-width: 0; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rf-pp__elapsed{ font-variant-numeric: tabular-nums; color: rgba(245,247,251,.7); font-size: 12px; }
+.rf-pp__toggle, .rf-pp__close {
+  background: transparent; border: none; color: rgba(245,247,251,.7);
+  width: 22px; height: 22px; border-radius: 4px; cursor: pointer;
+  font-size: 14px; line-height: 1; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.rf-pp__toggle:hover, .rf-pp__close:hover { background: rgba(255,255,255,.08); color: #fff; }
+.rf-pp__meta {
+  display: flex; gap: 10px; align-items: center;
+  padding: 6px 10px;
+  font-size: 12px; color: rgba(245,247,251,.7);
+  border-bottom: 1px solid rgba(255, 255, 255, .04);
+}
+.rf-pp__counter { font-variant-numeric: tabular-nums; }
+.rf-pp__kind    { color: rgba(245,247,251,.85); }
+.rf-pp__body { padding: 8px 10px; }
+.rf-pp__tail {
+  margin: 0; max-height: 132px; overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px; line-height: 1.5;
+  color: rgba(245,247,251,.85);
+  white-space: pre-wrap; word-break: break-word;
+}
+.rf-parse-progress--collapsed .rf-pp__meta,
+.rf-parse-progress--collapsed .rf-pp__body { display: none; }
+.rf-parse-progress--ok  { border-color: rgba(74, 222, 128, .35); }
+.rf-parse-progress--ok  .rf-pp__dot { background: #4ADE80; animation: none; }
+.rf-parse-progress--err { border-color: rgba(248, 113, 113, .45); }
+.rf-parse-progress--err .rf-pp__dot { background: #F87171; animation: none; }
 
 /* ===== Badges / Pills ===== */
 .rf-pill {

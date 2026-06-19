@@ -17,6 +17,7 @@
 
   var IFRAME_ID = "rf-preview-frame";
   var rerenderTimer = null;
+  var resizeTimer = null;
   // Debounce window: render N ms after the last change. While the user is
   // typing (consecutive state:report events), each new event resets the
   // timer, so we only run one full ECharts dispose+init cycle when they
@@ -37,6 +38,7 @@
     iframe.addEventListener("load", function onload() {
       iframe.removeEventListener("load", onload);
       log.info("preview: iframe ready");
+      attachResizeHandling(iframe);
       scheduleRender();
     });
 
@@ -90,6 +92,37 @@
       // next frame instead of fighting with whatever the user is doing.
       requestAnimationFrame(doRender);
     }, IDLE_MS);
+  }
+
+  // ECharts canvases don't follow CSS container changes on their own: once
+  // init() measures the container, the canvas size is frozen. When the preview
+  // pane is resized (splitter drag, browser resize, work-mode switch) the
+  // iframe's own window fires `resize`; we debounce and re-measure every live
+  // chart instead of doing a full dispose+init re-render (which would also
+  // reset scroll and flash). Instances are looked up by their container node
+  // via getInstanceByDom, so we don't need to track them manually — and we
+  // only ever touch containers still attached to the DOM.
+  function resizeAllCharts() {
+    var iframe = $iframe();
+    if (!iframe || !iframe.contentDocument) return;
+    var win = iframe.contentWindow;
+    if (!win || !win.echarts) return;
+    var bodies = iframe.contentDocument.querySelectorAll(".rf-chart-card__body");
+    for (var i = 0; i < bodies.length; i++) {
+      var inst = win.echarts.getInstanceByDom(bodies[i]);
+      if (inst) {
+        try { inst.resize(); } catch (e) { /* instance may be mid-dispose */ }
+      }
+    }
+  }
+
+  function attachResizeHandling(iframe) {
+    var win = iframe.contentWindow;
+    if (!win) return;
+    win.addEventListener("resize", function () {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(resizeAllCharts, 120);
+    });
   }
 
   function doRender() {

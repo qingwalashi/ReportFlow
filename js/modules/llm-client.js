@@ -65,12 +65,14 @@
       return Promise.reject(new Error("LLM 未配置：请先在「设置」中填写 API 地址、密钥和模型名"));
     }
 
+    var stream = !!opts.stream && typeof opts.onDelta === "function";
+
     var body = {
       model: opts.model || c.model,
       messages: opts.messages || [],
       temperature: opts.temperature == null ? c.temperature : opts.temperature,
       max_tokens: opts.maxTokens || c.maxTokens || 2048,
-      stream: false
+      stream: stream
     };
     if (opts.jsonMode) {
       body.response_format = { type: "json_object" };
@@ -80,8 +82,113 @@
     var timeoutMs = opts.timeoutMs || c.timeoutMs || 60000;
 
     return rateGate(c.rps || 1).then(function () {
+      if (stream) {
+        return doStreamFetch(url, c.apiKey, body, timeoutMs, opts.onDelta);
+      }
       return doFetchWithRetry(url, c.apiKey, body, timeoutMs, 0);
     });
+  }
+
+  // SSE streaming path. We don't retry mid-stream — if the connection drops
+  // halfway the user sees a clear error rather than a silently stitched reply.
+  // onDelta receives ({ delta, kind }) where kind is "content" or "reasoning".
+  function doStreamFetch(url, apiKey, body, timeoutMs, onDelta) {
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); }, timeoutMs);
+    var t0 = Date.now();
+
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + apiKey,
+        "Accept": "text/event-stream"
+      },
+      body: JSON.stringify(body),
+      signal: ctrl.signal
+    }).then(function (r) {
+      if (!r.ok) {
+        clearTimeout(timer);
+        return r.text().then(function (txt) {
+          var err = new Error("LLM HTTP " + r.status + ": " + truncate(txt, 220));
+          err.status = r.status; err.body = txt;
+          throw err;
+        });
+      }
+      if (!r.body || !r.body.getReader) {
+        // Fallback: server didn't actually stream; treat as non-stream JSON.
+        clearTimeout(timer);
+        return r.json().then(function (j) {
+          return extractContent(j);
+        });
+      }
+      var reader = r.body.getReader();
+      var decoder = new TextDecoder("utf-8");
+      var buf = "";
+      var contentBuf = "";
+      var reasonBuf = "";
+
+      function pump() {
+        return reader.read().then(function (chunk) {
+          if (chunk.done) {
+            clearTimeout(timer);
+            var out = contentBuf || reasonBuf;
+            log.info("llm: stream ok " + (Date.now() - t0) + "ms, " + out.length + " chars"
+                   + (contentBuf ? "" : " (reasoning fallback)"));
+            return out;
+          }
+          buf += decoder.decode(chunk.value, { stream: true });
+          // Parse SSE: events separated by "\n\n", lines start with "data: ".
+          var idx;
+          while ((idx = buf.indexOf("\n\n")) >= 0) {
+            var raw = buf.slice(0, idx);
+            buf = buf.slice(idx + 2);
+            raw.split("\n").forEach(function (line) {
+              line = line.trim();
+              if (!line.startsWith("data:")) return;
+              var payload = line.slice(5).trim();
+              if (!payload || payload === "[DONE]") return;
+              try {
+                var ev = JSON.parse(payload);
+                var d = ev && ev.choices && ev.choices[0] && ev.choices[0].delta || {};
+                if (typeof d.content === "string" && d.content) {
+                  contentBuf += d.content;
+                  try { onDelta({ delta: d.content, kind: "content", total: contentBuf.length }); } catch (e) {}
+                } else if (typeof d.reasoning_content === "string" && d.reasoning_content) {
+                  reasonBuf += d.reasoning_content;
+                  try { onDelta({ delta: d.reasoning_content, kind: "reasoning", total: reasonBuf.length }); } catch (e) {}
+                }
+              } catch (e) {
+                // Some providers emit keep-alive comments or partial chunks; ignore.
+              }
+            });
+          }
+          return pump();
+        });
+      }
+      return pump();
+    }).catch(function (err) {
+      clearTimeout(timer);
+      if (err.name === "AbortError") {
+        var to = new Error("LLM 请求超时（" + timeoutMs + "ms）。可在设置中调高超时。");
+        to.cause = err; throw to;
+      }
+      if (err instanceof TypeError) {
+        var hint = "请求失败（可能是 CORS 跨域被阻止）。建议：① 切换到 DeepSeek/Moonshot 等浏览器友好的预设；② 或在设置里填写「CORS 代理 URL」。";
+        var ne = new Error(hint);
+        ne.cause = err; throw ne;
+      }
+      throw err;
+    });
+  }
+
+  function extractContent(j) {
+    var msg = j && j.choices && j.choices[0] && j.choices[0].message || {};
+    return msg.content
+        || msg.reasoning_content
+        || msg.reasoning
+        || (j.choices && j.choices[0] && j.choices[0].text)
+        || "";
   }
 
   function doFetchWithRetry(url, apiKey, body, timeoutMs, attempt) {

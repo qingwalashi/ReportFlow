@@ -123,7 +123,8 @@
     body.appendChild(field("API 地址 (baseUrl)", baseUrl, "应为以 /v1 等结尾的 OpenAI 兼容根；客户端会自动追加 /chat/completions。"));
 
     var apiKey = inputText(current.apiKey, "sk-…", true);
-    body.appendChild(field("API 密钥", apiKey, "明文存储于浏览器 localStorage，仅在本地。"));
+    var apiKeyWrap = wrapWithToggle(apiKey);
+    body.appendChild(field("API 密钥", apiKeyWrap, "明文存储于浏览器 localStorage，仅在本地。点击右侧按钮切换显示/隐藏。"));
 
     var model = inputText(current.model, "deepseek-chat");
     body.appendChild(field("模型名", model));
@@ -294,6 +295,57 @@
       });
     }
     return i;
+  }
+  // Wrap a password input with an eye-toggle icon button on the right side.
+  // Uses inline SVG so the icon renders identically across platforms (no emoji
+  // font fallback). Two paths: an open-eye and a struck-through eye.
+  function wrapWithToggle(inputEl) {
+    var SVG_NS = "http://www.w3.org/2000/svg";
+    var EYE_OPEN_D = "M12 5c-5 0-9 4.5-10 7 1 2.5 5 7 10 7s9-4.5 10-7c-1-2.5-5-7-10-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4z";
+    var EYE_OFF_D  = "M2 4l18 18M6.5 7.6C3.7 9.3 1.7 11.7 1 13c1 2.5 5 6 10 6 1.7 0 3.3-.4 4.7-1.1M9.9 5.2C10.6 5.1 11.3 5 12 5c5 0 9 3.5 10 6-.5 1.2-1.6 2.7-3.2 4M14.1 14.1A3 3 0 0 1 9.9 9.9";
+
+    function makeSvg(d) {
+      var svg = document.createElementNS(SVG_NS, "svg");
+      svg.setAttribute("width", "16");
+      svg.setAttribute("height", "16");
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.setAttribute("fill", "none");
+      svg.setAttribute("stroke", "currentColor");
+      svg.setAttribute("stroke-width", "1.8");
+      svg.setAttribute("stroke-linecap", "round");
+      svg.setAttribute("stroke-linejoin", "round");
+      svg.setAttribute("aria-hidden", "true");
+      var p = document.createElementNS(SVG_NS, "path");
+      p.setAttribute("d", d);
+      svg.appendChild(p);
+      return svg;
+    }
+
+    var wrap = document.createElement("div");
+    wrap.style.cssText = "position:relative;display:flex;align-items:center;width:100%";
+    inputEl.style.flex = "1";
+    inputEl.style.paddingRight = "36px";
+    wrap.appendChild(inputEl);
+
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "rf-btn rf-btn--ghost rf-input-eye";
+    btn.setAttribute("aria-label", "显示密钥");
+    btn.setAttribute("aria-pressed", "false");
+    btn.title = "显示/隐藏密钥";
+    btn.style.cssText = "position:absolute;right:4px;top:50%;transform:translateY(-50%);padding:4px;height:auto;min-width:0;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--rf-text-muted);cursor:pointer";
+    btn.appendChild(makeSvg(EYE_OFF_D));
+
+    btn.addEventListener("mousedown", function (e) { e.preventDefault(); }); // keep input focus
+    btn.addEventListener("click", function () {
+      var show = inputEl.type === "password";
+      inputEl.type = show ? "text" : "password";
+      btn.setAttribute("aria-pressed", show ? "true" : "false");
+      btn.setAttribute("aria-label", show ? "隐藏密钥" : "显示密钥");
+      btn.replaceChildren(makeSvg(show ? EYE_OPEN_D : EYE_OFF_D));
+    });
+    wrap.appendChild(btn);
+    return wrap;
   }
   function inputNumber(value, min, max, step) {
     var i = document.createElement("input");

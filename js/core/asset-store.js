@@ -132,8 +132,22 @@
     });
   }
 
+  // Wipe every image record. Revokes any cached object URLs first so callers
+  // who still hold them get a clean failure rather than a phantom blob.
+  function clearAll() {
+    revokeAll();
+    return tx("readwrite").then(function (store) {
+      return new Promise(function (resolve, reject) {
+        var req = store.clear();
+        req.onsuccess = function () { resolve(true); };
+        req.onerror   = function () { reject(req.error); };
+      });
+    });
+  }
+
   window.RF_Assets = {
     put: put, get: get, url: url, del: del,
-    list: list, usageBytes: usageBytes, revokeAll: revokeAll
+    list: list, usageBytes: usageBytes, revokeAll: revokeAll,
+    clearAll: clearAll
   };
 })();

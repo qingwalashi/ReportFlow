@@ -224,9 +224,10 @@ body { background: var(--rf-bg); }
 .rf-template-switch__menu {
   position: absolute;
   top: calc(100% + 6px);
+  /* `left` 与 `width` 由 JS 在 open() 时按触发按钮内部的"模板名段"测量后写入
+     inline，使菜单视觉上紧贴当前模板名段、而不是从触发器左缘起。 */
   left: 0;
-  min-width: 100%;
-  max-width: 280px;
+  box-sizing: border-box;
   padding: 4px;
   background: var(--rf-bg-elev);
   border: 1px solid var(--rf-line);
@@ -237,7 +238,11 @@ body { background: var(--rf-bg); }
 .rf-template-switch__option {
   display: flex;
   align-items: center;
+  justify-content: center;  /* 文本水平居中（勾号绝对定位不参与布局，不会偏移文字） */
   gap: 6px;
+  width: 100%;             /* 铺满菜单宽度，避免短选项右侧出现留白 */
+  box-sizing: border-box;
+  position: relative;       /* 给绝对定位的勾号做参照 */
   padding: 6px 10px;
   font-size: var(--rf-text-xs);
   font-weight: 500;
@@ -263,6 +268,10 @@ body { background: var(--rf-bg); }
   border-color: var(--rf-accent-soft);
 }
 .rf-template-switch__option-check {
+  position: absolute;       /* 抽离 flex 流，文本居中时勾号不参与对齐 */
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   font-size: 11px;
   opacity: 0;
 }
@@ -561,7 +570,10 @@ body { background: var(--rf-bg); }
   overflow: hidden;
 }
 .rf-preview-frame {
+  display: block;
   width: 100%;
+  max-width: 1040px;       /* cap the "sheet" so a wide preview pane centers it */
+  margin: 0 auto;          /* ...on the desk-gray wrap instead of stretching edge-to-edge */
   height: 100%;            /* fill the wrap so the iframe is the sole scroller */
   min-height: 0;
   border: 0;

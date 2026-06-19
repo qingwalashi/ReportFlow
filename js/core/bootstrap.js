@@ -146,12 +146,21 @@
       renderMenu();
       menu.hidden = false;
       trigger.setAttribute("aria-expanded", "true");
+      // 让菜单宽度与整个模板切换器（"[图标] 模板 | 名称 ▾"）等宽并左对齐，
+      // 视觉上像是这块导航段直接展开成下拉。
+      alignMenuToHost();
       // 焦点放到当前激活项，方便键盘操作
       var active = menu.querySelector(".rf-template-switch__option.is-active") ||
                    menu.querySelector(".rf-template-switch__option");
       if (active) active.focus();
       document.addEventListener("mousedown", onDocDown, true);
       document.addEventListener("keydown", onKeyDown, true);
+    }
+    function alignMenuToHost() {
+      var host = trigger.parentElement; // .rf-template-switch (position: relative)
+      if (!host) return;
+      menu.style.left  = "0px";
+      menu.style.width = host.offsetWidth + "px";
     }
     function close() {
       menu.hidden = true;
@@ -280,6 +289,8 @@
     refresh();
     window.RF_Bus.on("draft:saved", refresh);
     window.RF_Bus.on("history:saved", refresh);
+    window.RF_Bus.on("assets:changed", refresh);
+    window.RF_Bus.on("state:report", refresh);
     setInterval(refresh, 8000);
   }
 
@@ -296,14 +307,19 @@
     }
     var btn = document.getElementById("rf-btn-parse");
     if (btn) { btn.disabled = true; btn.textContent = "解析中…"; }
-    window.RF_UI.toast.show("正在调用 " + (c.model || "LLM") + "…");
-    window.RF_Parser.parse(ta.value).then(function (out) {
+    var progress = window.RF_ParseProgress && window.RF_ParseProgress.start();
+    window.RF_Parser.parse(ta.value, {
+      onProgress: function (ev) { if (progress) progress.update(ev); }
+    }).then(function (out) {
       window.RF_State.set("report", out.report);
       try { window.RF_Storage.set("draft", "current", out.report); } catch (e) {}
+      if (progress) progress.success({ sections: out.report.sections.length, warnings: out.errors.length });
       window.RF_UI.toast.ok("解析完成（" + out.report.sections.length + " 章节" +
         (out.errors.length ? "，" + out.errors.length + " 处自动修正" : "") + "）");
     }).catch(function (err) {
-      window.RF_UI.toast.err(String(err && err.message || err));
+      var msg = String(err && err.message || err);
+      if (progress) progress.fail(msg);
+      window.RF_UI.toast.err(msg);
     }).then(function () {
       if (btn) { btn.disabled = false; btn.innerHTML = '<span class="rf-icon">⚡</span><span>解析</span>'; }
     });
@@ -338,7 +354,7 @@
   function onClearReport() {
     window.RF_UI.confirm({
       title: "清空当前报告",
-      body: "确认清空当前报告的所有内容？此操作将重置为空白报告，且无法撤销。",
+      body: "确认清空当前报告的所有内容？此操作将重置为空白报告，并删除报告中引用的所有图片资源（IndexedDB），且无法撤销。LLM 设置与历史快照将保留。",
       danger: true,
       confirmLabel: "确认清空"
     }).then(function (ok) {
@@ -347,7 +363,21 @@
       try { window.RF_Storage.remove("draft", "current"); } catch (e) {}
       var ta = document.getElementById("rf-input-text");
       if (ta) ta.value = "";
-      window.RF_UI.toast.ok("已清空");
+      // Wipe IndexedDB images so the storage indicator actually drops to 0,
+      // and broadcast assets:changed so the indicator refreshes immediately
+      // instead of waiting for the next 8s poll tick.
+      var done = function () {
+        window.RF_Bus.emit("assets:changed");
+        window.RF_UI.toast.ok("已清空");
+      };
+      if (window.RF_Assets && window.RF_Assets.clearAll) {
+        window.RF_Assets.clearAll().then(done, function (err) {
+          window.RF_Log.warn("clear: assets clearAll failed " + (err && err.message));
+          done();
+        });
+      } else {
+        done();
+      }
     });
   }
 
