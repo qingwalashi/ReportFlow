@@ -1,0 +1,14 @@
+{
+  "id": "mono-print",
+  "name": "水墨刊印",
+  "version": "1.0.0",
+  "author": "ReportFlow",
+  "description": "纯黑白灰阶 + 宋体衬线，借鉴旧式报刊版样，适合需要克制、严肃质感的报告。",
+  "stylesheet": "style.css",
+  "preview": "preview.png",
+  "capabilities": {
+    "charts": ["pie", "bar", "line"],
+    "images": true,
+    "pdfSafe": true
+  }
+}

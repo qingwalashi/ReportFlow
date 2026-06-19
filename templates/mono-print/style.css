@@ -1,0 +1,266 @@
+/* Template: mono-print — 水墨刊印 */
+/* All selectors must be prefixed with .rf-tpl-mono-print to avoid leaking. */
+
+.rf-tpl-mono-print {
+  --tpl-ink:        #111111;
+  --tpl-text:       #1a1a1a;
+  --tpl-muted:      #5c5c5c;
+  --tpl-faint:      #8a8a8a;
+  --tpl-line:       #cfcfcf;
+  --tpl-line-soft:  #e6e6e6;
+  --tpl-paper:      #fafafa;
+  --tpl-paper-soft: #f3f3f3;
+
+  font-family: "Source Han Serif SC", "Songti SC", SimSun, "PingFang SC", serif;
+  color: var(--tpl-text);
+  font-size: 15px;
+  line-height: 1.85;
+  background: var(--tpl-paper);
+}
+
+/* ===== Header ===== */
+.rf-tpl-mono-print .rf-doc-header {
+  text-align: center;
+  padding: 6px 0 22px;
+  margin-bottom: 28px;
+  border-top: 3px solid var(--tpl-ink);
+  border-bottom: 1px solid var(--tpl-ink);
+  position: relative;
+}
+.rf-tpl-mono-print .rf-doc-header::after {
+  /* 下方再叠一条细线，做"双线报头" */
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -4px;
+  border-bottom: 1px solid var(--tpl-ink);
+}
+.rf-tpl-mono-print .rf-doc-eyebrow {
+  font-family: "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: var(--tpl-muted);
+  text-transform: uppercase;
+  margin: 4px 0 12px;
+}
+.rf-tpl-mono-print .rf-doc-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--tpl-ink);
+  letter-spacing: 8px;
+  margin: 0 0 6px;
+  line-height: 1.25;
+}
+.rf-tpl-mono-print .rf-doc-subtitle {
+  font-size: 15px;
+  color: var(--tpl-muted);
+  letter-spacing: 3px;
+  font-style: italic;
+}
+.rf-tpl-mono-print .rf-doc-byline {
+  margin-top: 14px;
+  display: flex; justify-content: center; gap: 28px;
+  font-size: 12px;
+  color: var(--tpl-muted);
+  font-family: "PingFang SC", sans-serif;
+  letter-spacing: 1px;
+}
+.rf-tpl-mono-print .rf-doc-byline span::before {
+  content: "│"; color: var(--tpl-line); margin-right: 12px;
+}
+.rf-tpl-mono-print .rf-doc-byline span:first-child::before { content: ""; margin: 0; }
+
+.rf-tpl-mono-print .rf-tags {
+  text-align: center; margin-top: 12px; display: flex; gap: 6px; justify-content: center;
+}
+.rf-tpl-mono-print .rf-tag {
+  display: inline-block;
+  padding: 1px 10px;
+  font-size: 11px;
+  border: 1px solid var(--tpl-ink);
+  color: var(--tpl-ink);
+  border-radius: 0;
+  font-family: "PingFang SC", sans-serif;
+  letter-spacing: 1px;
+}
+
+/* ===== Section ===== */
+.rf-tpl-mono-print .rf-section {
+  margin-bottom: 32px;
+  page-break-inside: avoid;
+}
+.rf-tpl-mono-print .rf-section__heading {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--tpl-ink);
+  border-bottom: 1px solid var(--tpl-ink);
+  padding: 4px 0 6px;
+  margin-bottom: 16px;
+  letter-spacing: 2px;
+}
+.rf-tpl-mono-print .rf-section__index {
+  display: inline-block;
+  background: var(--tpl-ink);
+  color: var(--tpl-paper);
+  font-family: "PingFang SC", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 7px;
+  letter-spacing: 1px;
+  align-self: center;
+}
+.rf-tpl-mono-print .rf-section__text { flex: 1; }
+
+.rf-tpl-mono-print .rf-block { margin-bottom: 16px; }
+
+/* ===== Text ===== */
+.rf-tpl-mono-print .rf-text { text-align: justify; }
+.rf-tpl-mono-print .rf-text p { text-indent: 2em; margin: 0 0 8px; }
+.rf-tpl-mono-print .rf-text strong { color: var(--tpl-ink); font-weight: 700; }
+.rf-tpl-mono-print .rf-text em { color: var(--tpl-text); }
+.rf-tpl-mono-print .rf-text a {
+  color: var(--tpl-ink);
+  border-bottom: 1px solid var(--tpl-ink);
+  text-decoration: none;
+}
+.rf-tpl-mono-print .rf-text ul,
+.rf-tpl-mono-print .rf-text ol {
+  text-indent: 0; padding-left: 28px; margin: 6px 0 10px;
+}
+.rf-tpl-mono-print .rf-text ul li,
+.rf-tpl-mono-print .rf-text ol li { margin: 2px 0; }
+.rf-tpl-mono-print .rf-text ul li::marker { color: var(--tpl-ink); }
+.rf-tpl-mono-print .rf-text blockquote {
+  margin: 8px 0;
+  padding: 4px 14px;
+  border-left: 3px solid var(--tpl-ink);
+  color: var(--tpl-muted);
+  background: var(--tpl-paper-soft);
+}
+.rf-tpl-mono-print .rf-text code {
+  background: var(--tpl-paper-soft);
+  border: 1px solid var(--tpl-line-soft);
+  padding: 0 5px;
+  border-radius: 0;
+  font-size: 90%;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+}
+.rf-tpl-mono-print .rf-text pre {
+  background: var(--tpl-paper-soft);
+  border: 1px solid var(--tpl-line);
+  padding: 10px 12px;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+
+/* ===== Chart ===== */
+.rf-tpl-mono-print .rf-chart-card {
+  border: 1px solid var(--tpl-ink);
+  background: #fff;
+  padding: 14px 16px 10px;
+  border-radius: 0;
+}
+.rf-tpl-mono-print .rf-chart-card__title {
+  font-family: "PingFang SC", sans-serif;
+  font-size: 13px;
+  color: var(--tpl-muted);
+  text-align: center;
+  margin-bottom: 10px;
+  letter-spacing: 2px;
+  border-bottom: 1px dashed var(--tpl-line);
+  padding-bottom: 6px;
+}
+.rf-tpl-mono-print .rf-chart-card__body { width: 100%; height: 320px; }
+
+/* ===== Image ===== */
+.rf-tpl-mono-print .rf-img {
+  margin: 10px 0;
+  text-align: center;
+}
+.rf-tpl-mono-print .rf-img img {
+  max-width: 100%;
+  border: 1px solid var(--tpl-ink);
+  padding: 4px;
+  background: #fff;
+  display: inline-block;
+  /* 黑白报刊气质：图像也走灰阶。如不需要可注释下行 */
+  filter: grayscale(100%);
+}
+.rf-tpl-mono-print .rf-img__caption {
+  font-size: 12px;
+  color: var(--tpl-muted);
+  margin-top: 6px;
+  font-family: "PingFang SC", sans-serif;
+  letter-spacing: 1px;
+}
+.rf-tpl-mono-print .rf-img__caption::before { content: "图　"; color: var(--tpl-faint); }
+
+/* ===== Footer ===== */
+.rf-tpl-mono-print .rf-doc-footer {
+  margin-top: 36px;
+  padding-top: 14px;
+  border-top: 1px solid var(--tpl-ink);
+  text-align: center;
+  font-size: 12px;
+  color: var(--tpl-muted);
+  font-family: "PingFang SC", sans-serif;
+  letter-spacing: 3px;
+}
+
+/* ===== Table（黑白：双线表头 + 单线主体，行间斑马灰） ===== */
+.rf-tpl-mono-print .rf-tpl-mono-print-table {
+  margin: 18px 0;
+}
+.rf-tpl-mono-print .rf-table-title {
+  text-align: center;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--tpl-ink);
+  margin-bottom: 8px;
+  font-family: "Source Han Serif SC", "Songti SC", SimSun, serif;
+  letter-spacing: 2px;
+}
+.rf-tpl-mono-print .rf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  border-top: 2px solid var(--tpl-ink);
+  border-bottom: 2px solid var(--tpl-ink);
+  background: #fff;
+}
+.rf-tpl-mono-print .rf-table th,
+.rf-tpl-mono-print .rf-table td {
+  border: none;
+  border-bottom: 1px solid var(--tpl-line-soft);
+  padding: 8px 12px;
+  vertical-align: middle;
+}
+.rf-tpl-mono-print .rf-table thead th {
+  background: transparent;
+  color: var(--tpl-ink);
+  font-weight: 700;
+  border-top: 1px solid var(--tpl-ink);
+  border-bottom: 1px solid var(--tpl-ink);
+  letter-spacing: 1px;
+}
+.rf-tpl-mono-print .rf-table tfoot td {
+  background: var(--tpl-paper-soft);
+  font-weight: 600;
+  border-top: 1px solid var(--tpl-ink);
+}
+.rf-tpl-mono-print .rf-table tbody tr:nth-child(even) td {
+  background: var(--tpl-paper-soft);
+}
+.rf-tpl-mono-print .rf-table tbody tr:last-child td { border-bottom: none; }
+.rf-tpl-mono-print .rf-table-caption {
+  text-align: right;
+  font-size: 12px;
+  color: var(--tpl-muted);
+  margin-top: 6px;
+  font-family: "PingFang SC", sans-serif;
+}

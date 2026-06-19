@@ -54,38 +54,218 @@ body { background: var(--rf-bg); }
 /* ===== Template picker (center) ===== */
 .rf-topbar__center {
   display: flex;
-  justify-content: center;
+  /* 模式切换贴左、模板下拉贴右，靠 .rf-spacer 占满中间空隙 */
+  justify-content: space-between;
   align-items: center;
+  gap: 14px;
 }
-.rf-template-picker {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 4px 8px 4px 12px;
+.rf-topbar__center > .rf-spacer { flex: 1; }
+
+/* ===== Mode switch (segmented control) =====
+   Two-state segmented in the topbar center. Active segment uses the
+   accent border + soft accent fill; inactive stays muted. Hairline
+   border keeps it consistent with the rest of the chrome.
+   外层高度对齐 .rf-btn（13px × 1.4 行高 + 6px×2 padding + 1px×2 border ≈ 33px），
+   保证与右侧「清空 / 历史 / 设置 / 帮助」一条直线。 */
+.rf-mode-switch {
+  display: inline-flex;
+  align-items: stretch;
+  height: 33px;
+  padding: 2px;
   background: var(--rf-bg-soft);
+  border: 1px solid var(--rf-line);
   border-radius: var(--rf-radius-sm);
-  border: 1px solid transparent;
-  transition: border-color .12s ease, background .12s ease;
-  white-space: nowrap;
+  gap: 2px;
+  box-sizing: border-box;
 }
-.rf-template-picker:hover {
-  border-color: var(--rf-line-strong);
+.rf-mode-switch__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  font-family: var(--rf-font);
+  font-size: var(--rf-text-xs);
+  font-weight: 500;
+  line-height: 1;
+  color: var(--rf-text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .12s ease, color .12s ease, border-color .12s ease;
+}
+.rf-mode-switch__btn:hover {
+  color: var(--rf-text);
   background: var(--rf-bg-elev);
 }
-.rf-template-picker__label {
+.rf-mode-switch__btn.is-active {
+  color: var(--rf-accent);
+  background: var(--rf-bg-elev);
+  border-color: var(--rf-accent-soft);
+  box-shadow: 0 0 0 1px var(--rf-accent-soft);
+}
+.rf-mode-switch__btn:focus-visible {
+  outline: none;
+  border-color: var(--rf-accent);
+  box-shadow: 0 0 0 3px var(--rf-accent-soft);
+}
+.rf-mode-switch__icon {
+  font-size: 12px;
+  line-height: 1;
+  opacity: .85;
+}
+/* ===== Template switch =====
+   外观与 .rf-mode-switch 完全对齐：33px 高度、灰底胶囊、相同的圆角与边框；
+   内部是单按钮触发器（显示当前模板名 + ▾），点击展开菜单。
+   原生 <select id="rf-template-select"> 仍保留为数据源（hidden），
+   bootstrap.js 通过它读写当前模板，无需改动业务逻辑。 */
+.rf-template-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  height: 33px;
+  padding: 2px;
+  background: var(--rf-bg-soft);
+  border: 1px solid var(--rf-line);
+  border-radius: var(--rf-radius-sm);
+  box-sizing: border-box;
+}
+.rf-template-switch__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 130px;
+  padding: 0 8px 0 10px;
+  font-family: var(--rf-font);
   font-size: var(--rf-text-xs);
-  color: var(--rf-text-muted);
+  font-weight: 500;
+  line-height: 1;
+  /* 默认即"激活感"：触发器只有一个，沿用 mode-switch 激活态的色彩，
+     保持与左侧并排时的视觉重量一致。 */
+  color: var(--rf-accent);
+  background: var(--rf-bg-elev);
+  border: 1px solid var(--rf-accent-soft);
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px var(--rf-accent-soft);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .12s ease, color .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+.rf-template-switch__btn:hover {
+  background: var(--rf-bg-elev);
+  border-color: var(--rf-accent);
+}
+.rf-template-switch__btn:focus-visible {
+  outline: none;
+  border-color: var(--rf-accent);
+  box-shadow: 0 0 0 3px var(--rf-accent-soft);
+}
+.rf-template-switch__btn[aria-expanded="true"] {
+  border-color: var(--rf-accent);
+  box-shadow: 0 0 0 1px var(--rf-accent-soft);
+}
+.rf-template-switch__icon {
+  font-size: 12px;
+  line-height: 1;
+  opacity: .85;
+}
+/* "模板" 分类提示词：弱化字重 + 字号缩印感（letter-spacing），
+   与右侧"当前模板名"形成主次对比。和 .rf-template-picker__label 的旧风格延续。 */
+.rf-template-switch__kind {
+  font-size: 11px;
+  font-weight: 500;
   letter-spacing: .04em;
-  text-transform: uppercase;
+  color: var(--rf-text-muted);
   white-space: nowrap;
 }
-.rf-template-picker .rf-select {
-  background: transparent;
-  border: 0;
-  padding: 4px 4px;
-  font-weight: 500;
-  font-size: var(--rf-text-sm);
-  min-width: 130px;
+/* 在分类提示词与当前值之间画一条 hairline，明确"模板 | 极简商务"的视觉分组。 */
+.rf-template-switch__sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 4px 2px;
+  background: var(--rf-line);
 }
-.rf-template-picker .rf-select:focus { box-shadow: none; }
+.rf-template-switch__label {
+  flex: 1 1 auto;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rf-template-switch__caret {
+  font-size: 10px;
+  line-height: 1;
+  opacity: .7;
+  margin-left: 2px;
+  transition: transform .15s ease;
+}
+.rf-template-switch__btn[aria-expanded="true"] .rf-template-switch__caret {
+  transform: rotate(180deg);
+}
+/* Native <select> as the source of truth — visually hidden, still in the DOM
+   so existing code (sel.value, "change" listener, populateTemplateSelect) works. */
+.rf-template-switch__native {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+/* Dropdown menu */
+.rf-template-switch__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  max-width: 280px;
+  padding: 4px;
+  background: var(--rf-bg-elev);
+  border: 1px solid var(--rf-line);
+  border-radius: var(--rf-radius-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .08), 0 2px 6px rgba(0, 0, 0, .04);
+  z-index: 50;
+}
+.rf-template-switch__option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: var(--rf-text-xs);
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--rf-text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: left;
+  transition: background .1s ease, color .1s ease, border-color .1s ease;
+}
+.rf-template-switch__option:hover,
+.rf-template-switch__option:focus-visible {
+  outline: none;
+  background: var(--rf-bg-soft);
+  color: var(--rf-text);
+}
+.rf-template-switch__option.is-active {
+  color: var(--rf-accent);
+  background: var(--rf-bg-soft);
+  border-color: var(--rf-accent-soft);
+}
+.rf-template-switch__option-check {
+  font-size: 11px;
+  opacity: 0;
+}
+.rf-template-switch__option.is-active .rf-template-switch__option-check {
+  opacity: 1;
+}
 
 .rf-topbar__actions { display: flex; gap: 6px; justify-content: flex-end; }
 
@@ -142,6 +322,7 @@ body { background: var(--rf-bg); }
   color: var(--rf-text-dim);
   opacity: .7;
 }
+.rf-pane--input .rf-pane__head { padding-right: 66px; }
 .rf-pane--input   .rf-pane__head::before { content: "01"; }
 .rf-pane--edit    .rf-pane__head::before { content: "02"; }
 .rf-pane--preview .rf-pane__head::before { content: "03"; }
@@ -174,6 +355,83 @@ body { background: var(--rf-bg); }
   background: var(--rf-accent);
   width: 2px;
 }
+
+/* ===== Pane collapse — only the input pane uses this for now =====
+   展开态：rail 隐藏，正文照常显示。
+   折叠态（.is-collapsed）：head/正文/foot 全部隐藏，仅显示左侧竖排的 rail 按钮，
+   整栏宽度由 JS 把 grid-template-columns 该列写为固定像素（COLLAPSED_W）。 */
+.rf-pane__collapse {
+  position: absolute;
+  top: 8px; right: 36px;
+  width: 24px; height: 24px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--rf-text-dim);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transition: background .12s ease, border-color .12s ease, color .12s ease;
+}
+.rf-pane__collapse:hover {
+  background: var(--rf-bg);
+  border-color: var(--rf-line);
+  color: var(--rf-text);
+}
+/* 折叠时小图标方向反转 */
+.rf-pane__collapse-icon {
+  display: inline-block;
+  font-family: var(--rf-mono);
+  transform: translateY(-1px);
+}
+
+/* 折叠态下用整列做点击区，竖排标题 */
+.rf-pane__rail {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border: 0;
+  background: transparent;
+  color: var(--rf-text-dim);
+  cursor: pointer;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  font-family: inherit;
+  transition: background .12s ease, color .12s ease;
+}
+.rf-pane__rail:hover {
+  background: var(--rf-bg);
+  color: var(--rf-text);
+}
+.rf-pane__rail-icon {
+  font-family: var(--rf-mono);
+  font-size: 16px;
+  line-height: 1;
+  color: var(--rf-text-dim);
+}
+.rf-pane__rail-title {
+  font-size: var(--rf-text-sm);
+  font-weight: 600;
+  /* 竖排：每个汉字一行 */
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 4px;
+  white-space: nowrap;
+}
+
+/* 折叠态：把 head/textarea/foot 都藏起来，只露 rail */
+.rf-pane.is-collapsed > .rf-pane__head,
+.rf-pane.is-collapsed > .rf-input-text,
+.rf-pane.is-collapsed > .rf-pane__foot { display: none; }
+.rf-pane.is-collapsed > .rf-pane__rail { display: flex; }
+
+/* 折叠态相邻的 splitter 失活（不能再被拖回来） */
+.rf-splitter.is-disabled { pointer-events: none; }
+.rf-splitter.is-disabled::after { background: transparent; }
 
 /* ===== Input pane ===== */
 .rf-input-text {
@@ -334,6 +592,75 @@ body { background: var(--rf-bg); }
 .rf-dim  { color: var(--rf-text-dim); }
 .rf-mono { font-family: var(--rf-mono); }
 
+/* ===== Work mode: suggest =====
+   简易模式下隐藏「结构化编辑」中栏与其相邻的两条 splitter，
+   工作区压成两栏（自然语言录入 | 实时预览）。
+   通过 body[data-work-mode="suggest"] 控制，避免散落到多个 JS 操作 inline 样式。 */
+body[data-work-mode="suggest"] .rf-pane--edit,
+body[data-work-mode="suggest"] .rf-workspace > .rf-splitter {
+  display: none !important;
+}
+body[data-work-mode="suggest"] .rf-workspace {
+  /* 两栏：输入栏可被折叠（折叠态由 JS 控制宽度），预览栏吃掉剩余空间 */
+  grid-template-columns: minmax(240px, 1fr) minmax(360px, 1.4fr);
+  /* 标准模式靠两条 6px splitter 撑出视觉间隔；简易模式 splitter 被隐藏，
+     在 grid 上补一个等宽的 column-gap，保持两块的呼吸感一致。 */
+  column-gap: 6px;
+}
+/* 简易模式 + 输入栏折叠：输入栏定宽到 rail 宽度，预览撑满 */
+body[data-work-mode="suggest"] .rf-workspace:has(> .rf-pane--input.is-collapsed) {
+  grid-template-columns: 42px 1fr;
+}
+
+/* 简易模式下预览栏的编号从 03 变 02（中栏 02 已隐藏） */
+body[data-work-mode="suggest"] .rf-pane--preview .rf-pane__head::before { content: "02"; }
+
+/* ===== Mobile "more" menu =====
+   桌面端整组隐藏；≤768px 时由媒体查询打开。
+   样式上复用 .rf-template-switch__menu 的卡片+阴影规格，保持顶栏右侧两个下拉的视觉一致。 */
+.rf-mobile-more { display: none; position: relative; }
+.rf-mobile-more__btn {
+  /* 圆形/紧凑触发器，仅图标，移动端拇指可达 */
+  min-width: 36px;
+  padding: 0 10px;
+}
+.rf-mobile-more__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 160px;
+  padding: 4px;
+  background: var(--rf-bg-elev);
+  border: 1px solid var(--rf-line);
+  border-radius: var(--rf-radius-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .08), 0 2px 6px rgba(0, 0, 0, .04);
+  z-index: 50;
+}
+.rf-mobile-more__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  font-family: var(--rf-font);
+  font-size: var(--rf-text-sm);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--rf-text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  transition: background .1s ease, color .1s ease;
+}
+.rf-mobile-more__item:hover,
+.rf-mobile-more__item:focus-visible {
+  outline: none;
+  background: var(--rf-bg-soft);
+}
+
 /* Responsive collapse — narrow screens stack vertically */
 @media (max-width: 980px) {
   .rf-workspace {
@@ -346,4 +673,76 @@ body { background: var(--rf-bg); }
     border-right: 0;
   }
   .rf-brand__tag { display: none; }
+
+  /* 堆叠布局下，折叠态改为压成"一行高"，rail 横排显示 */
+  .rf-pane.is-collapsed { min-height: 0; }
+  .rf-pane.is-collapsed > .rf-pane__rail {
+    flex-direction: row;
+    height: auto;
+    padding: 10px 14px;
+    gap: 10px;
+    justify-content: flex-start;
+  }
+  .rf-pane.is-collapsed > .rf-pane__rail .rf-pane__rail-title {
+    writing-mode: horizontal-tb;
+    text-orientation: mixed;
+    letter-spacing: 1px;
+  }
 }
+
+/* ===== Mobile (≤768px): suggest-only, stacked, condensed topbar =====
+   - JS 在此尺寸下强制 body[data-work-mode="suggest"]（不写 storage），
+     由既有的 suggest 规则隐藏 .rf-pane--edit 与 splitter。
+   - 顶栏隐藏模式切换；历史/设置/帮助折进 ⋮ 菜单；状态栏隐藏。
+   - workspace 改竖向 grid：输入(1fr) | 预览(1fr)。折叠态：输入塌成 rail，预览铺满。 */
+@media (max-width: 768px) {
+  /* 顶栏：隐藏模式切换、隐藏带 data-mobile=hide 的按钮，显示汉堡组 */
+  .rf-topbar {
+    padding: 0 10px;
+    gap: 8px;
+  }
+  .rf-mode-switch { display: none; }
+  .rf-topbar__actions [data-mobile="hide"] { display: none; }
+  .rf-mobile-more { display: inline-flex; }
+  /* topbar center 在仅剩模板切换时不必再 space-between：靠右对齐 */
+  .rf-topbar__center { justify-content: flex-end; }
+  .rf-topbar__center > .rf-spacer { display: none; }
+  /* 模板切换：缩窄 min-width，避免 360px 屏目标超界 */
+  .rf-template-switch__btn { min-width: 0; }
+  .rf-template-switch__label { max-width: 96px; }
+
+  /* 状态栏：移动端隐藏（手机屏寸金贵，4 个 chip 装不下也不刚需） */
+  .rf-statusbar { display: none; }
+
+  /* Workspace：竖向 grid，输入(上)/预览(下) 等高平分。
+     用更具体的 body[data-work-mode="suggest"] 覆盖 980px block 里 grid-auto-rows，
+     和 css:603-609 那条两列规则。 */
+  body[data-work-mode="suggest"] .rf-workspace,
+  .rf-workspace {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    grid-auto-rows: auto;
+    column-gap: 0;
+    row-gap: 6px;
+  }
+  /* 折叠态：输入区收成 rail 高度，预览铺满剩余。
+     需要同时覆盖 css:611 那条 "42px 1fr" 列规则（仍以 columns 为主）。 */
+  body[data-work-mode="suggest"] .rf-workspace:has(> .rf-pane--input.is-collapsed),
+  .rf-workspace:has(> .rf-pane--input.is-collapsed) {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  /* 折叠/展开箭头：桌面是 ‹ / ›（左右），移动端上下堆叠改为旋转 90° 复用原字符样式。
+     - 折叠按钮 ‹ → rotate(90deg) 视觉上指向上（折叠输入区往上收）
+     - rail 展开图标 › → rotate(90deg) 视觉上指向下（展开输入区往下拉）
+     沿用桌面端的字号/字体/位置微调，保持与桌面同款手感。 */
+  .rf-pane__collapse-icon { transform: translateY(-1px) rotate(90deg); }
+  .rf-pane__rail-icon { transform: rotate(90deg); }
+
+  /* 预览底栏：手机端拼包下载体验差，隐藏 ZIP；剩余 PDF/HTML/PNG/全屏 4 个允许换行。
+     输入底栏的 4 个按钮（解析/AI 改写/载入示例/清空）也允许换行，避免被截。 */
+  #rf-btn-export-zip { display: none; }
+  .rf-pane__foot { flex-wrap: wrap; row-gap: 6px; }
+}
+

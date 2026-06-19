@@ -13,8 +13,102 @@
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/table.css" />
   <link rel="stylesheet" href="css/app.css" />
+
+  <!-- 入场动画：内联以保证刷新时第一帧即可见，不被外部 CSS 加载顺序影响 -->
+  <style>
+    .rf-splash{
+      position:fixed; inset:0; z-index:99999;
+      display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(135deg,#f7f9fc 0%,#eaf1fb 60%,#dbe7f7 100%);
+      animation:rf-splash-fade .45s ease .95s forwards;
+    }
+    .rf-splash[hidden]{ display:none !important; }
+    .rf-splash__inner{
+      display:flex; flex-direction:column; align-items:center; gap:18px;
+      transform:translateY(-2vh);
+    }
+    .rf-splash__logo{
+      width:96px; height:96px; display:block;
+      filter:drop-shadow(0 10px 28px rgba(31,87,184,.25));
+      animation:rf-splash-pop .7s cubic-bezier(.2,.8,.2,1) both,
+                rf-splash-breath 1.6s ease-in-out .7s infinite;
+    }
+    .rf-splash__name{
+      font:600 22px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+      letter-spacing:.5px; color:#1f57b8;
+      opacity:0; animation:rf-splash-rise .5s ease .25s forwards;
+    }
+    .rf-splash__tag{
+      font:400 13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+      color:#5a6b85; letter-spacing:1px;
+      opacity:0; animation:rf-splash-rise .5s ease .4s forwards;
+    }
+    .rf-splash__bar{
+      margin-top:6px; width:120px; height:3px; border-radius:3px;
+      background:rgba(31,87,184,.12); overflow:hidden; position:relative;
+    }
+    .rf-splash__bar::after{
+      content:""; position:absolute; inset:0;
+      background:linear-gradient(90deg,transparent,#1f57b8,transparent);
+      transform:translateX(-100%);
+      animation:rf-splash-slide 1.1s ease-in-out infinite;
+    }
+    @keyframes rf-splash-pop{
+      0%{ transform:scale(.6); opacity:0; }
+      60%{ transform:scale(1.08); opacity:1; }
+      100%{ transform:scale(1); opacity:1; }
+    }
+    @keyframes rf-splash-breath{
+      0%,100%{ transform:scale(1); }
+      50%{ transform:scale(1.04); }
+    }
+    @keyframes rf-splash-rise{
+      from{ opacity:0; transform:translateY(6px); }
+      to{ opacity:1; transform:translateY(0); }
+    }
+    @keyframes rf-splash-slide{
+      0%{ transform:translateX(-100%); }
+      100%{ transform:translateX(100%); }
+    }
+    @keyframes rf-splash-fade{
+      to{ opacity:0; visibility:hidden; }
+    }
+    @media (prefers-reduced-motion: reduce){
+      .rf-splash, .rf-splash__logo, .rf-splash__name, .rf-splash__tag, .rf-splash__bar::after{
+        animation-duration:.2s !important; animation-iteration-count:1 !important;
+      }
+    }
+  </style>
 </head>
 <body>
+  <!-- 入场画面：刷新时即可见，约 1.4s 后自动淡出移除 -->
+  <div class="rf-splash" id="rf-splash" role="status" aria-label="正在加载">
+    <div class="rf-splash__inner">
+      <img class="rf-splash__logo" src="assets/brand/logo.svg" alt="ReportFlow" width="96" height="96" />
+      <div class="rf-splash__name">ReportFlow</div>
+      <div class="rf-splash__tag">智能汇报工作台</div>
+      <div class="rf-splash__bar" aria-hidden="true"></div>
+    </div>
+  </div>
+  <script>
+    // 动画结束后从 DOM 中移除，避免遗留节点拦截事件
+    (function(){
+      var el = document.getElementById('rf-splash');
+      if(!el) return;
+      var done = false;
+      var remove = function(){
+        if(done) return; done = true;
+        el.setAttribute('hidden','');
+        // 下一帧再卸载，给 CSS 收尾时间
+        setTimeout(function(){ el.parentNode && el.parentNode.removeChild(el); }, 50);
+      };
+      el.addEventListener('animationend', function(e){
+        if(e.animationName === 'rf-splash-fade') remove();
+      });
+      // 兜底：1.8s 后强制移除（即使动画事件丢失）
+      setTimeout(remove, 1800);
+    })();
+  </script>
   <header class="rf-topbar">
     <div class="rf-brand">
       <img class="rf-brand__mark" src="assets/brand/logo.svg" alt="" width="28" height="28" />
@@ -23,25 +117,72 @@
     </div>
 
     <div class="rf-topbar__center">
-      <label class="rf-template-picker">
-        <span class="rf-template-picker__label">模板</span>
-        <select id="rf-template-select" class="rf-select"></select>
-      </label>
+      <div class="rf-mode-switch" role="tablist" aria-label="工作模式">
+        <button class="rf-mode-switch__btn is-active" id="rf-mode-standard"
+                role="tab" aria-selected="true" data-mode="standard"
+                title="标准模式：显示自然语言、结构化编辑、预览三栏">
+          <span class="rf-mode-switch__icon" aria-hidden="true">▦</span>
+          <span>标准模式</span>
+        </button>
+        <button class="rf-mode-switch__btn" id="rf-mode-suggest"
+                role="tab" aria-selected="false" data-mode="suggest"
+                title="简易模式：仅显示自然语言录入与实时预览，隐藏结构化编辑">
+          <span class="rf-mode-switch__icon" aria-hidden="true">◫</span>
+          <span>简易模式</span>
+        </button>
+      </div>
+
+      <div class="rf-spacer" aria-hidden="true"></div>
+
+      <!-- 模板选择：外观与左侧"模式切换"胶囊一致；
+           隐藏 <select> 仍是数据源（populateTemplateSelect / change 事件不变），
+           rf-template-switch 的 JS 在打开时按 options 渲染菜单，选中后写回 select.value。 -->
+      <div class="rf-template-switch" role="group" aria-label="模板">
+        <button type="button" class="rf-template-switch__btn" id="rf-template-trigger"
+                aria-haspopup="listbox" aria-expanded="false"
+                title="切换报告模板">
+          <span class="rf-template-switch__icon" aria-hidden="true">▤</span>
+          <span class="rf-template-switch__kind">模板</span>
+          <span class="rf-template-switch__sep" aria-hidden="true"></span>
+          <span class="rf-template-switch__label" id="rf-template-trigger-label">—</span>
+          <span class="rf-template-switch__caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="rf-template-switch__menu" id="rf-template-menu" role="listbox" hidden></div>
+        <select id="rf-template-select" class="rf-template-switch__native" aria-hidden="true" tabindex="-1"></select>
+      </div>
     </div>
 
     <nav class="rf-topbar__actions">
       <button class="rf-btn rf-btn--danger" id="rf-btn-clear" title="清空当前报告所有内容">
         <span class="rf-icon">🗑</span><span>清空</span>
       </button>
-      <button class="rf-btn rf-btn--ghost" id="rf-btn-history" title="历史报告 (Ctrl+H)">
+      <button class="rf-btn rf-btn--ghost" id="rf-btn-history" data-mobile="hide" title="历史报告 (Ctrl+H)">
         <span class="rf-icon">⏱</span><span>历史</span>
       </button>
-      <button class="rf-btn rf-btn--ghost" id="rf-btn-settings" title="大模型设置">
+      <button class="rf-btn rf-btn--ghost" id="rf-btn-settings" data-mobile="hide" title="大模型设置">
         <span class="rf-icon">⚙</span><span>设置</span>
       </button>
-      <button class="rf-btn rf-btn--ghost" id="rf-btn-help" title="帮助">
+      <button class="rf-btn rf-btn--ghost" id="rf-btn-help" data-mobile="hide" title="帮助">
         <span class="rf-icon">?</span><span>帮助</span>
       </button>
+      <!-- 仅移动端可见：把上面三个按钮折进去，避免顶栏拥挤。点击代理到原按钮，保留所有逻辑。 -->
+      <div class="rf-mobile-more" id="rf-mobile-more">
+        <button class="rf-btn rf-btn--ghost rf-mobile-more__btn" id="rf-btn-mobile-more"
+                type="button" aria-haspopup="menu" aria-expanded="false" aria-label="更多" title="更多">
+          <span aria-hidden="true">⋮</span>
+        </button>
+        <div class="rf-mobile-more__menu" id="rf-mobile-menu" role="menu" hidden>
+          <button class="rf-mobile-more__item" type="button" data-action="history" role="menuitem">
+            <span class="rf-icon" aria-hidden="true">⏱</span><span>历史</span>
+          </button>
+          <button class="rf-mobile-more__item" type="button" data-action="settings" role="menuitem">
+            <span class="rf-icon" aria-hidden="true">⚙</span><span>设置</span>
+          </button>
+          <button class="rf-mobile-more__item" type="button" data-action="help" role="menuitem">
+            <span class="rf-icon" aria-hidden="true">?</span><span>帮助</span>
+          </button>
+        </div>
+      </div>
     </nav>
   </header>
 
@@ -51,6 +192,13 @@
       <div class="rf-pane__head">
         <h2 class="rf-pane__title">自然语言录入</h2>
         <div class="rf-pane__hint">粘贴或键入任意排版文本，点击「解析」自动结构化。</div>
+        <button class="rf-pane__collapse" id="rf-btn-collapse-input"
+                type="button"
+                aria-label="折叠自然语言录入"
+                aria-expanded="true"
+                title="折叠/展开（自然语言录入）">
+          <span class="rf-pane__collapse-icon" aria-hidden="true">‹</span>
+        </button>
       </div>
       <textarea
         id="rf-input-text"
@@ -68,6 +216,14 @@
         <button class="rf-btn rf-btn--ghost" id="rf-btn-load-sample">载入示例</button>
         <button class="rf-btn rf-btn--ghost" id="rf-btn-clear-input">清空</button>
       </div>
+      <!-- 折叠态下的窄条：竖排显示标题，整条可点击展开 -->
+      <button class="rf-pane__rail" id="rf-btn-expand-input"
+              type="button"
+              aria-label="展开自然语言录入"
+              title="展开自然语言录入">
+        <span class="rf-pane__rail-icon" aria-hidden="true">›</span>
+        <span class="rf-pane__rail-title">自然语言录入</span>
+      </button>
     </section>
 
     <div class="rf-splitter" data-target="prev"></div>
@@ -177,8 +333,10 @@
   <script defer src="js/modules/exporter-png.js"></script>
 
   <!-- ============ Templates（自注册；新增模板在此追加一行） ============ -->
-  <script defer src="templates/formal-gov/render.js"></script>
+  <!-- 注册顺序 = 模板下拉顺序，order[0] 即默认模板 -->
   <script defer src="templates/minimal-business/render.js"></script>
+  <script defer src="templates/formal-gov/render.js"></script>
+  <script defer src="templates/mono-print/render.js"></script>
   <script defer src="templates/tech-minimal/render.js"></script>
 
   <!-- ============ 入口（最后） ============ -->

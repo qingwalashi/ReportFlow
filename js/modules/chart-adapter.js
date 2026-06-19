@@ -40,7 +40,11 @@
           type: "pie",
           radius: ["38%", "70%"],
           avoidLabelOverlap: true,
-          itemStyle: { borderColor: "#fff", borderWidth: 2, borderRadius: 4 },
+          itemStyle: {
+            borderColor: theme.pieBorderColor != null ? theme.pieBorderColor : "#fff",
+            borderWidth: theme.pieBorderWidth != null ? theme.pieBorderWidth : 2,
+            borderRadius: theme.pieBorderRadius != null ? theme.pieBorderRadius : 4
+          },
           label: { color: textColor, formatter: "{b} {d}%" },
           data: pieData
         }]

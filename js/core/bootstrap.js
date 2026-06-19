@@ -32,6 +32,7 @@
     if (sel) {
       sel.addEventListener("change", function () { setTemplate(sel.value); });
     }
+    initTemplateSwitch();
 
     // ===== Restore last template & draft =====
     var ui = window.RF_Storage.get("config", "ui", {}) || {};
@@ -82,6 +83,15 @@
     // ===== Splitters =====
     bindSplitters();
 
+    // ===== Pane collapse（自然语言录入） =====
+    initInputCollapse();
+
+    // ===== Work mode 切换（标准 / 简易） =====
+    initWorkMode();
+
+    // ===== Mobile ⋮ 菜单（仅 ≤768px 由 CSS 显示） =====
+    initMobileMore();
+
     // Storage quota notice
     window.RF_Bus.on("storage:quota", function () {
       window.RF_UI.toast.warn("浏览器存储空间已满，新内容无法保存。请在帮助中清理历史。");
@@ -118,6 +128,102 @@
     var stateTpl = window.RF_State.get("templateId");
     if (stateTpl) sel.value = stateTpl;
     else if (current && window.ReportFlowTemplates.has(current)) sel.value = current;
+    syncTemplateSwitchUI();
+  }
+
+  // ===== Template switch (custom dropdown, mirrors .rf-mode-switch styling) =====
+  // 单一真值：上面的 <select id="rf-template-select">。本函数只做：
+  //   1) 触发器按钮的文案 + 菜单项的渲染
+  //   2) 点击菜单项 → 写回 sel.value 并派发 "change"，复用现有 setTemplate 路径
+  //   3) 点击外部 / Esc 关闭菜单
+  function initTemplateSwitch() {
+    var trigger = document.getElementById("rf-template-trigger");
+    var menu    = document.getElementById("rf-template-menu");
+    var sel     = document.getElementById("rf-template-select");
+    if (!trigger || !menu || !sel) return;
+
+    function open() {
+      renderMenu();
+      menu.hidden = false;
+      trigger.setAttribute("aria-expanded", "true");
+      // 焦点放到当前激活项，方便键盘操作
+      var active = menu.querySelector(".rf-template-switch__option.is-active") ||
+                   menu.querySelector(".rf-template-switch__option");
+      if (active) active.focus();
+      document.addEventListener("mousedown", onDocDown, true);
+      document.addEventListener("keydown", onKeyDown, true);
+    }
+    function close() {
+      menu.hidden = true;
+      trigger.setAttribute("aria-expanded", "false");
+      document.removeEventListener("mousedown", onDocDown, true);
+      document.removeEventListener("keydown", onKeyDown, true);
+    }
+    function onDocDown(e) {
+      if (menu.contains(e.target) || trigger.contains(e.target)) return;
+      close();
+    }
+    function onKeyDown(e) {
+      if (e.key === "Escape") { e.preventDefault(); close(); trigger.focus(); return; }
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        var items = Array.prototype.slice.call(menu.querySelectorAll(".rf-template-switch__option"));
+        if (!items.length) return;
+        var idx = items.indexOf(document.activeElement);
+        var next = e.key === "ArrowDown"
+          ? (idx + 1) % items.length
+          : (idx - 1 + items.length) % items.length;
+        items[next].focus();
+      }
+    }
+
+    function renderMenu() {
+      menu.innerHTML = "";
+      var current = sel.value;
+      Array.prototype.forEach.call(sel.options, function (opt) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "rf-template-switch__option" + (opt.value === current ? " is-active" : "");
+        b.setAttribute("role", "option");
+        b.setAttribute("aria-selected", opt.value === current ? "true" : "false");
+        if (opt.title) b.title = opt.title;
+        b.innerHTML =
+          '<span class="rf-template-switch__option-check" aria-hidden="true">✓</span>' +
+          '<span>' + escapeHtml(opt.textContent) + '</span>';
+        b.addEventListener("click", function () {
+          if (sel.value !== opt.value) {
+            sel.value = opt.value;
+            sel.dispatchEvent(new Event("change", { bubbles: true }));
+          }
+          close();
+          trigger.focus();
+        });
+        menu.appendChild(b);
+      });
+    }
+
+    trigger.addEventListener("click", function () {
+      if (menu.hidden) open(); else close();
+    });
+
+    syncTemplateSwitchUI();
+  }
+
+  // 同步触发器文案到 select 当前值。populateTemplateSelect / setTemplate 后调用即可。
+  function syncTemplateSwitchUI() {
+    var sel   = document.getElementById("rf-template-select");
+    var label = document.getElementById("rf-template-trigger-label");
+    if (!sel || !label) return;
+    var opt = sel.options[sel.selectedIndex];
+    label.textContent = opt ? opt.textContent : "模板";
+    var trigger = document.getElementById("rf-template-trigger");
+    if (trigger && opt && opt.title) trigger.title = opt.title;
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
   function setTemplate(id) {
@@ -128,6 +234,7 @@
     try { window.RF_Storage.set("config", "ui", ui); } catch (e) {}
     var sel = document.getElementById("rf-template-select");
     if (sel && sel.value !== id) sel.value = id;
+    syncTemplateSwitchUI();
     var manifest = (window.ReportFlowTemplates.get(id) || {}).manifest || {};
     var tplStatus = document.getElementById("rf-status-template");
     if (tplStatus) tplStatus.textContent = "模板：" + manifest.name;
@@ -391,6 +498,9 @@
     var splitters = workspace.querySelectorAll(".rf-splitter");
     splitters.forEach(function (sp) {
       sp.addEventListener("pointerdown", function (e) {
+        // 折叠态下相邻 splitter 已被加上 .is-disabled，pointer-events 已 none，
+        // 这里再守一道，防止编程触发。
+        if (sp.classList.contains("is-disabled")) return;
         e.preventDefault(); sp.setPointerCapture(e.pointerId);
         var startX = e.clientX;
         var startCols = window.getComputedStyle(workspace).gridTemplateColumns.split(" ").map(parseFloat);
@@ -417,6 +527,222 @@
         }
         window.addEventListener("pointermove", move);
         window.addEventListener("pointerup", up);
+      });
+    });
+  }
+
+  // ===== Pane collapse — input pane =====
+  // 折叠时把整列宽度压到 COLLAPSED_W，左侧 splitter 失活；展开时恢复折叠前的列宽。
+  // 状态写到 RF_Storage.config.ui.inputCollapsed，刷新页面保留。
+  function initInputCollapse() {
+    var COLLAPSED_W = 42;            // 与 .rf-pane__rail 视觉宽度匹配
+    var workspace = document.querySelector(".rf-workspace");
+    var pane      = document.querySelector(".rf-pane--input");
+    var btnFold   = document.getElementById("rf-btn-collapse-input");
+    var btnExpand = document.getElementById("rf-btn-expand-input");
+    if (!workspace || !pane || !btnFold || !btnExpand) return;
+
+    // 折叠前的列宽快照（数字数组，pane/splitter/pane/splitter/pane）。null 表示未保存过。
+    var savedCols = null;
+
+    function readUi() { return window.RF_Storage.get("config", "ui", {}) || {}; }
+    function writeUi(patch) {
+      try {
+        var ui = readUi();
+        Object.assign(ui, patch);
+        window.RF_Storage.set("config", "ui", ui);
+      } catch (e) { /* 配额满等情况静默忽略，UI 状态本就不是关键数据 */ }
+    }
+
+    function leftSplitter() {
+      // .rf-pane--input 之后的第一个 .rf-splitter
+      var n = pane.nextElementSibling;
+      while (n && !n.classList.contains("rf-splitter")) n = n.nextElementSibling;
+      return n;
+    }
+
+    function setCollapsed(collapsed) {
+      var sp = leftSplitter();
+      var styleCols = workspace.style.gridTemplateColumns;
+      // 简易模式只有两栏，列宽完全交给 CSS（含 :has 折叠规则），
+      // 不再写 inline，避免覆盖 CSS 的两栏布局。
+      var isSuggest = document.body.getAttribute("data-work-mode") === "suggest";
+
+      if (collapsed) {
+        // 1) 记下当前列宽（仅在还没记或上次记的不是折叠态时记）。
+        //    若 inline 样式为空，说明用户从没拖过，存 null，展开时让 CSS 默认接管。
+        if (!pane.classList.contains("is-collapsed")) {
+          savedCols = styleCols ? styleCols : null;
+        }
+        // 2) 切类
+        pane.classList.add("is-collapsed");
+        if (sp) sp.classList.add("is-disabled");
+        btnFold.setAttribute("aria-expanded", "false");
+        // 3) 改 grid 列宽：标准模式按 5 轨道分配；简易模式让 CSS 接管
+        if (!isSuggest) applyCollapsedCols();
+        else workspace.style.gridTemplateColumns = "";
+      } else {
+        pane.classList.remove("is-collapsed");
+        if (sp) sp.classList.remove("is-disabled");
+        btnFold.setAttribute("aria-expanded", "true");
+        // 恢复
+        if (!isSuggest && savedCols) {
+          workspace.style.gridTemplateColumns = savedCols;
+        } else {
+          // 没快照 / 简易模式 → 清掉 inline，回到 CSS 默认 minmax 比例
+          workspace.style.gridTemplateColumns = "";
+        }
+      }
+
+      writeUi({ inputCollapsed: !!collapsed });
+    }
+
+    function applyCollapsedCols() {
+      // 折叠态下当前 grid 实际像素，按比例把"输入栏腾出的空间"分给中/右两栏
+      var cur = window.getComputedStyle(workspace).gridTemplateColumns.split(" ").map(parseFloat);
+      // cur 形如 [w0, 6, w2, 6, w4]；如果 grid 已塌成 1 列（窄屏），CSS 会接管，无需写 inline
+      if (cur.length < 5) { workspace.style.gridTemplateColumns = ""; return; }
+      var freed = cur[0] - COLLAPSED_W;
+      var midRight = cur[2] + cur[4];
+      var newMid, newRight;
+      if (midRight > 0) {
+        newMid   = cur[2] + freed * (cur[2] / midRight);
+        newRight = cur[4] + freed * (cur[4] / midRight);
+      } else {
+        newMid = cur[2]; newRight = cur[4];
+      }
+      workspace.style.gridTemplateColumns =
+        COLLAPSED_W + "px 6px " + newMid + "px 6px " + newRight + "px";
+    }
+
+    btnFold.addEventListener("click", function () { setCollapsed(true); });
+    btnExpand.addEventListener("click", function () { setCollapsed(false); });
+
+    // 恢复持久化状态
+    // 移动端（≤768px）默认应该上下平分能看到两块，不要继承桌面端的折叠记忆，
+    // 否则用户在桌面折叠后切到手机会只看到一条 rail。
+    var isMobile = window.matchMedia("(max-width: 768px)").matches;
+    if (readUi().inputCollapsed && !isMobile) setCollapsed(true);
+  }
+
+  // ===== Work mode — 标准 / 简易 =====
+  // 标准模式：三栏（自然语言 / 结构化编辑 / 预览）。
+  // 简易模式：仅自然语言 + 预览两栏，隐藏结构化编辑栏。
+  // 通过 body[data-work-mode] 让 CSS 接管显示，避免 JS 散写 inline 样式。
+  // 状态持久化到 RF_Storage.config.ui.workMode；切换时清掉 inline grid 列宽
+  // （否则三栏列宽会卡住两栏布局）。
+  //
+  // 移动端（≤768px）软强制：mql.matches 时忽略持久化设置、强制 suggest，
+  // 不写回 storage —— 桌面端的偏好不被污染。监听 mql 变化让旋屏/调整窗口实时跟随。
+  function initWorkMode() {
+    var btnStd = document.getElementById("rf-mode-standard");
+    var btnSug = document.getElementById("rf-mode-suggest");
+    var workspace = document.querySelector(".rf-workspace");
+    if (!btnStd || !btnSug || !workspace) return;
+
+    var mql = window.matchMedia("(max-width: 768px)");
+
+    function readUi() { return window.RF_Storage.get("config", "ui", {}) || {}; }
+    function writeUi(patch) {
+      try {
+        var ui = readUi();
+        Object.assign(ui, patch);
+        window.RF_Storage.set("config", "ui", ui);
+      } catch (e) { /* 静默：UI 状态不是关键数据 */ }
+    }
+
+    // 渲染 mode 到 DOM（更新 body[data-work-mode]、按钮 aria/active、清 inline 列宽、广播 resize）。
+    // 不写 storage —— 是否持久化由调用方决定。
+    function render(mode) {
+      var m = (mode === "suggest") ? "suggest" : "standard";
+      document.body.setAttribute("data-work-mode", m);
+      btnStd.classList.toggle("is-active", m === "standard");
+      btnSug.classList.toggle("is-active", m === "suggest");
+      btnStd.setAttribute("aria-selected", m === "standard" ? "true" : "false");
+      btnSug.setAttribute("aria-selected", m === "suggest" ? "true" : "false");
+      // 切换模式时清空 inline grid 列宽：上一种模式留下的像素宽度
+      // 在新模式的列数下没有意义，让 CSS 默认接管。
+      workspace.style.gridTemplateColumns = "";
+      // 通知滚动同步、预览等模块视口已变（防止滚动比例错位）
+      window.dispatchEvent(new Event("resize"));
+    }
+
+    // 用户主动切换：写回 storage（仅桌面端会触发，移动端按钮已被 CSS 隐藏）。
+    function apply(mode) {
+      render(mode);
+      writeUi({ workMode: (mode === "suggest") ? "suggest" : "standard" });
+    }
+
+    // 当前应展示的 mode：移动端强制 suggest；否则取持久化值，缺省 standard。
+    function effectiveMode() {
+      if (mql.matches) return "suggest";
+      return readUi().workMode || "standard";
+    }
+
+    btnStd.addEventListener("click", function () {
+      if (mql.matches) return;   // 移动端 mode-switch 已 display:none；保险拦一下
+      apply("standard");
+    });
+    btnSug.addEventListener("click", function () {
+      if (mql.matches) return;
+      apply("suggest");
+    });
+
+    // 初次渲染
+    render(effectiveMode());
+
+    // 旋屏 / 调整窗口大小时重新决定 effectiveMode。
+    // 旧 Safari 不支持 addEventListener("change", ...)，回退到 addListener。
+    var onMqlChange = function () { render(effectiveMode()); };
+    if (mql.addEventListener) mql.addEventListener("change", onMqlChange);
+    else if (mql.addListener) mql.addListener(onMqlChange);
+  }
+
+  // ===== Mobile "more" menu =====
+  // 顶栏右侧 ⋮ 按钮（仅 ≤768px 显示，CSS 控制可见性）。
+  // 菜单项点击 → 代理点击对应桌面按钮（#rf-btn-history / settings / help），
+  // 复用既有所有事件绑定，保持单一真值。
+  function initMobileMore() {
+    var trigger = document.getElementById("rf-btn-mobile-more");
+    var menu    = document.getElementById("rf-mobile-menu");
+    if (!trigger || !menu) return;
+
+    var actionToBtnId = {
+      history:  "rf-btn-history",
+      settings: "rf-btn-settings",
+      help:     "rf-btn-help"
+    };
+
+    function open() {
+      menu.hidden = false;
+      trigger.setAttribute("aria-expanded", "true");
+      document.addEventListener("mousedown", onDocDown, true);
+      document.addEventListener("keydown", onKeyDown, true);
+    }
+    function close() {
+      menu.hidden = true;
+      trigger.setAttribute("aria-expanded", "false");
+      document.removeEventListener("mousedown", onDocDown, true);
+      document.removeEventListener("keydown", onKeyDown, true);
+    }
+    function onDocDown(e) {
+      if (menu.contains(e.target) || trigger.contains(e.target)) return;
+      close();
+    }
+    function onKeyDown(e) {
+      if (e.key === "Escape") { e.preventDefault(); close(); trigger.focus(); }
+    }
+
+    trigger.addEventListener("click", function () {
+      if (menu.hidden) open(); else close();
+    });
+
+    Array.prototype.forEach.call(menu.querySelectorAll(".rf-mobile-more__item"), function (item) {
+      item.addEventListener("click", function () {
+        var btn = document.getElementById(actionToBtnId[item.dataset.action]);
+        close();
+        // setTimeout 让菜单先关闭（避免 modal 打开时菜单还在前面挡）
+        if (btn) setTimeout(function () { btn.click(); }, 0);
       });
     });
   }
