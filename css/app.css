@@ -1,63 +1,89 @@
-/* ReportFlow — application shell layout */
+/* ReportFlow — application shell layout
+   Three panes: input → edit → preview. The shell stays out of the
+   way; the workflow indicator in the topbar is the one signature. */
 
-body {
-  background: var(--rf-bg);
-}
+body { background: var(--rf-bg); }
 
-/* ===== Topbar ===== */
+/* ===== Topbar =====
+   48px tall, hairline-bottom, paper-tone surface. Left: brand +
+   workflow indicator. Center: template picker. Right: utility actions. */
 .rf-topbar {
   height: var(--rf-topbar-h);
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
   padding: 0 16px;
   background: var(--rf-bg-elev);
   border-bottom: 1px solid var(--rf-line);
   z-index: 5;
 }
-.rf-brand { display: flex; align-items: center; gap: 10px; }
+
+/* Brand block */
+.rf-brand {
+  display: flex; align-items: center;
+  gap: 10px;
+  padding-right: 14px;
+  border-right: 1px solid var(--rf-line);
+  height: 28px;
+}
 .rf-brand__mark {
-  width: 28px; height: 28px;
+  width: 26px; height: 26px;
   display: block;
-  border-radius: 7px;
+  border-radius: 6px;
   flex: none;
 }
 .rf-brand__name {
+  /* The display serif appears here, used with restraint. */
+  font-family: var(--rf-font-display);
   font-size: var(--rf-text-md);
   font-weight: 600;
-  letter-spacing: -.1px;
+  letter-spacing: -.01em;
+  color: var(--rf-text);
 }
 .rf-brand__tag {
   font-size: var(--rf-text-xs);
-  color: var(--rf-accent-strong);
-  padding: 2px 8px;
-  background: var(--rf-accent-soft);
-  border-radius: 999px;
-  margin-left: 4px;
-  font-weight: 500;
-  letter-spacing: .2px;
+  color: var(--rf-text-muted);
+  letter-spacing: .04em;
+  margin-left: 2px;
   white-space: nowrap;
+  /* No pill, no accent fill — let the wordmark own the moment. */
+  font-weight: 400;
 }
 
-.rf-topbar__center { display: flex; justify-content: flex-end; }
+/* ===== Template picker (center) ===== */
+.rf-topbar__center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 .rf-template-picker {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 4px 10px 4px 12px;
+  padding: 4px 8px 4px 12px;
   background: var(--rf-bg-soft);
   border-radius: var(--rf-radius-sm);
   border: 1px solid transparent;
-  transition: border-color .12s ease;
+  transition: border-color .12s ease, background .12s ease;
   white-space: nowrap;
 }
-.rf-template-picker:hover { border-color: var(--rf-line-strong); }
+.rf-template-picker:hover {
+  border-color: var(--rf-line-strong);
+  background: var(--rf-bg-elev);
+}
 .rf-template-picker__label {
-  font-size: var(--rf-text-xs); color: var(--rf-text-muted);
+  font-size: var(--rf-text-xs);
+  color: var(--rf-text-muted);
+  letter-spacing: .04em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 .rf-template-picker .rf-select {
-  background: transparent; border: 0; padding: 4px 4px;
-  font-weight: 500; min-width: 130px;
+  background: transparent;
+  border: 0;
+  padding: 4px 4px;
+  font-weight: 500;
+  font-size: var(--rf-text-sm);
+  min-width: 130px;
 }
 .rf-template-picker .rf-select:focus { box-shadow: none; }
 
@@ -82,13 +108,43 @@ body {
   min-width: 0;
   overflow: hidden;
 }
+
+/* Pane head: stage label + hint, with a small numeric eyebrow that
+   encodes the real sequence (input is 01, edit is 02, preview is 03). */
 .rf-pane__head {
-  padding: 10px 14px 8px;
+  position: relative;
+  padding: 12px 38px 10px 14px;
   border-bottom: 1px solid var(--rf-line);
   flex-shrink: 0;
 }
-.rf-pane__title { font-size: var(--rf-text-md); font-weight: 600; }
-.rf-pane__hint  { font-size: var(--rf-text-xs); color: var(--rf-text-dim); margin-top: 2px; }
+.rf-pane__title {
+  font-size: var(--rf-text-md);
+  font-weight: 600;
+  letter-spacing: -.005em;
+  color: var(--rf-text);
+}
+.rf-pane__hint {
+  font-size: var(--rf-text-xs);
+  color: var(--rf-text-dim);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+/* Numeric eyebrow — the panes truly are a sequence (01→02→03). */
+.rf-pane__head::before {
+  content: attr(data-step);
+  position: absolute;
+  top: 12px; right: 14px;
+  font-family: var(--rf-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  color: var(--rf-text-dim);
+  opacity: .7;
+}
+.rf-pane--input   .rf-pane__head::before { content: "01"; }
+.rf-pane--edit    .rf-pane__head::before { content: "02"; }
+.rf-pane--preview .rf-pane__head::before { content: "03"; }
 
 .rf-pane__foot {
   padding: 10px 14px;
@@ -98,7 +154,7 @@ body {
   background: var(--rf-bg);
 }
 
-/* Splitter */
+/* Splitter — slimmer hairline, accent on hover */
 .rf-splitter {
   cursor: col-resize;
   background: transparent;
@@ -106,25 +162,36 @@ body {
   user-select: none;
 }
 .rf-splitter::after {
-  content: ""; position: absolute; left: 50%; top: 25%; bottom: 25%;
-  width: 2px; background: var(--rf-line); transform: translateX(-50%);
-  border-radius: 2px;
-  transition: background .12s ease;
+  content: "";
+  position: absolute;
+  left: 50%; top: 30%; bottom: 30%;
+  width: 1px;
+  background: var(--rf-line);
+  transform: translateX(-50%);
+  transition: background .12s ease, width .12s ease;
 }
-.rf-splitter:hover::after { background: var(--rf-accent); }
+.rf-splitter:hover::after {
+  background: var(--rf-accent);
+  width: 2px;
+}
 
 /* ===== Input pane ===== */
 .rf-input-text {
   flex: 1; min-height: 0;
   width: 100%;
-  padding: 14px;
+  padding: 14px 16px;
   border: 0;
   background: transparent;
   font-size: var(--rf-text-sm);
   font-family: var(--rf-font);
+  line-height: 1.7;
   resize: none;
   outline: none;
   color: var(--rf-text);
+}
+.rf-input-text::placeholder {
+  color: var(--rf-text-dim);
+  font-style: italic;
 }
 
 /* ===== Editor pane ===== */
@@ -132,12 +199,14 @@ body {
   flex: 1; min-height: 0; overflow: auto;
   padding: 14px;
 }
-.rf-editor { display: flex; flex-direction: column; gap: 14px; }
+.rf-editor { display: flex; flex-direction: column; gap: 12px; }
 
 .rf-editor__title {
-  font-size: var(--rf-text-md); font-weight: 600;
+  font-size: var(--rf-text-md);
+  font-weight: 600;
   color: var(--rf-text-muted);
   margin-bottom: 4px;
+  letter-spacing: -.005em;
 }
 
 /* Section card */
@@ -146,10 +215,13 @@ body {
   border-radius: var(--rf-radius);
   background: var(--rf-bg-elev);
   overflow: hidden;
+  transition: border-color .12s ease;
 }
+.rf-sec:hover { border-color: var(--rf-line-strong); }
 .rf-sec__head {
-  padding: 10px 12px;
+  padding: 9px 12px;
   background: var(--rf-bg-soft);
+  border-bottom: 1px solid var(--rf-line);
   display: flex; align-items: center; gap: 8px;
 }
 .rf-sec__head .rf-input { background: var(--rf-bg-elev); }
@@ -161,31 +233,43 @@ body {
   border: 1px solid var(--rf-line);
   border-radius: var(--rf-radius-sm);
   padding: 10px 10px 8px;
-  background: #fbfcfd;
+  background: #FBFCFE;
+  transition: border-color .12s ease, background .12s ease;
 }
+.rf-blk:hover { border-color: var(--rf-line-strong); }
+
 /* Block-highlight selected state — paired with .rf-block--selected
-   inside the preview iframe. Click on either side highlights both.
-   Two changes only: swap border colour to accent, swap background to
-   accent-soft. Keeps the card the same size — no shadow / ring / glow
-   that would make it jump or fight neighbouring blocks. */
+   inside the preview iframe. Click on either side highlights both. */
 .rf-blk--selected {
   border-color: var(--rf-accent);
   background: var(--rf-accent-soft);
 }
+
 .rf-blk__head {
   display: flex; align-items: center; justify-content: space-between;
-  font-size: var(--rf-text-xs); color: var(--rf-text-muted);
+  font-size: var(--rf-text-xs);
+  color: var(--rf-text-muted);
   margin-bottom: 6px;
 }
-.rf-blk__type { font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.rf-blk__type {
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: 10.5px;
+  color: var(--rf-text-dim);
+}
 .rf-blk__actions { display: flex; gap: 4px; }
-.rf-blk__actions .rf-btn { padding: 3px 6px; font-size: 11px; }
+.rf-blk__actions .rf-btn { padding: 3px 7px; font-size: 11px; }
 
 .rf-blk--text textarea { min-height: 72px; }
 .rf-chart-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
 }
-.rf-chart-data textarea { font-family: var(--rf-mono); font-size: 12px; }
+.rf-chart-data textarea {
+  font-family: var(--rf-mono);
+  font-size: 12px;
+  line-height: 1.55;
+}
 
 /* Image block */
 .rf-img-blk__preview {
@@ -203,16 +287,22 @@ body {
   max-width: 100%; max-height: 180px; object-fit: contain;
 }
 
-/* ===== Preview pane ===== */
+/* ===== Preview pane =====
+   The preview is the deliverable — give it the only real shadow on
+   the page so it reads like a sheet of paper on a desk. */
 .rf-preview-frame-wrap {
   flex: 1; min-height: 0;
-  background: #e9ecf2;
-  padding: 12px;
-  overflow: auto;
+  background: #D9DEE8;       /* a hair darker & cooler than the app bg */
+  padding: 14px;
+  /* Hidden, not auto: the real scroller is the iframe's own document
+     (see scroll-sync.js — outer wrap scrollHeight ≈ clientHeight).
+     `auto` here only ever produced a redundant second scrollbar. */
+  overflow: hidden;
 }
 .rf-preview-frame {
   width: 100%;
-  min-height: 100%;
+  height: 100%;            /* fill the wrap so the iframe is the sole scroller */
+  min-height: 0;
   border: 0;
   background: #fff;
   border-radius: var(--rf-radius-sm);
@@ -226,16 +316,17 @@ body {
   padding: 0 14px;
   background: var(--rf-bg-elev);
   border-top: 1px solid var(--rf-line);
-  font-size: var(--rf-text-xs);
+  font-size: 11.5px;
   color: var(--rf-text-muted);
+  letter-spacing: .01em;
 }
 .rf-status { display: inline-flex; align-items: center; gap: 4px; }
-.rf-status--ok  { color: var(--rf-ok); }
-.rf-status--warn{ color: var(--rf-warn); }
-.rf-status--err { color: var(--rf-err); }
+.rf-status--ok    { color: var(--rf-ok); }
+.rf-status--warn  { color: var(--rf-warn); }
+.rf-status--err   { color: var(--rf-err); }
 .rf-status--right { margin-left: auto; }
 
-/* ===== Misc ===== */
+/* ===== Misc utilities ===== */
 .rf-row { display: flex; gap: 8px; align-items: center; }
 .rf-row--end { justify-content: flex-end; }
 .rf-spacer { flex: 1; }
@@ -250,4 +341,9 @@ body {
     grid-auto-rows: minmax(260px, auto);
   }
   .rf-splitter { display: none; }
+  .rf-brand {
+    padding-right: 10px;
+    border-right: 0;
+  }
+  .rf-brand__tag { display: none; }
 }

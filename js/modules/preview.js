@@ -57,6 +57,14 @@
       "html,body{margin:0;padding:0;background:#fff;color:#1a1f2c;}",
       "body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:1.7;}",
       "#root{padding:32px 36px;max-width:920px;margin:0 auto;}",
+      // Scrollbar — match the host shell's .rf-edit-scroll / textarea
+      // scrollbars so the preview pane visually agrees with panes 01/02.
+      // Kept here (not in the host CSS) because the iframe is a separate
+      // document; webkit scrollbar selectors don't cross the boundary.
+      "html::-webkit-scrollbar,body::-webkit-scrollbar{width:10px;height:10px;}",
+      "html::-webkit-scrollbar-thumb,body::-webkit-scrollbar-thumb{background:#BFC7D6;border-radius:8px;border:2px solid transparent;background-clip:padding-box;}",
+      "html::-webkit-scrollbar-thumb:hover,body::-webkit-scrollbar-thumb:hover{background:#A5AEC1;background-clip:padding-box;}",
+      "html::-webkit-scrollbar-track,body::-webkit-scrollbar-track{background:transparent;}",
       // Block-highlight selected style — kept here so it works across all
       // templates without each template having to opt in. The preview side
       // .rf-block has no native border/background, so we add the full box;

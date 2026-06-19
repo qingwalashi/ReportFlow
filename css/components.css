@@ -1,86 +1,141 @@
-/* ReportFlow — buttons, modals, forms, toasts */
+/* ReportFlow — buttons, modals, forms, toasts
+   Hairline-first. No glow, no transform-jump, no double shadow. */
 
-/* ===== Buttons ===== */
+/* ===== Buttons =====
+   Three variants do real work: default (utility), primary (the one
+   commit action per surface), ghost (everything else). Danger is a
+   ghost in red. Borders, not backgrounds, do the visual lifting. */
 .rf-btn {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 13px;
+  padding: 6px 12px;
+  font-family: var(--rf-font);
   font-size: var(--rf-text-sm);
+  font-weight: 500;
+  line-height: 1.4;
   border-radius: var(--rf-radius-sm);
-  border: 1px solid transparent;
-  background: var(--rf-bg-soft);
+  border: 1px solid var(--rf-line);
+  background: var(--rf-bg-elev);
   color: var(--rf-text);
-  transition: background .12s ease, border-color .12s ease, color .12s ease, transform .04s ease;
+  transition: background .12s ease, border-color .12s ease, color .12s ease;
   white-space: nowrap;
   user-select: none;
+  cursor: pointer;
 }
-.rf-btn:hover { background: var(--rf-bg-hover); }
-.rf-btn:active { transform: translateY(1px); }
-.rf-btn:disabled, .rf-btn[aria-disabled="true"] {
-  opacity: .55; cursor: not-allowed; transform: none;
+.rf-btn:hover {
+  background: var(--rf-bg-soft);
+  border-color: var(--rf-line-strong);
+}
+.rf-btn:active { background: var(--rf-bg-hover); }
+.rf-btn:focus-visible {
+  border-color: var(--rf-accent);
+  box-shadow: 0 0 0 3px var(--rf-accent-soft);
+}
+.rf-btn:disabled,
+.rf-btn[aria-disabled="true"] {
+  opacity: .5; cursor: not-allowed;
 }
 
 .rf-btn--primary {
-  background: var(--rf-accent); color: #fff;
+  background: var(--rf-accent);
+  border-color: var(--rf-accent);
+  color: #fff;
 }
-.rf-btn--primary:hover { background: var(--rf-accent-strong); }
+.rf-btn--primary:hover {
+  background: var(--rf-accent-strong);
+  border-color: var(--rf-accent-strong);
+}
+.rf-btn--primary:active { background: var(--rf-accent-strong); }
 
 .rf-btn--ghost {
-  background: transparent; border-color: var(--rf-line);
+  background: transparent;
+  border-color: var(--rf-line);
 }
-.rf-btn--ghost:hover { background: var(--rf-bg-soft); border-color: var(--rf-line-strong); }
+.rf-btn--ghost:hover {
+  background: var(--rf-bg-soft);
+  border-color: var(--rf-line-strong);
+}
 
 .rf-btn--danger {
-  background: transparent; color: var(--rf-err); border-color: var(--rf-line);
+  background: transparent;
+  color: var(--rf-err);
+  border-color: var(--rf-line);
 }
-.rf-btn--danger:hover { background: #fdecec; border-color: #f3bdbd; }
+.rf-btn--danger:hover {
+  background: #FBEDED;
+  border-color: #ECC2C2;
+  color: var(--rf-err);
+}
 
-.rf-btn--icon { padding: 6px 8px; }
-.rf-btn--sm   { padding: 4px 9px; font-size: var(--rf-text-xs); }
-.rf-icon { font-size: 14px; line-height: 1; }
+.rf-btn--icon { padding: 5px 8px; }
+.rf-btn--sm   { padding: 3px 8px; font-size: var(--rf-text-xs); }
+.rf-icon { font-size: 13px; line-height: 1; opacity: .85; }
 
 /* ===== Form controls ===== */
 .rf-input, .rf-select, .rf-textarea {
   width: 100%;
-  padding: 7px 10px;
+  padding: 6px 10px;
+  font-family: var(--rf-font);
   font-size: var(--rf-text-sm);
+  line-height: 1.5;
   background: var(--rf-bg-elev);
   border: 1px solid var(--rf-line);
   border-radius: var(--rf-radius-sm);
   color: var(--rf-text);
   transition: border-color .12s ease, box-shadow .12s ease;
 }
-.rf-input:hover, .rf-select:hover, .rf-textarea:hover { border-color: var(--rf-line-strong); }
-.rf-input:focus, .rf-select:focus, .rf-textarea:focus {
-  outline: none; border-color: var(--rf-accent);
+.rf-input:hover,
+.rf-select:hover,
+.rf-textarea:hover { border-color: var(--rf-line-strong); }
+.rf-input:focus,
+.rf-select:focus,
+.rf-textarea:focus {
+  outline: none;
+  border-color: var(--rf-accent);
   box-shadow: 0 0 0 3px var(--rf-accent-soft);
 }
-.rf-textarea { resize: vertical; min-height: 64px; font-family: var(--rf-font); }
-.rf-input--invalid, .rf-input--invalid:focus { border-color: var(--rf-err); box-shadow: 0 0 0 3px #fdecec; }
+.rf-textarea {
+  resize: vertical;
+  min-height: 64px;
+  font-family: var(--rf-font);
+  line-height: 1.6;
+}
+.rf-input--invalid,
+.rf-input--invalid:focus {
+  border-color: var(--rf-err);
+  box-shadow: 0 0 0 3px #FBEDED;
+}
 
 .rf-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
-.rf-field__label { font-size: var(--rf-text-sm); color: var(--rf-text-muted); }
-.rf-field__hint { font-size: var(--rf-text-xs); color: var(--rf-text-dim); }
+.rf-field__label {
+  font-size: var(--rf-text-xs);
+  color: var(--rf-text-muted);
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+.rf-field__hint  { font-size: var(--rf-text-xs); color: var(--rf-text-dim); }
 .rf-field__error { font-size: var(--rf-text-xs); color: var(--rf-err); }
 
 .rf-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-/* ===== Modal ===== */
+/* ===== Modal =====
+   Modal title gets the display serif — a quiet earned moment. */
 .rf-modal-root[hidden] { display: none; }
 .rf-modal-root {
   position: fixed; inset: 0; z-index: 100;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(20, 30, 50, .38);
-  animation: rf-fade-in .12s ease;
+  background: rgba(20, 28, 50, .42);
+  animation: rf-fade-in .14s ease;
 }
 .rf-modal {
   background: var(--rf-bg-elev);
+  border: 1px solid var(--rf-line);
   border-radius: var(--rf-radius-lg);
   box-shadow: var(--rf-shadow-lg);
   width: min(640px, 92vw);
   max-height: 86vh;
   display: flex; flex-direction: column;
   overflow: hidden;
-  animation: rf-pop .14s ease;
+  animation: rf-pop .16s ease;
 }
 .rf-modal--lg { width: min(880px, 94vw); }
 .rf-modal__head {
@@ -88,61 +143,92 @@
   border-bottom: 1px solid var(--rf-line);
   display: flex; align-items: center; justify-content: space-between;
 }
-.rf-modal__title { font-size: var(--rf-text-md); font-weight: 600; }
+.rf-modal__title {
+  font-family: var(--rf-font-display);
+  font-size: var(--rf-text-lg);
+  font-weight: 600;
+  letter-spacing: -.01em;
+}
 .rf-modal__close {
-  width: 28px; height: 28px; border-radius: var(--rf-radius-sm);
+  width: 28px; height: 28px;
+  border: 0; background: transparent;
+  border-radius: var(--rf-radius-sm);
   display: inline-flex; align-items: center; justify-content: center;
   color: var(--rf-text-muted);
+  cursor: pointer;
+  transition: background .12s ease, color .12s ease;
 }
-.rf-modal__close:hover { background: var(--rf-bg-hover); color: var(--rf-text); }
+.rf-modal__close:hover { background: var(--rf-bg-soft); color: var(--rf-text); }
 .rf-modal__body { padding: 16px 18px; overflow: auto; flex: 1; }
 .rf-modal__foot {
-  padding: 12px 18px; border-top: 1px solid var(--rf-line);
+  padding: 12px 18px;
+  border-top: 1px solid var(--rf-line);
+  background: var(--rf-bg);
   display: flex; justify-content: flex-end; gap: 8px;
 }
 
 @keyframes rf-fade-in { from { opacity: 0 } to { opacity: 1 } }
 @keyframes rf-pop {
-  from { transform: translateY(6px) scale(.985); opacity: 0 }
+  from { transform: translateY(4px) scale(.99); opacity: 0 }
   to   { transform: translateY(0) scale(1); opacity: 1 }
 }
 
 /* ===== Toast ===== */
 .rf-toast-root {
-  position: fixed; right: 18px; bottom: 38px; z-index: 200;
+  position: fixed; right: 16px; bottom: 36px; z-index: 200;
   display: flex; flex-direction: column; gap: 8px;
   pointer-events: none;
 }
 .rf-toast {
   pointer-events: auto;
-  background: #1a1f2c; color: #fff;
-  padding: 9px 14px; border-radius: var(--rf-radius);
+  background: #161A24; color: #F5F7FB;
+  padding: 9px 14px;
+  border-radius: var(--rf-radius);
+  border: 1px solid rgba(255, 255, 255, .06);
   font-size: var(--rf-text-sm);
   box-shadow: var(--rf-shadow);
   display: flex; gap: 8px; align-items: center;
   max-width: 360px;
-  animation: rf-toast-in .16s ease;
+  animation: rf-toast-in .18s ease;
 }
-.rf-toast--ok   { background: #1c4d35; }
-.rf-toast--warn { background: #6b4904; }
-.rf-toast--err  { background: #6b1d1d; }
-@keyframes rf-toast-in { from { transform: translateY(8px); opacity: 0 } to { transform: none; opacity: 1 } }
+.rf-toast--ok   { background: #1B4A36; }
+.rf-toast--warn { background: #5A3D08; }
+.rf-toast--err  { background: #5C2424; }
+@keyframes rf-toast-in {
+  from { transform: translateY(8px); opacity: 0 }
+  to   { transform: none; opacity: 1 }
+}
 
 /* ===== Badges / Pills ===== */
 .rf-pill {
   display: inline-flex; align-items: center;
-  padding: 2px 8px; border-radius: 999px;
+  padding: 1px 8px;
+  border-radius: 999px;
   font-size: var(--rf-text-xs);
-  background: var(--rf-bg-soft); color: var(--rf-text-muted);
+  font-weight: 500;
+  background: var(--rf-bg-soft);
+  color: var(--rf-text-muted);
+  border: 1px solid var(--rf-line);
 }
-.rf-pill--accent { background: var(--rf-accent-soft); color: var(--rf-accent-strong); }
-.rf-pill--warn   { background: #fff3d6; color: #8a5b00; }
+.rf-pill--accent {
+  background: var(--rf-accent-soft);
+  color: var(--rf-accent-strong);
+  border-color: transparent;
+}
+.rf-pill--warn {
+  background: #FBF1D9;
+  color: #7A4F08;
+  border-color: transparent;
+}
 
 /* ===== Empty states ===== */
 .rf-empty {
-  padding: 28px 16px; text-align: center;
-  color: var(--rf-text-dim); font-size: var(--rf-text-sm);
-  border: 1px dashed var(--rf-line); border-radius: var(--rf-radius);
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--rf-text-dim);
+  font-size: var(--rf-text-sm);
+  border: 1px dashed var(--rf-line);
+  border-radius: var(--rf-radius);
 }
 
 /* ===== Rewrite-selection modal (input-rewrite.js) ===== */
@@ -151,6 +237,7 @@
   font-size: var(--rf-text-xs);
   color: var(--rf-text-muted);
   font-weight: 500;
+  letter-spacing: .02em;
 }
 .rf-rewrite__orig {
   margin: 0;
@@ -163,14 +250,14 @@
   color: var(--rf-text);
   white-space: pre-wrap;
   word-break: break-word;
-  max-height: 9.5em;        /* ~6 lines, then scroll */
+  max-height: 9.5em;
   overflow: auto;
-  line-height: 1.55;
+  line-height: 1.6;
 }
 .rf-rewrite__instr  { resize: vertical; }
 .rf-rewrite__presets {
   display: flex; flex-wrap: wrap; gap: 6px;
-  margin-top: -4px;          /* hug the instruction box */
+  margin-top: -4px;
 }
 .rf-rewrite__status {
   min-height: 1.2em;
@@ -179,7 +266,7 @@
 }
 .rf-rewrite__result {
   display: flex; flex-direction: column; gap: 6px;
-  padding-top: 6px;
+  padding-top: 10px;
   border-top: 1px dashed var(--rf-line);
 }
 .rf-rewrite__result-area { resize: vertical; }
@@ -190,33 +277,34 @@
 }
 .rf-rewrite__foot .rf-btn { min-width: 72px; justify-content: center; }
 
-/* === 日期快捷选择 === */
+/* === Date picker === */
 .rf-date-picker { position: relative; display: flex; align-items: stretch; gap: 4px; }
 .rf-date-picker > .rf-input { flex: 1; min-width: 0; }
-.rf-date-picker__btn { padding: 4px 10px; font-size: 14px; line-height: 1; }
+.rf-date-picker__btn { padding: 4px 10px; font-size: 13px; line-height: 1; }
 .rf-date-picker__menu {
   position: absolute;
   top: calc(100% + 4px);
   right: 0;
   z-index: 30;
   min-width: 220px;
-  background: var(--rf-bg, #fff);
-  border: 1px solid var(--rf-line, #d6dbe3);
-  border-radius: 6px;
-  box-shadow: 0 6px 20px rgba(20, 30, 60, 0.12);
+  background: var(--rf-bg-elev);
+  border: 1px solid var(--rf-line);
+  border-radius: var(--rf-radius);
+  box-shadow: var(--rf-shadow);
   padding: 4px;
 }
 .rf-date-picker__item {
   padding: 6px 10px;
-  border-radius: 4px;
-  font-size: 13px;
+  border-radius: var(--rf-radius-sm);
+  font-size: var(--rf-text-sm);
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
+  color: var(--rf-text);
 }
-.rf-date-picker__item:hover { background: var(--rf-bg-hover, #eef2f8); }
+.rf-date-picker__item:hover { background: var(--rf-bg-soft); }
 
-/* === 文本块全屏编辑 === */
+/* === Inline text expand-to-fullscreen === */
 .rf-text-edit { position: relative; }
 .rf-text-edit > .rf-textarea { width: 100%; padding-right: 36px; }
 .rf-text-edit__expand {
@@ -224,18 +312,23 @@
   top: 6px;
   right: 6px;
   padding: 2px 8px !important;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1;
-  opacity: 0.55;
+  opacity: .5;
   z-index: 1;
+  background: transparent;
+  border-color: transparent;
 }
-.rf-text-edit__expand:hover { opacity: 1; }
+.rf-text-edit__expand:hover {
+  opacity: 1;
+  background: var(--rf-bg-soft);
+  border-color: var(--rf-line);
+}
 .rf-textarea--fullscreen {
   width: 100%;
   min-height: 60vh;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 14px;
-  line-height: 1.6;
+  font-family: var(--rf-mono);
+  font-size: 13px;
+  line-height: 1.65;
   resize: vertical;
 }
-
