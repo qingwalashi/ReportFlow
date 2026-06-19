@@ -8,6 +8,18 @@
   <link rel="icon" type="image/svg+xml" href="assets/brand/favicon.svg" />
   <link rel="alternate icon" href="assets/brand/favicon.ico" />
 
+  <!-- ============ PWA ============ -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1f57b8" />
+  <meta name="color-scheme" content="light" />
+  <meta name="application-name" content="ReportFlow" />
+  <meta name="description" content="把任意自然语言文本一键结构化为多模板报告，可离线使用。" />
+  <!-- iOS Safari 的 PWA 兼容 -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="ReportFlow" />
+  <link rel="apple-touch-icon" href="assets/brand/icon-maskable.svg" />
+
   <link rel="stylesheet" href="css/reset.css" />
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/components.css" />
@@ -340,6 +352,7 @@
   <script defer src="templates/tech-minimal/render.js"></script>
 
   <!-- ============ 入口（最后） ============ -->
+  <script defer src="js/core/pwa-register.js"></script>
   <script defer src="js/core/bootstrap.js"></script>
 </body>
 </html>

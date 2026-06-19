@@ -1,0 +1,35 @@
+{
+  "name": "ReportFlow — 智能汇报工作台",
+  "short_name": "ReportFlow",
+  "description": "把任意自然语言文本一键结构化为多模板报告，可离线使用。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "any",
+  "background_color": "#f7f9fc",
+  "theme_color": "#1f57b8",
+  "categories": ["productivity", "business"],
+  "icons": [
+    {
+      "src": "assets/brand/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/brand/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/brand/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
