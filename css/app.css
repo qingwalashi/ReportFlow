@@ -58,6 +58,9 @@ body { background: var(--rf-bg); }
   justify-content: space-between;
   align-items: center;
   gap: 14px;
+  /* 允许中间列在窄屏下真正收缩，避免把右侧 actions（含 ⋮）挤出视口。
+     grid item 默认 min-width: auto，会被内容撑开 —— 必须显式置 0。 */
+  min-width: 0;
 }
 .rf-topbar__center > .rf-spacer { flex: 1; }
 
@@ -267,7 +270,7 @@ body { background: var(--rf-bg); }
   opacity: 1;
 }
 
-.rf-topbar__actions { display: flex; gap: 6px; justify-content: flex-end; }
+.rf-topbar__actions { display: flex; gap: 6px; justify-content: flex-end; min-width: 0; }
 
 /* ===== Workspace (3-pane) ===== */
 .rf-workspace {
@@ -703,13 +706,18 @@ body[data-work-mode="suggest"] .rf-pane--preview .rf-pane__head::before { conten
   }
   .rf-mode-switch { display: none; }
   .rf-topbar__actions [data-mobile="hide"] { display: none; }
-  .rf-mobile-more { display: inline-flex; }
+  .rf-mobile-more { display: inline-flex; flex: none; }
   /* topbar center 在仅剩模板切换时不必再 space-between：靠右对齐 */
   .rf-topbar__center { justify-content: flex-end; }
   .rf-topbar__center > .rf-spacer { display: none; }
   /* 模板切换：缩窄 min-width，避免 360px 屏目标超界 */
-  .rf-template-switch__btn { min-width: 0; }
-  .rf-template-switch__label { max-width: 96px; }
+  .rf-template-switch__btn { min-width: 0; max-width: 100%; }
+  .rf-template-switch__label {
+    max-width: 96px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
   /* 状态栏：移动端隐藏（手机屏寸金贵，4 个 chip 装不下也不刚需） */
   .rf-statusbar { display: none; }
@@ -744,5 +752,33 @@ body[data-work-mode="suggest"] .rf-pane--preview .rf-pane__head::before { conten
      输入底栏的 4 个按钮（解析/AI 改写/载入示例/清空）也允许换行，避免被截。 */
   #rf-btn-export-zip { display: none; }
   .rf-pane__foot { flex-wrap: wrap; row-gap: 6px; }
+}
+
+/* ===== Extra-narrow phones (≤480px) =====
+   小于 480px 时（典型 iPhone SE 375px、部分 360px Android）顶栏空间紧张，
+   原先 brand wordmark + template chip 撑开后会把右侧 ⋮ 挤出视口。
+   - 收掉品牌字与左竖线，仅留 logo（仍可点回首页/识别）
+   - 模板 label 进一步收窄并允许省略号
+   - 顶栏 padding/gap 再缩一档 */
+@media (max-width: 480px) {
+  .rf-topbar { padding: 0 8px; gap: 6px; }
+  .rf-brand {
+    padding-right: 0;
+    border-right: 0;
+    gap: 0;
+  }
+  .rf-brand__name { display: none; }
+  /* 模板 chip：去掉「模板」字与分隔符，仅留图标+当前模板名+▾，最大 80px 截断 */
+  .rf-template-switch__kind,
+  .rf-template-switch__sep { display: none; }
+  .rf-template-switch__btn { padding: 0 8px; gap: 6px; }
+  .rf-template-switch__label { max-width: 80px; }
+}
+
+/* ===== Ultra-narrow (≤360px) =====
+   兜底：极窄屏（折叠机外屏、老旧 360px 设备）模板名也省略，仅保留图标，
+   保证 ⋮ 永远在视口内。 */
+@media (max-width: 360px) {
+  .rf-template-switch__label { max-width: 56px; }
 }
 
