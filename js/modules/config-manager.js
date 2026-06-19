@@ -66,6 +66,17 @@
     corsProxy:   ""
   };
 
+  // Preset thresholds for the "最大生成长度" dropdown. Covers short replies up
+  // to long reasoning outputs; chosen as common power-of-two checkpoints so
+  // users don't have to think about exact token counts.
+  var MAX_TOKEN_OPTIONS = [
+    { value: 1024,  label: "1024（短回复）" },
+    { value: 2048,  label: "2048（默认）" },
+    { value: 4096,  label: "4096" },
+    { value: 8192,  label: "8192（长输出）" },
+    { value: 16384, label: "16384（推理类模型）" }
+  ];
+
   function init() {
     // Load saved config (if any) into state.
     var saved = storage.get("config", "llm", null);
@@ -120,8 +131,8 @@
     var row = document.createElement("div"); row.className = "rf-field-row";
     var temp = inputNumber(current.temperature, 0, 2, 0.05);
     row.appendChild(field("Temperature", temp, "0 ~ 2，解析建议 0.2"));
-    var maxT = inputNumber(current.maxTokens, 64, 16384, 1);
-    row.appendChild(field("最大生成长度 (tokens)", maxT));
+    var maxT = inputSelect(current.maxTokens, MAX_TOKEN_OPTIONS);
+    row.appendChild(field("最大生成长度 (tokens)", maxT, "1024 适合短回复；2048（默认）适合解析；推理类模型建议 ≥ 4096"));
     body.appendChild(row);
 
     var row2 = document.createElement("div"); row2.className = "rf-field-row";
@@ -189,7 +200,7 @@
       apiKey.value = "";
       model.value = DEFAULTS.model;
       temp.value = DEFAULTS.temperature;
-      maxT.value = DEFAULTS.maxTokens;
+      maxT.value = String(DEFAULTS.maxTokens);
       timeout.value = DEFAULTS.timeoutMs;
       rps.value = DEFAULTS.rps;
       corsProxy.value = "";
@@ -289,6 +300,22 @@
     i.type = "number"; i.className = "rf-input";
     i.value = value; i.min = min; i.max = max; i.step = step;
     return i;
+  }
+  function inputSelect(value, options) {
+    var s = document.createElement("select");
+    s.className = "rf-select";
+    var matched = false;
+    options.forEach(function (opt) {
+      var o = document.createElement("option");
+      o.value = String(opt.value);
+      o.textContent = opt.label;
+      if (Number(value) === Number(opt.value)) { o.selected = true; matched = true; }
+      s.appendChild(o);
+    });
+    // If a saved value isn't in the preset list (legacy config), fall back to
+    // the default option so the dropdown isn't blank.
+    if (!matched && options.length) s.value = String(options[1] ? options[1].value : options[0].value);
+    return s;
   }
 
   window.RF_ConfigManager = { init: init, get: get, save: save, openModal: openModal };

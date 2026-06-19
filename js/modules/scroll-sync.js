@@ -19,6 +19,18 @@
  *    do NOT propagate editor-side scrolls (avoids IME / focus-induced
  *    jitter from disturbing the preview).
  *
+ * Preview scroll container: the iframe element itself has a small fixed
+ * height (it does NOT grow with its content), so the iframe's INNER
+ * <html> is what scrolls — confirmed by runtime inspection: outer wrap
+ * scrollHeight≈clientHeight (not scrollable), iframe.contentDocument's
+ * scrollingElement.scrollHeight ≫ clientHeight (the real scroll host).
+ *
+ * IMPORTANT: srcdoc iframes replace contentDocument when their srcdoc
+ * is set; a listener bound during preview.js's initial assignment may
+ * be attached to a transient document and lost when the real document
+ * loads. We must re-bind on every preview:rendered event, comparing
+ * the current contentDocument identity to the last bound one.
+ *
  * Wired in bootstrap.js after RF_Preview.init().
  */
 (function () {
@@ -37,35 +49,30 @@
   var lockTimer = null;
   var rafPending = false;
 
-  // Bound to the iframe's current contentWindow. Re-bound on every
-  // preview:rendered event in case the iframe was reloaded (template
-  // switch, srcdoc rewrite, etc).
-  var boundPreviewWin = null;
+  // The contentDocument we currently have a scroll listener on. When
+  // the iframe srcdoc reloads, contentDocument is replaced; we detect
+  // identity change and rebind.
+  var boundDoc = null;
 
   function init() {
     var editScroll = document.querySelector(EDIT_SCROLL_SEL);
     if (!editScroll) return;
-
     editScroll.addEventListener("scroll", onEditorScroll, { passive: true });
 
-    // Preview iframe may not be ready at init time; bind on first render
-    // and re-bind whenever the iframe gets a new contentWindow.
     bus.on("preview:rendered", bindPreviewIfNeeded);
-    // Also try immediately in case preview was already rendered before
-    // we ran (race with bootstrap order).
     bindPreviewIfNeeded();
   }
 
   function bindPreviewIfNeeded() {
     var iframe = document.getElementById(IFRAME_ID);
-    if (!iframe || !iframe.contentWindow) return;
-    var win = iframe.contentWindow;
-    if (win === boundPreviewWin) return; // already bound to this window
-
-    // Old window (if any) is gone with the previous iframe document; no
-    // explicit removeEventListener needed.
-    boundPreviewWin = win;
-    win.addEventListener("scroll", onPreviewScroll, { passive: true });
+    if (!iframe) return;
+    var doc = iframe.contentDocument;
+    if (!doc || doc === boundDoc) return;
+    // New (or replaced) document — bind here. The previous listener,
+    // if any, is gone with the previous document; no explicit removal
+    // needed.
+    boundDoc = doc;
+    doc.addEventListener("scroll", onPreviewScroll, { passive: true });
   }
 
   function onEditorScroll() {
@@ -103,21 +110,15 @@
     if (!src || !dst) return;
     if (!src.sections.length || !dst.sections.length) return;
 
-    // Nothing to sync if the source can't scroll.
     if (src.scrollEl.scrollHeight <= src.scrollEl.clientHeight + 1) return;
 
     var idx = activeSectionIndex(src);
     if (idx < 0) return;
 
-    // Clamp against destination's section count (transient mismatch
-    // during preview's 150ms render debounce).
     idx = Math.min(idx, dst.sections.length - 1);
 
-    var dstSec = dst.sections[idx];
-    var targetTop = sectionOffsetTop(dstSec, dst.scrollEl);
+    var targetTop = dst.sectionTops[idx];
 
-    // Avoid pointless writes that would still trigger a scroll event
-    // and consume a lock window.
     if (Math.abs(dst.scrollEl.scrollTop - targetTop) < 1) return;
 
     acquireLock(side === "editor" ? "preview" : "editor");
@@ -134,54 +135,56 @@
   }
 
   /**
-   * Return descriptor for one side, or null if not currently mountable.
+   * Return descriptor for one side, or null if not currently usable.
    *  scrollEl: the element whose scrollTop we read/write
    *  viewportTop / viewportBottom: scrollEl-relative viewport bounds
    *  sections: array of section elements (in order)
+   *  sectionTops: array of section top offsets, in scrollEl coordinates
    */
   function getSide(which) {
     if (which === "editor") {
       var es = document.querySelector(EDIT_SCROLL_SEL);
       if (!es) return null;
-      var secs = es.querySelectorAll(EDIT_SECTION_SEL);
+      var secs = Array.prototype.slice.call(es.querySelectorAll(EDIT_SECTION_SEL));
+      var tops = secs.map(function (s) { return offsetTopWithin(s, es); });
       return {
         scrollEl: es,
         viewportTop: es.scrollTop,
         viewportBottom: es.scrollTop + es.clientHeight,
-        sections: Array.prototype.slice.call(secs)
+        sections: secs,
+        sectionTops: tops
       };
     }
-    // preview
+    // preview — scroll happens INSIDE the iframe document
     var iframe = document.getElementById(IFRAME_ID);
     if (!iframe || !iframe.contentDocument) return null;
     var doc = iframe.contentDocument;
     var scrollEl = doc.scrollingElement || doc.documentElement;
     if (!scrollEl) return null;
-    var psecs = doc.querySelectorAll(PREVIEW_SECTION_SEL);
+    var psecs = Array.prototype.slice.call(doc.querySelectorAll(PREVIEW_SECTION_SEL));
+    // Sections live in the iframe document; their offsetTop chain
+    // terminates at <body>/<html> inside the iframe — same coordinate
+    // system as scrollEl.scrollTop.
+    var ptops = psecs.map(function (s) { return offsetTopWithin(s, scrollEl); });
     return {
       scrollEl: scrollEl,
       viewportTop: scrollEl.scrollTop,
       viewportBottom: scrollEl.scrollTop + scrollEl.clientHeight,
-      sections: Array.prototype.slice.call(psecs)
+      sections: psecs,
+      sectionTops: ptops
     };
   }
 
   /**
    * Index of the section with the largest pixel-area overlap with the
-   * source side's scroll viewport. Returns -1 if nothing overlaps
-   * (shouldn't happen given the scrollHeight check, but defensive).
-   *
-   * We use offsetTop/offsetHeight for stable, scroll-independent
-   * geometry (getBoundingClientRect would also work but mixes in the
-   * scrollEl's own client rect).
+   * source side's scroll viewport. Returns -1 if nothing overlaps.
    */
   function activeSectionIndex(side) {
     var vt = side.viewportTop, vb = side.viewportBottom;
     var bestIdx = -1, bestOverlap = -1;
     for (var i = 0; i < side.sections.length; i++) {
-      var sec = side.sections[i];
-      var top = offsetTopWithin(sec, side.scrollEl);
-      var bottom = top + sec.offsetHeight;
+      var top = side.sectionTops[i];
+      var bottom = top + side.sections[i].offsetHeight;
       var overlap = Math.min(bottom, vb) - Math.max(top, vt);
       if (overlap > bestOverlap) {
         bestOverlap = overlap;
@@ -191,15 +194,11 @@
     return bestIdx;
   }
 
-  /** Offset of a section relative to its scroll container. */
-  function sectionOffsetTop(sec, scrollEl) {
-    return offsetTopWithin(sec, scrollEl);
-  }
-
   /**
-   * Sum offsetTop up the offsetParent chain until we reach (or pass)
-   * scrollEl. Works for both the editor pane and the iframe's
-   * documentElement (where the chain terminates at body/html naturally).
+   * Sum offsetTop up the offsetParent chain until we reach (or just
+   * past) scrollEl. Works inside both the editor pane and the iframe
+   * document — in both cases, sections are descendants of scrollEl
+   * and the chain terminates naturally.
    */
   function offsetTopWithin(el, scrollEl) {
     var top = 0;
@@ -207,13 +206,10 @@
     while (node && node !== scrollEl) {
       top += node.offsetTop || 0;
       node = node.offsetParent;
-      // Defensive: if offsetParent is null before we reach scrollEl
-      // (e.g. element became display:none mid-iteration), bail with
-      // what we have rather than loop forever.
       if (!node) break;
     }
     return top;
   }
 
-  window.RF_ScrollSync = { init: init };
+  window.RF_ScrollSync = { init: init, acquireLock: acquireLock };
 })();

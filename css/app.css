@@ -155,6 +155,15 @@ body {
   padding: 10px 10px 8px;
   background: #fbfcfd;
 }
+/* Block-highlight selected state — paired with .rf-block--selected
+   inside the preview iframe. Click on either side highlights both.
+   Two changes only: swap border colour to accent, swap background to
+   accent-soft. Keeps the card the same size — no shadow / ring / glow
+   that would make it jump or fight neighbouring blocks. */
+.rf-blk--selected {
+  border-color: var(--rf-accent);
+  background: var(--rf-accent-soft);
+}
 .rf-blk__head {
   display: flex; align-items: center; justify-content: space-between;
   font-size: var(--rf-text-xs); color: var(--rf-text-muted);

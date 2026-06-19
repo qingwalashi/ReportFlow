@@ -21,6 +21,7 @@
     window.RF_Editor.init();           // binds to state.report
     window.RF_Preview.init();          // creates the iframe doc, listens for state changes
     if (window.RF_ScrollSync) window.RF_ScrollSync.init();  // editor ↔ preview scroll sync
+    if (window.RF_BlockHighlight) window.RF_BlockHighlight.init();  // block click highlight
     window.RF_History.init();          // history button + Ctrl+S
 
     // ===== Template selector =====

@@ -89,6 +89,7 @@
     var report = state.get("report");
     if (!report) {
       rootEl.innerHTML = '<div class="rf-empty">尚无内容。在左侧粘贴文本并点击「解析」，或直接编辑。</div>';
+      bus.emit("editor:rendered");
       return;
     }
     rootEl.innerHTML = "";
@@ -96,6 +97,7 @@
     (report.sections || []).forEach(function (sec, i) {
       rootEl.appendChild(renderSection(sec, i));
     });
+    bus.emit("editor:rendered");
   }
 
   // ===== Meta =====

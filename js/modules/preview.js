@@ -57,6 +57,12 @@
       "html,body{margin:0;padding:0;background:#fff;color:#1a1f2c;}",
       "body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:1.7;}",
       "#root{padding:32px 36px;max-width:920px;margin:0 auto;}",
+      // Block-highlight selected style — kept here so it works across all
+      // templates without each template having to opt in. The preview side
+      // .rf-block has no native border/background, so we add the full box;
+      // negative margin offsets the padding/border so neighbouring text
+      // doesn't reflow when a block is selected/deselected.
+      ".rf-block--selected{border:1px solid #2d5cf6;background:#e8efff;border-radius:3px;padding:5px 7px;margin:-6px -8px;}",
       "</style>",
       "<script src='libs/echarts.min.js'></scr" + "ipt>",
       "<script src='libs/marked.min.js'></scr" + "ipt>",
