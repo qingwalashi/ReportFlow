@@ -13,7 +13,7 @@
 - 纯静态项目：所有依赖 vendored 在 `libs/`，不引入新的第三方包。
 - IIFE + `window.RF_*` 全局命名空间，禁用 ESM。
 - 兼容 `file://` 与 http(s) 双协议。
-- 旧 exporter（PDF / ZIP）的对外 API 与导出文件**字节级**保持兼容；只允许内部重构。
+- 旧 exporter（PDF / ZIP）的对外 API 与导出文件**功能与视觉**保持一致；允许内部重构带来的非语义微差（如 attribute 顺序、空白）。
 - 加载脚本顺序：`exporter-common.js` 必须排在 `exporter-pdf.js` / `exporter-zip.js` / `exporter-png.js` / `exporter-html.js` 之前。
 - 预览快照入口固定为 `window.RF_Preview.snapshotForExport()`，返回 `{ doc, rootHtml, rootClass, bodyClass, head }`。
 - 项目无单元测试基础设施；本计划用"手工功能验证"代替自动化测试，每个任务的验证步骤都写明具体点击路径与预期结果。
@@ -328,7 +328,7 @@ git commit -m "refactor: 抽取 exporter-common.js 作为四个 exporter 共享 
 - Consumes: `RF_ExportCommon.cloneRoot` / `resolveImages("dataurl")` / `collectCssText` / `safeFileName`（Task 1）
 - Produces: `RF_ExportPdf.exportPdf()` → Promise（**与原版签名一致**）
 
-**重要：** 重构后导出的 PDF 在视觉与字节布局上必须与原版**保持一致**。这一步是纯重构，不改行为。
+**重要：** 重构后导出的 PDF 在视觉与内容上必须与原版一致。这一步是纯重构，不改可观察行为。
 
 - [ ] **Step 1：替换文件全部内容**
 
