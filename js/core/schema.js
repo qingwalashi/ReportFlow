@@ -156,6 +156,8 @@
     if (x.italic === true) out.italic = true;
     if (isStr(x.color) && /^#[0-9a-fA-F]{3,8}$/.test(x.color)) out.color = x.color;
     if (isStr(x.bg)    && /^#[0-9a-fA-F]{3,8}$/.test(x.bg))    out.bg    = x.bg;
+    // 智能高亮标记：num=关键数字、text=关键结论。渲染端据此给单元格上荧光笔底色。
+    if (x.hl === "num" || x.hl === "text") out.hl = x.hl;
     if (STYLE_BORDER.indexOf(x.borderTop) >= 0)    out.borderTop = x.borderTop;
     if (STYLE_BORDER.indexOf(x.borderBottom) >= 0) out.borderBottom = x.borderBottom;
     return out;

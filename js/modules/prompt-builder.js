@@ -155,8 +155,45 @@
     ];
   }
 
+  // ===== 智能高亮 =====
+  // 让模型在已结构化的报告片段里挑出「关键数字」和/或「关键结论」并标注坐标，
+  // 而不是改写原文。payload 由 smart-highlight.js 组装：
+  //   { texts: [{ id, content }], cells: [{ id, v }] }
+  // kinds 是启用的高亮类型数组，取值 "num" / "text"。
+  function buildHighlightPrompt(payload, kinds) {
+    var wantNum  = kinds.indexOf("num") >= 0;
+    var wantText = kinds.indexOf("text") >= 0;
+
+    var rules = [
+      "你是报告重点标注助手。下面给出一份报告里若干文本段（texts）和表格单元格（cells），",
+      "每项都带唯一 id。请识别其中值得高亮的内容，仅返回一个 JSON 对象，不要解释、不要 markdown 代码块。",
+      "",
+      "启用的高亮类型：" + (wantNum ? "num（关键数字/KPI/百分比/金额/同比环比） " : "") + (wantText ? "text（关键结论/重要术语/核心观点）" : ""),
+      "只输出已启用类型的标注；未启用的类型一律不要出现。",
+      "",
+      "输出格式：",
+      "{",
+      '  "textHighlights": [ { "id": "<文本段 id>", "phrase": "<必须是该段 content 中可精确匹配的连续子串>", "kind": "num"|"text" } ],',
+      '  "cellHighlights": [ { "id": "<单元格 id>", "kind": "num"|"text" } ]',
+      "}",
+      "",
+      "要求：",
+      "1) phrase 必须是对应文本段 content 里【原样存在】的子串（含标点/数字），不要改写、不要拼接跨句内容。",
+      "2) 每段最多标注 1-3 个最关键的片段，宁缺毋滥，避免整段泛标。",
+      "3) 表头/单位/说明类单元格不要标注；cells 里只标真正承载关键数值或结论的格子。",
+      "4) 若某段/某格没有值得高亮的内容，就不要为它输出任何项。",
+      "5) kind 只能是已启用类型之一。"
+    ].join("\n");
+
+    return [
+      { role: "system", content: rules },
+      { role: "user",   content: "待标注数据（JSON）：\n" + JSON.stringify(payload) }
+    ];
+  }
+
   window.RF_Prompts = {
     buildParsePrompt: buildParsePrompt,
-    buildRepairPrompt: buildRepairPrompt
+    buildRepairPrompt: buildRepairPrompt,
+    buildHighlightPrompt: buildHighlightPrompt
   };
 })();

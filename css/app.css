@@ -517,6 +517,32 @@ body { background: var(--rf-bg); }
   background: var(--rf-accent-soft);
 }
 
+/* 智能高亮弹窗 */
+.rf-hl-dialog__tip {
+  font-size: 13px;
+  color: var(--rf-text-muted, #6b7280);
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+.rf-hl-dialog__opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--rf-line);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+.rf-hl-dialog__opt:hover { border-color: var(--rf-accent); }
+.rf-hl-dialog__opt input { margin-top: 3px; }
+.rf-hl-dialog__opt-label { font-size: 14px; font-weight: 600; }
+.rf-hl-dialog__opt-hint {
+  font-size: 12px;
+  color: var(--rf-text-muted, #6b7280);
+  margin-top: 2px;
+}
+
 .rf-blk__head {
   display: flex; align-items: center; justify-content: space-between;
   font-size: var(--rf-text-xs);

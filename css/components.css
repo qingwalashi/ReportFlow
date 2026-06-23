@@ -383,6 +383,7 @@
 /* === Inline text expand-to-fullscreen === */
 .rf-text-edit { position: relative; }
 .rf-text-edit > .rf-textarea { width: 100%; padding-right: 36px; }
+.rf-text-edit > .rf-richtext { padding-right: 36px; }
 .rf-text-edit__expand {
   position: absolute;
   top: 6px;
@@ -408,3 +409,78 @@
   line-height: 1.65;
   resize: vertical;
 }
+
+/* === Rich text block editor (renders **bold** + <mark> highlight inline) === */
+.rf-richtext {
+  width: 100%;
+  min-height: 64px;
+  padding: 6px 10px;
+  font-family: var(--rf-font);
+  font-size: var(--rf-text-sm);
+  line-height: 1.6;
+  background: var(--rf-bg-elev);
+  border: 1px solid var(--rf-line);
+  border-radius: var(--rf-radius-sm);
+  color: var(--rf-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+.rf-richtext:hover { border-color: var(--rf-line-strong); }
+.rf-richtext:focus {
+  outline: none;
+  border-color: var(--rf-accent);
+  box-shadow: 0 0 0 3px var(--rf-accent-soft);
+}
+.rf-richtext:empty::before {
+  content: attr(data-placeholder);
+  color: var(--rf-text-dim);
+  pointer-events: none;
+}
+.rf-richtext strong { font-weight: 700; }
+.rf-richtext mark.rf-hl { border-radius: 2px; padding: 0 2px; color: inherit; }
+.rf-richtext mark.rf-hl--num  { background: #fff1a8; }
+.rf-richtext mark.rf-hl--text { background: #c8f2d4; }
+.rf-richtext--fullscreen {
+  min-height: 60vh;
+  font-size: 15px;
+  line-height: 1.7;
+  padding: 12px 14px;
+  overflow-y: auto;
+}
+
+/* === Inline text quick toolbar (bold / highlight) === */
+.rf-text-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.rf-text-toolbar__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--rf-text);
+  background: var(--rf-bg);
+  border: 1px solid var(--rf-line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.rf-text-toolbar__btn:hover {
+  background: var(--rf-bg-soft);
+  border-color: var(--rf-line-strong);
+}
+.rf-text-toolbar__btn:active { transform: translateY(1px); }
+.rf-text-toolbar__btn--bold { font-weight: 700; min-width: 28px; justify-content: center; }
+.rf-text-toolbar__sw {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid rgba(0,0,0,.12);
+}
+.rf-text-fullscreen { width: 100%; }

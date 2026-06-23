@@ -36,6 +36,8 @@
   var otherChars = 0;
   var tStart = 0;
   var tickTimer = null;
+  // Per-run labels so the same panel can serve other flows (e.g. 智能高亮).
+  var labels = { done: "解析完成", fail: "解析失败" };
 
   function isCjk(code) {
     // CJK Unified Ideographs + Extension A + common CJK punctuation +
@@ -105,8 +107,13 @@
     els.close.addEventListener("click", function () { dismiss(); });
   }
 
-  function start() {
+  function start(cfg) {
+    cfg = cfg || {};
     ensureMount();
+    labels = {
+      done: cfg.doneLabel || "解析完成",
+      fail: cfg.failLabel || "解析失败"
+    };
     tailContent = "";
     tailReason  = "";
     fullContentLen = 0;
@@ -117,7 +124,7 @@
     rootEl.classList.remove("rf-parse-progress--ok", "rf-parse-progress--err", "rf-parse-progress--collapsed");
     els.toggle.textContent = "−";
     els.close.hidden = true;
-    els.phase.textContent = "构建提示…";
+    els.phase.textContent = cfg.startLabel || "构建提示…";
     els.elapsed.textContent = "0.0s";
     els.counter.textContent = "~0 tok";
     els.kind.textContent = "";
@@ -180,17 +187,20 @@
   function success(info) {
     if (!els) return;
     rootEl.classList.add("rf-parse-progress--ok");
-    els.phase.textContent = "解析完成";
-    els.kind.textContent  = (info && info.sections != null)
-      ? (info.sections + " 章节" + (info.warnings ? " · " + info.warnings + " 警告" : ""))
-      : "";
+    els.phase.textContent = (info && info.label) || labels.done;
+    // info.summary: free-form text (用于高亮等流程)；否则回退到「N 章节 · M 警告」。
+    els.kind.textContent  = (info && typeof info.summary === "string")
+      ? info.summary
+      : (info && info.sections != null)
+        ? (info.sections + " 章节" + (info.warnings ? " · " + info.warnings + " 警告" : ""))
+        : "";
     finalize();
   }
 
   function fail(message) {
     if (!els) return;
     rootEl.classList.add("rf-parse-progress--err");
-    els.phase.textContent = "解析失败";
+    els.phase.textContent = labels.fail;
     els.kind.textContent  = "";
     if (message) {
       // Show the error in the tail area so it's visible without expanding.

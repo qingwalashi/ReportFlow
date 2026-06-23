@@ -146,6 +146,41 @@
   outline: 2px solid var(--rf-accent);
 }
 
+/* 高亮选择器：每项为「色块 + 文字（数字 / 文字 / 清除）」 */
+.rf-tbar-color__pop--hl {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  width: auto;
+  min-width: 96px;
+}
+.rf-tbar-color__sw--labeled {
+  width: 100%;
+  height: auto;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 4px 6px;
+  font-size: var(--rf-text-xs);
+  color: var(--rf-text);
+  background: transparent;
+  border-color: transparent;
+}
+.rf-tbar-color__sw--labeled:hover {
+  outline: none;
+  background: var(--rf-bg-soft);
+}
+.rf-tbar-color__dot {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid var(--rf-line);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--rf-text-dim);
+}
+
 /* ---------- 粘贴提示 ---------- */
 .rf-table-edit__paste-hint {
   font-size: var(--rf-text-xs);

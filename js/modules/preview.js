@@ -73,6 +73,11 @@
       // negative margin offsets the padding/border so neighbouring text
       // doesn't reflow when a block is selected/deselected.
       ".rf-block--selected{border:1px solid #2d5cf6;background:#e8efff;border-radius:3px;padding:5px 7px;margin:-6px -8px;}",
+      // 智能高亮（荧光笔）—— 正文 text 块里 <mark class="rf-hl rf-hl--num|text">。
+      // 表格单元格的同色底色由 table-format.js 走内联 style 输出，无需在此声明。
+      ".rf-hl{border-radius:2px;padding:0 2px;color:inherit;}",
+      ".rf-hl--num{background:#fff1a8;}",
+      ".rf-hl--text{background:#c8f2d4;}",
       "</style>",
       "<script src='libs/echarts.min.js'></scr" + "ipt>",
       "<script src='libs/marked.min.js'></scr" + "ipt>",

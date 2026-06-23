@@ -13,7 +13,7 @@
 "use strict";
 
 // 升级缓存：发布新版只需改这里的版本号，旧缓存会在 activate 时被清理。
-const CACHE_VERSION = "v1.3.0";
+const CACHE_VERSION = "v1.4.3";
 const CACHE_NAME = "reportflow-" + CACHE_VERSION;
 
 // 计算 SW 作用域内的相对根（部署到子目录也可用）
@@ -70,6 +70,7 @@ const PRECACHE_URLS = [
   "./js/modules/editor.js",
   "./js/modules/scroll-sync.js",
   "./js/modules/block-highlight.js",
+  "./js/modules/smart-highlight.js",
   "./js/modules/config-manager.js",
   "./js/modules/llm-client.js",
   "./js/modules/prompt-builder.js",

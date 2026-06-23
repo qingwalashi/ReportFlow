@@ -22,6 +22,7 @@
     window.RF_Preview.init();          // creates the iframe doc, listens for state changes
     if (window.RF_ScrollSync) window.RF_ScrollSync.init();  // editor ↔ preview scroll sync
     if (window.RF_BlockHighlight) window.RF_BlockHighlight.init();  // block click highlight
+    if (window.RF_SmartHighlight) window.RF_SmartHighlight.init();  // 智能高亮按钮
     window.RF_History.init();          // history button + Ctrl+S
 
     // ===== Template selector =====

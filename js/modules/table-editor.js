@@ -26,6 +26,10 @@
   var COLOR_SWATCHES = ["", "#1a1f2c", "#c0392b", "#27ae60", "#2563eb", "#a37b00"];
   var BG_SWATCHES    = ["", "#fff8e1", "#e8f5e9", "#e3f2fd", "#fce4ec", "#f4f6fa"];
 
+  // 智能高亮底色（荧光笔风格）。与 table-format.js / preview.js 的 .rf-hl--* 保持一致。
+  var HL_NUM_BG  = "#fff1a8";  // 数字高亮 — 黄
+  var HL_TEXT_BG = "#c8f2d4";  // 文字高亮 — 绿
+
   // 所有已挂载的编辑器实例，用于「点击某个表格时清除其它表格的选中状态」
   var mountedInstances = [];
 
@@ -145,6 +149,7 @@
     g1.appendChild(alignSelect(ctx));
     g1.appendChild(colorPicker(ctx, "字色", "color", COLOR_SWATCHES));
     g1.appendChild(colorPicker(ctx, "背景", "bg", BG_SWATCHES));
+    g1.appendChild(highlightPicker(ctx));
 
     // 数字格式组
     var g2 = group(bar, "数字");
@@ -268,6 +273,52 @@
     return wrap;
   }
 
+  // 智能高亮选择器：黄=数字高亮(num)、绿=文字高亮(text)、✕=清除。
+  // 写入 cell.style.hl，与「背景」分离；清除走 applyStyle 的 null 删除逻辑。
+  function highlightPicker(ctx) {
+    var HL_OPTIONS = [
+      { kind: "num",  bg: "#fff1a8", title: "数字高亮", label: "数字" },
+      { kind: "text", bg: "#c8f2d4", title: "文字高亮", label: "文字" },
+      { kind: null,   bg: "",        title: "清除高亮", label: "清除" }
+    ];
+    var wrap = el("span", "rf-tbar-color");
+    wrap.title = "高亮";
+    var box = el("button", "rf-tbar-btn rf-tbar-color__btn");
+    box.type = "button";
+    box.textContent = "高亮";
+    box.addEventListener("mousedown", function (e) { e.preventDefault(); });
+
+    var pop = el("div", "rf-tbar-color__pop rf-tbar-color__pop--hl");
+    HL_OPTIONS.forEach(function (op) {
+      var sw = document.createElement("span");
+      sw.className = "rf-tbar-color__sw rf-tbar-color__sw--labeled";
+      sw.title = op.title;
+      var dot = document.createElement("span");
+      dot.className = "rf-tbar-color__dot";
+      dot.style.background = op.bg || "transparent";
+      if (!op.kind) dot.textContent = "✕";
+      sw.appendChild(dot);
+      sw.appendChild(document.createTextNode(op.label));
+      sw.addEventListener("mousedown", function (e) { e.preventDefault(); });
+      sw.addEventListener("click", function () {
+        applyStyle(ctx, { hl: op.kind });   // kind=null → applyStyle 删除该属性
+        pop.style.display = "none";
+      });
+      pop.appendChild(sw);
+    });
+    pop.style.display = "none";
+
+    box.addEventListener("click", function (e) {
+      e.stopPropagation();
+      pop.style.display = pop.style.display === "none" ? "flex" : "none";
+    });
+    document.addEventListener("click", function () { pop.style.display = "none"; });
+
+    wrap.appendChild(box);
+    wrap.appendChild(pop);
+    return wrap;
+  }
+
   // 取选区中第一个可见 cell 的某属性，用于按钮的 toggle 状态
   function toggle(key, ctx) {
     var cell = visibleCellAt(ctx, ctx.activeR, ctx.activeC);
@@ -345,6 +396,9 @@
     if (s.italic) parts.push("font-style:italic");
     if (s.color) parts.push("color:" + s.color);
     if (s.bg) parts.push("background:" + s.bg);
+    // 智能高亮底色 —— 与渲染端 table-format.js 一致，放在 s.bg 之后使其优先。
+    if (s.hl === "num")  parts.push("background:" + HL_NUM_BG);
+    if (s.hl === "text") parts.push("background:" + HL_TEXT_BG);
     return parts.join(";");
   }
 

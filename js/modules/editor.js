@@ -236,12 +236,15 @@
 
     if (blk.type === "text") {
       var taWrap = el("div", "rf-text-edit");
-      var ta = textarea(blk.content, function (v) { patchBlock(secIdx, blkIdx, { content: v }); });
-      ta.placeholder = "支持 Markdown：**加粗**、列表、`代码`...";
-      ta.rows = 4;
-      taWrap.appendChild(ta);
+      var ed = richText(blk.content, function (v) { patchBlock(secIdx, blkIdx, { content: v }); });
+      ed.dataset.placeholder = "正文（**加粗**、高亮即时显示效果；其它 Markdown 以原文显示）";
+      // 文本快捷工具栏（加粗 / 高亮），参考表格编辑器的 B / 高亮按钮
+      taWrap.appendChild(buildTextToolbar(ed, function () {
+        patchBlock(secIdx, blkIdx, { content: richHtmlToMd(ed) });
+      }));
+      taWrap.appendChild(ed);
       var expandBtn = btn("ghost", "⛶", function () {
-        openTextFullscreen(secIdx, blkIdx, ta);
+        openTextFullscreen(secIdx, blkIdx, ed);
       }, "全屏编辑");
       expandBtn.classList.add("rf-text-edit__expand");
       taWrap.appendChild(expandBtn);
@@ -329,27 +332,32 @@
     });
   }
 
-  // 在大弹窗中编辑文本块。大 textarea 与小框共用 patchBlock 回写，
+  // 在大弹窗中编辑文本块。大编辑器与小框共用 patchBlock 回写，
   // 因 commit() 内 selfCommitting 守卫，输入不会重渲表单也不会丢焦点。
-  // 同步把值回写到小 textarea，关闭弹窗后小框立即显示新内容。
-  function openTextFullscreen(secIdx, blkIdx, sourceTa) {
+  // 关闭弹窗后用最新内容同步回小框（sourceEd 是内联富文本编辑器）。
+  function openTextFullscreen(secIdx, blkIdx, sourceEd) {
     var rep = state.get("report");
     var content = (rep && rep.sections[secIdx] && rep.sections[secIdx].blocks[blkIdx] &&
                    rep.sections[secIdx].blocks[blkIdx].content) || "";
-    var bigTa = document.createElement("textarea");
-    bigTa.className = "rf-textarea rf-textarea--fullscreen";
-    bigTa.value = content;
-    bigTa.placeholder = "支持 Markdown：**加粗**、列表、`代码`...";
-    bigTa.addEventListener("input", function () {
-      patchBlock(secIdx, blkIdx, { content: bigTa.value });
-      if (sourceTa) sourceTa.value = bigTa.value;
+    var bigEd = richText(content, function (v) {
+      patchBlock(secIdx, blkIdx, { content: v });
+      if (sourceEd) sourceEd.innerHTML = mdToRichHtml(v);
     });
+    bigEd.classList.add("rf-richtext--fullscreen");
+    bigEd.dataset.placeholder = "正文（**加粗**、高亮即时显示效果；其它 Markdown 以原文显示）";
+    var bigWrap = el("div", "rf-text-fullscreen");
+    bigWrap.appendChild(buildTextToolbar(bigEd, function () {
+      var md = richHtmlToMd(bigEd);
+      patchBlock(secIdx, blkIdx, { content: md });
+      if (sourceEd) sourceEd.innerHTML = mdToRichHtml(md);
+    }));
+    bigWrap.appendChild(bigEd);
     window.RF_UI.modal.open({
       title: "编辑文本",
-      bodyEl: bigTa,
+      bodyEl: bigWrap,
       size: "lg"
     });
-    setTimeout(function () { bigTa.focus(); }, 0);
+    setTimeout(function () { bigEd.focus(); }, 0);
   }
 
   function renderChartEditor(blk, secIdx, blkIdx) {
@@ -477,6 +485,184 @@
     if (b && b.assetId) imgMgr.remove(b.assetId);
     rep.sections[secIdx].blocks.splice(blkIdx, 1);
     commit(rep, { structural: true });
+  }
+
+  // ===== 文本快捷工具栏（加粗 / 高亮）=====
+  // ===== 文本快捷工具栏（加粗 / 高亮）=====
+  // 文本块为富文本编辑器（contentEditable）：**加粗** 与 <mark> 高亮即时显示效果，
+  // 其它 Markdown（列表 / 标题 / `代码` / 链接）以原文显示。底层仍以 Markdown
+  // 存储（mdToRichHtml ↔ richHtmlToMd 双向转换），预览与导出沿用既有渲染。
+  function buildTextToolbar(ed, onChange) {
+    var bar = el("div", "rf-text-toolbar");
+
+    bar.appendChild(txtBtn("B", "加粗", "rf-text-toolbar__btn--bold", function () {
+      toggleBold(ed);
+      onChange();
+    }));
+
+    bar.appendChild(hlBtn("num", "数字高亮", "#fff1a8", function () {
+      applyHighlight(ed, "num");
+      onChange();
+    }));
+    bar.appendChild(hlBtn("text", "文字高亮", "#c8f2d4", function () {
+      applyHighlight(ed, "text");
+      onChange();
+    }));
+    return bar;
+  }
+
+  function txtBtn(label, title, extraCls, onClick) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "rf-text-toolbar__btn" + (extraCls ? " " + extraCls : "");
+    b.textContent = label;
+    b.title = title;
+    b.addEventListener("mousedown", function (e) { e.preventDefault(); }); // 不抢焦点 / 保留选区
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
+  function hlBtn(kind, title, bg, onClick) {
+    var b = txtBtn("", title, "rf-text-toolbar__btn--hl", onClick);
+    var sw = el("span", "rf-text-toolbar__sw");
+    sw.style.background = bg;
+    b.appendChild(sw);
+    b.appendChild(document.createTextNode(kind === "num" ? "数字" : "文字"));
+    return b;
+  }
+
+  // 富文本编辑器（contentEditable）。值以 Markdown 形式进出。
+  function richText(value, onInput) {
+    var ed = document.createElement("div");
+    ed.className = "rf-richtext";
+    ed.contentEditable = "true";
+    ed.spellcheck = false;
+    ed.innerHTML = mdToRichHtml(value);
+    ed.addEventListener("input", function () { onInput(richHtmlToMd(ed)); });
+    return ed;
+  }
+
+  // ---- 工具栏操作（contentEditable 选区）----
+  function toggleBold(ed) {
+    ed.focus();
+    var sel = window.getSelection();
+    if (!sel || !sel.rangeCount || !ed.contains(sel.getRangeAt(0).commonAncestorContainer)) return;
+    // execCommand 同时支持「加粗」与「取消加粗」的切换，跨节点选区也可用。
+    try { document.execCommand("bold"); } catch (e) { /* 老浏览器忽略 */ }
+  }
+
+  function applyHighlight(ed, kind) {
+    ed.focus();
+    var sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    var range = sel.getRangeAt(0);
+    if (!ed.contains(range.commonAncestorContainer)) return;
+
+    // 选区已在 mark 内 → 取消高亮（再次点击=清除）。
+    var existing = enclosingMark(ed, range.commonAncestorContainer);
+    if (existing) { unwrapEl(existing); return; }
+
+    var mark = document.createElement("mark");
+    mark.className = "rf-hl rf-hl--" + kind;
+    if (range.collapsed) {
+      mark.textContent = "高亮文本";
+      range.insertNode(mark);
+    } else {
+      mark.appendChild(range.extractContents());
+      range.insertNode(mark);
+    }
+    // 选中刚包裹的内容，便于继续编辑
+    var r = document.createRange();
+    r.selectNodeContents(mark);
+    sel.removeAllRanges();
+    sel.addRange(r);
+  }
+
+  function enclosingMark(root, node) {
+    while (node && node !== root) {
+      if (node.nodeType === 1 && node.nodeName === "MARK" &&
+          node.className.indexOf("rf-hl") >= 0) return node;
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  // 把元素替换为它的子节点（脱壳），用于取消高亮。
+  function unwrapEl(elm) {
+    var parent = elm.parentNode;
+    if (!parent) return;
+    while (elm.firstChild) parent.insertBefore(elm.firstChild, elm);
+    parent.removeChild(elm);
+  }
+
+  // ---- Markdown ↔ 富文本 HTML（仅处理 **加粗** 与 <mark> 高亮）----
+  // 其它 Markdown 一律按原文（转义后）保留为纯文本节点。
+  var HL_MARK_RE = /<mark class="rf-hl rf-hl--(num|text)">([\s\S]*?)<\/mark>/g;
+
+  function escHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // 仅把 **...** 转为 <strong>，其余文本转义。
+  function inlineBold(s) {
+    var out = "", re = /\*\*([\s\S]+?)\*\*/g, last = 0, m;
+    while ((m = re.exec(s))) {
+      out += escHtml(s.slice(last, m.index)) + "<strong>" + escHtml(m[1]) + "</strong>";
+      last = m.index + m[0].length;
+    }
+    return out + escHtml(s.slice(last));
+  }
+
+  function mdToRichHtml(md) {
+    md = String(md == null ? "" : md);
+    var out = "", last = 0, m;
+    HL_MARK_RE.lastIndex = 0;
+    while ((m = HL_MARK_RE.exec(md))) {
+      out += inlineBold(md.slice(last, m.index));
+      out += '<mark class="rf-hl rf-hl--' + m[1] + '">' + inlineBold(m[2]) + "</mark>";
+      last = m.index + m[0].length;
+    }
+    out += inlineBold(md.slice(last));
+    return out.replace(/\n/g, "<br>");
+  }
+
+  function richHtmlToMd(ed) {
+    // contentEditable \u5E38\u628A\u7A7A\u683C\u6362\u6210 &nbsp;(\u00A0)\uFF0C\u56DE\u5199\u65F6\u8FD8\u539F\u4E3A\u666E\u901A\u7A7A\u683C\u3002
+    return nodeToMd(ed).replace(/\u00A0/g, " ");
+  }
+
+  function nodeToMd(node) {
+    var md = "";
+    var kids = node.childNodes;
+    for (var i = 0; i < kids.length; i++) {
+      var ch = kids[i];
+      if (ch.nodeType === 3) {            // 文本节点
+        md += ch.nodeValue;
+      } else if (ch.nodeType === 1) {     // 元素
+        var name = ch.nodeName;
+        var fw = ch.style && ch.style.fontWeight;
+        var styledBold = fw === "bold" || fw === "bolder" || (parseInt(fw, 10) >= 600);
+        if (name === "BR") {
+          md += "\n";
+        } else if (name === "STRONG" || name === "B") {
+          md += "**" + nodeToMd(ch) + "**";
+        } else if (name === "MARK") {
+          var kind = ch.className.indexOf("rf-hl--num") >= 0 ? "num" : "text";
+          md += '<mark class="rf-hl rf-hl--' + kind + '">' + nodeToMd(ch) + "</mark>";
+        } else if (styledBold) {
+          // 某些浏览器 execCommand("bold") 产出 <span style="font-weight:..">
+          md += "**" + nodeToMd(ch) + "**";
+        } else if (name === "DIV" || name === "P") {
+          // contentEditable 用 div/p 表示新行：块前补换行（非开头且未已换行）。
+          if (md && !/\n$/.test(md)) md += "\n";
+          md += nodeToMd(ch);
+        } else {
+          md += nodeToMd(ch);
+        }
+      }
+    }
+    return md;
   }
 
   // ===== Helpers =====

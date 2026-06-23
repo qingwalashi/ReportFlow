@@ -10,6 +10,10 @@
 (function () {
   "use strict";
 
+  // 智能高亮底色（荧光笔风格）。与 preview.js baseDoc 中 .rf-hl--* 保持一致。
+  var HL_NUM_BG  = "#fff1a8";  // 数字高亮 — 黄
+  var HL_TEXT_BG = "#c8f2d4";  // 文字高亮 — 绿
+
   /**
    * @param {number|string} value  内部值（文本或数字）
    * @param {object|null}   format { kind, decimals, thousands, prefix, suffix }
@@ -238,6 +242,10 @@
     if (s.italic) parts.push("font-style:italic");
     if (s.color) parts.push("color:" + s.color);
     if (s.bg) parts.push("background:" + s.bg);
+    // 智能高亮底色 —— 与正文 <mark class="rf-hl--*"> 同色。放在 s.bg 之后，
+    // 使高亮优先于单元格自定义背景（高亮是临时的、可一键清除的标注）。
+    if (s.hl === "num")  parts.push("background:" + HL_NUM_BG);
+    if (s.hl === "text") parts.push("background:" + HL_TEXT_BG);
     if (s.borderTop && s.borderTop !== "none") {
       parts.push("border-top:" + (s.borderTop === "thick" ? "2px" : "1px") + " solid currentColor");
     }
