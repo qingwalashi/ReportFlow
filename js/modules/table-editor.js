@@ -26,6 +26,9 @@
   var COLOR_SWATCHES = ["", "#1a1f2c", "#c0392b", "#27ae60", "#2563eb", "#a37b00"];
   var BG_SWATCHES    = ["", "#fff8e1", "#e8f5e9", "#e3f2fd", "#fce4ec", "#f4f6fa"];
 
+  // 所有已挂载的编辑器实例，用于「点击某个表格时清除其它表格的选中状态」
+  var mountedInstances = [];
+
   function mount(host, blk, secIdx, blkIdx, callbacks) {
     var ctx = {
       host: host,
@@ -33,26 +36,40 @@
       spec: clone(blk.spec),
       title: blk.title || "",
       caption: blk.caption || "",
-      activeR: 0,
-      activeC: 0,
-      selection: { r0: 0, c0: 0, r1: 0, c1: 0 },
+      // 默认无选中：activeR/C 为 -1，selection 为 null。点击单元格后才产生选中。
+      activeR: -1,
+      activeC: -1,
+      selection: null,
       callbacks: callbacks || {},
       // DOM 引用
       root: null, gridEl: null, toolbarEl: null,
       isSelecting: false
     };
+    mountedInstances.push(ctx);
 
     ctx.root = el("div", "rf-table-edit");
     host.appendChild(ctx.root);
 
-    // 标题
+    // 标题（带「放大」按钮：仅当宿主提供 onExpand 时显示，弹窗内的实例不再嵌套）
+    var titleRow = el("div", "rf-table-edit__titlerow");
     var titleInput = textInput(ctx.title, function (v) {
       ctx.title = v;
       emitChange(ctx);
     });
     titleInput.placeholder = "表格标题（可空）";
     titleInput.className += " rf-table-edit__title";
-    ctx.root.appendChild(titleInput);
+    ctx.titleInput = titleInput;
+    titleRow.appendChild(titleInput);
+    if (ctx.callbacks.onExpand) {
+      var expandBtn = document.createElement("button");
+      expandBtn.type = "button";
+      expandBtn.className = "rf-btn rf-btn--ghost rf-table-edit__expand";
+      expandBtn.textContent = "⛶";
+      expandBtn.title = "放大编辑";
+      expandBtn.addEventListener("click", function () { ctx.callbacks.onExpand(); });
+      titleRow.appendChild(expandBtn);
+    }
+    ctx.root.appendChild(titleRow);
 
     // 工具栏
     ctx.toolbarEl = buildToolbar(ctx);
@@ -78,6 +95,8 @@
     });
     unitInput.placeholder = "整表单位（如：万元）";
     unitInput.style.maxWidth = "140px";
+    ctx.capInput = capInput;
+    ctx.unitInput = unitInput;
     capRow.appendChild(capInput);
     capRow.appendChild(unitInput);
     ctx.root.appendChild(capRow);
@@ -87,7 +106,29 @@
 
     return {
       destroy: function () {
+        var i = mountedInstances.indexOf(ctx);
+        if (i >= 0) mountedInstances.splice(i, 1);
         if (ctx.root && ctx.root.parentNode) ctx.root.parentNode.removeChild(ctx.root);
+      },
+      // 用一份新的 blk 刷新本实例（标题/表注/单位 + 网格），不重建宿主表单。
+      // 供「放大编辑」弹窗关闭后，让内联实例同步弹窗里所做的修改。
+      reload: function (newBlk) {
+        ctx.blk = newBlk;
+        ctx.spec = clone(newBlk.spec);
+        ctx.title = newBlk.title || "";
+        ctx.caption = newBlk.caption || "";
+        // active/selection 可能越界（行列被删），夹到合法范围；若原本无选中则保持无选中
+        var maxR = ctx.spec.rows.length - 1;
+        var maxC = ctx.spec.columns.length - 1;
+        if (ctx.activeR >= 0 && ctx.activeC >= 0) {
+          ctx.activeR = Math.max(0, Math.min(ctx.activeR, maxR));
+          ctx.activeC = Math.max(0, Math.min(ctx.activeC, maxC));
+          ctx.selection = { r0: ctx.activeR, c0: ctx.activeC, r1: ctx.activeR, c1: ctx.activeC };
+        }
+        if (ctx.titleInput) ctx.titleInput.value = ctx.title;
+        if (ctx.capInput) ctx.capInput.value = ctx.caption;
+        if (ctx.unitInput) ctx.unitInput.value = ctx.spec.unit || "";
+        renderGrid(ctx);
       }
     };
   }
@@ -324,6 +365,7 @@
       if (!td) return;
       var r = +td.dataset.r, c = +td.dataset.c;
       if (r < 0) return;          // 表头行点击：只激活，不进选区
+      clearOtherSelections(ctx);  // 点击本表格时，清除其它表格的选中状态
       mouseDownAt = { r: r, c: c };
       ctx.activeR = r; ctx.activeC = c;
       ctx.selection = { r0: r, c0: c, r1: r, c1: c };
@@ -440,7 +482,9 @@
           emitChange(ctx, { structural: true });
           renderGrid(ctx);
         } else {
-          fillFromCell(ctx, ctx.activeR, ctx.activeC, result.spec);
+          var fr = ctx.activeR < 0 ? 0 : ctx.activeR;
+          var fc = ctx.activeC < 0 ? 0 : ctx.activeC;
+          fillFromCell(ctx, fr, fc, result.spec);
           emitChange(ctx, { structural: true });
           renderGrid(ctx);
         }
@@ -516,11 +560,29 @@
     var sel = ctx.selection;
     var tds = ctx.gridEl.querySelectorAll(".rf-table-edit__td");
     Array.prototype.forEach.call(tds, function (td) {
+      if (!sel) {
+        td.classList.remove("is-selected");
+        td.classList.remove("is-active");
+        return;
+      }
       var r = +td.dataset.r, c = +td.dataset.c;
       var inside = r >= sel.r0 && r <= sel.r1 && c >= sel.c0 && c <= sel.c1;
       var isActive = r === ctx.activeR && c === ctx.activeC;
       td.classList.toggle("is-selected", inside && !isActive);
       td.classList.toggle("is-active", isActive);
+    });
+  }
+
+  // 清除其它表格实例的选中状态（点击某个表格时调用）
+  function clearOtherSelections(current) {
+    mountedInstances.forEach(function (ctx) {
+      if (ctx === current) return;
+      if (!ctx.selection && ctx.activeR < 0) return;
+      ctx.activeR = -1;
+      ctx.activeC = -1;
+      ctx.selection = null;
+      ctx.isSelecting = false;
+      if (ctx.gridEl) highlightSelection(ctx);
     });
   }
 
@@ -577,6 +639,7 @@
 
   function forSelectedCells(ctx, fn) {
     var s = ctx.selection;
+    if (!s) return;
     for (var r = s.r0; r <= s.r1; r++) {
       for (var c = s.c0; c <= s.c1; c++) {
         var cell = ctx.spec.rows[r] && ctx.spec.rows[r][c];
@@ -591,6 +654,7 @@
 
   // 行列增删 — 必须修正穿越的合并区
   function insertRow(ctx, where) {
+    if (ctx.activeR < 0) return;
     var pos = where === "above" ? ctx.activeR : ctx.activeR + 1;
     var newRow = ctx.spec.columns.map(function () { return schema.emptyCell(); });
     ctx.spec.rows.splice(pos, 0, newRow);
@@ -607,6 +671,7 @@
   }
 
   function insertCol(ctx, where) {
+    if (ctx.activeC < 0) return;
     var pos = where === "left" ? ctx.activeC : ctx.activeC + 1;
     ctx.spec.columns.splice(pos, 0, {
       key: "c" + ctx.spec.columns.length, header: "", width: "auto", align: "left", format: null
@@ -627,6 +692,7 @@
   }
 
   function deleteRow(ctx) {
+    if (ctx.activeR < 0) return;
     if (ctx.spec.rows.length <= 1) return;
     ctx.spec.rows.splice(ctx.activeR, 1);
     if (ctx.activeR >= ctx.spec.rows.length) ctx.activeR = ctx.spec.rows.length - 1;
@@ -634,6 +700,7 @@
   }
 
   function deleteCol(ctx) {
+    if (ctx.activeC < 0) return;
     if (ctx.spec.columns.length <= 1) return;
     ctx.spec.columns.splice(ctx.activeC, 1);
     ctx.spec.rows.forEach(function (row) { row.splice(ctx.activeC, 1); });
@@ -643,6 +710,7 @@
 
   function mergeSelection(ctx) {
     var s = ctx.selection;
+    if (!s) return;
     if (s.r0 === s.r1 && s.c0 === s.c1) return;     // 单格无须合并
     var main = ctx.spec.rows[s.r0][s.c0];
     main.rowspan = s.r1 - s.r0 + 1;
@@ -661,6 +729,7 @@
   }
 
   function splitActive(ctx) {
+    if (ctx.activeR < 0 || ctx.activeC < 0) return;
     var cell = ctx.spec.rows[ctx.activeR][ctx.activeC];
     if (!cell || (cell.rowspan === 1 && cell.colspan === 1)) return;
     var rs = cell.rowspan, cs = cell.colspan;
@@ -680,6 +749,7 @@
   }
 
   function toggleHeaderRow(ctx) {
+    if (ctx.activeR < 0) return;
     // 把活动行设为/取消"表头行"——通过调整 headerRows 实现
     // 简化：当 activeR === headerRows-1 时取消最近一层；否则把 headerRows 设为 activeR
     if (ctx.activeR === 0) {

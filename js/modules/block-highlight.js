@@ -39,7 +39,13 @@
   // Tags whose clicks should NOT trigger selection (editing/navigation).
   // closest() walks up from event.target, so this catches clicks on the
   // controls themselves and any inner spans they might have.
-  var IGNORE_SEL = "input,textarea,button,select,a,label";
+  //
+  // [contenteditable] covers the table editor's editable cells
+  // (<td/th contenteditable="true">): clicking a cell to edit it is an
+  // editing interaction like focusing an input — it must NOT be treated
+  // as a block-selection click, otherwise every cell click re-anchors the
+  // panes via scrollBlockToTopThird and the editor "jumps".
+  var IGNORE_SEL = "input,textarea,button,select,a,label,[contenteditable='true']";
 
   // null when nothing selected.
   var selected = null;

@@ -264,16 +264,67 @@
       box.appendChild(el("div", "rf-empty", "（table-editor.js 未加载）"));
       return;
     }
-    window.RF_TableEditor.mount(box, blk, secIdx, blkIdx, {
-      onChange: function (newBlk, opts) {
+    var inst = window.RF_TableEditor.mount(box, blk, secIdx, blkIdx, {
+      onChange: function (newBlk /*, opts */) {
         // 把表格的 spec/title/caption 整体回写。
-        // structural=true 会触发 editor 重建表单 —— 但 table-editor 内部已自管 DOM，
-        // 重建会再调一次 mount，table-editor 接受新 blk 并重渲网格。
+        //
+        // 这里【永远】走非 structural patch —— 即便是行/列/合并等结构性表格
+        // 操作。table-editor 内部已通过 renderGrid 自管整张网格的 DOM，表单里
+        // 这个 block 的位置和形态都不变，无需重建表单。
+        //
+        // 若透传 structural=true，commit() 会 render() 整个编辑区：当前表格连同
+        // 页面上【其它所有表格】都会被销毁重挂。重挂出来的新实例 activeR/activeC
+        // 默认 0/0，于是每个表格的首个单元格都被点亮成 is-active —— 这正是
+        // “点一个单元格，焦点跳到别的表格首格” 的根因。去掉 structural 即可保住
+        // 焦点、且不干扰其它表格。预览侧仍会在每次 state:report 时重渲，不受影响。
         patchBlock(secIdx, blkIdx, {
           title: newBlk.title,
           caption: newBlk.caption,
           spec: newBlk.spec
-        }, opts);
+        });
+      },
+      // 「放大编辑」：打开弹窗，里面挂一个更大的同 block 表格编辑器。
+      onExpand: function () {
+        openTableFullscreen(secIdx, blkIdx, inst);
+      }
+    });
+  }
+
+  // 在大弹窗中独立编辑表格。弹窗里挂第二个 table-editor 实例，绑定同一个 block，
+  // 同样走非 structural 的 patchBlock 回写（commit 内 selfCommitting 守卫，不重渲表单、
+  // 不丢焦点、不影响其它表格）。关闭后用最新的 block 调 inst.reload()，让内联实例
+  // 同步弹窗里所做的修改。
+  function openTableFullscreen(secIdx, blkIdx, inlineInst) {
+    function currentBlk() {
+      var rep = state.get("report");
+      return rep && rep.sections[secIdx] && rep.sections[secIdx].blocks[blkIdx];
+    }
+    var blk = currentBlk();
+    if (!blk) return;
+
+    var host = el("div", "rf-table-fullscreen");
+    var bigInst = window.RF_TableEditor.mount(host, blk, secIdx, blkIdx, {
+      onChange: function (newBlk) {
+        patchBlock(secIdx, blkIdx, {
+          title: newBlk.title,
+          caption: newBlk.caption,
+          spec: newBlk.spec
+        });
+      }
+      // 不传 onExpand：弹窗内不再显示「放大」按钮，避免自我嵌套。
+    });
+
+    window.RF_UI.modal.open({
+      title: "编辑表格",
+      bodyEl: host,
+      size: "lg",
+      onClose: function () {
+        if (bigInst) bigInst.destroy();
+        // 把弹窗里编辑后的最新内容同步回内联实例。
+        var latest = currentBlk();
+        if (latest && inlineInst && typeof inlineInst.reload === "function") {
+          inlineInst.reload(latest);
+        }
       }
     });
   }

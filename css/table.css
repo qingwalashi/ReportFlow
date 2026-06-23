@@ -15,6 +15,40 @@
   font-weight: 600;
 }
 
+/* 标题行：标题输入框 + 放大按钮（按钮浮在输入框右侧，输入框留出内边距） */
+.rf-table-edit__titlerow {
+  position: relative;
+}
+.rf-table-edit__titlerow .rf-table-edit__title {
+  width: 100%;
+  padding-right: 36px;
+}
+.rf-table-edit__expand {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  padding: 2px 8px !important;
+  font-size: 14px;
+  line-height: 1;
+  opacity: .55;
+  background: transparent;
+  border-color: transparent;
+}
+.rf-table-edit__expand:hover {
+  opacity: 1;
+  background: var(--rf-bg-soft);
+  border-color: var(--rf-line);
+}
+
+/* 放大编辑弹窗里的表格容器：让网格充分利用弹窗空间 */
+.rf-table-fullscreen {
+  min-width: min(820px, 90vw);
+}
+.rf-table-fullscreen .rf-table-edit__grid-wrap {
+  max-height: 62vh;
+}
+
 /* ---------- 工具栏 ---------- */
 
 .rf-table-edit__toolbar {

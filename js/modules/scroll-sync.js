@@ -1,6 +1,11 @@
 /**
- * scroll-sync.js — bidirectional scroll synchronization between the
- * structured editor pane (.rf-edit-scroll) and the preview iframe.
+ * scroll-sync.js — one-directional scroll synchronization: the preview
+ * iframe drives the structured editor pane (.rf-edit-scroll).
+ *
+ * Direction
+ *  - KEEP:   preview scroll -> editor follows.
+ *  - REMOVE: editor scroll -> preview (no listener on .rf-edit-scroll),
+ *            so scrolling the editor never moves the preview.
  *
  * Strategy
  *  - Granularity: section. report.sections is an ordered array; both
@@ -55,10 +60,10 @@
   var boundDoc = null;
 
   function init() {
-    var editScroll = document.querySelector(EDIT_SCROLL_SEL);
-    if (!editScroll) return;
-    editScroll.addEventListener("scroll", onEditorScroll, { passive: true });
-
+    // One-directional sync: preview scroll drives the structured editor.
+    // The editor->preview direction is intentionally NOT wired (no scroll
+    // listener on .rf-edit-scroll), so scrolling the editor never moves
+    // the preview.
     bus.on("preview:rendered", bindPreviewIfNeeded);
     bindPreviewIfNeeded();
   }
@@ -75,12 +80,6 @@
     doc.addEventListener("scroll", onPreviewScroll, { passive: true });
   }
 
-  function onEditorScroll() {
-    if (lockSide === "editor") return;
-    if (editorHasFocusedInput()) return;
-    schedule(function () { syncFrom("editor"); });
-  }
-
   function onPreviewScroll() {
     if (lockSide === "preview") return;
     schedule(function () { syncFrom("preview"); });
@@ -93,15 +92,6 @@
       rafPending = false;
       try { fn(); } catch (e) { /* swallow — never break user scrolling */ }
     });
-  }
-
-  function editorHasFocusedInput() {
-    var ae = document.activeElement;
-    if (!ae) return false;
-    var tag = ae.tagName;
-    if (tag !== "INPUT" && tag !== "TEXTAREA") return false;
-    var editScroll = document.querySelector(EDIT_SCROLL_SEL);
-    return !!(editScroll && editScroll.contains(ae));
   }
 
   function syncFrom(side) {
