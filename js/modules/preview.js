@@ -204,6 +204,10 @@
         return window.RF_TableFormat
           ? window.RF_TableFormat.formatCell(value, format)
           : String(value == null ? "" : value);
+      },
+      footerText: function () {
+        var cfg = window.RF_ConfigManager && window.RF_ConfigManager.getReport();
+        return (cfg && cfg.showFooter && cfg.footerText) || "";
       }
     };
   }

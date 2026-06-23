@@ -48,9 +48,8 @@
     });
 
     // ===== Footer =====
-    var foot = h(container, "div", "rf-doc-footer");
-    foot.textContent = "—— 本报告由 ReportFlow 生成 ——";
-  }
+    var footText = ctx.footerText && ctx.footerText();
+    if (footText) h(container, "div", "rf-doc-footer", footText);
 
   function renderBlock(blk, host, ctx) {
     if (!blk || !blk.type) return;

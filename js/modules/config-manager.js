@@ -66,6 +66,11 @@
     corsProxy:   ""
   };
 
+  var REPORT_DEFAULTS = {
+    showFooter:   true,
+    footerText:   "—— 本报告由 ReportFlow 生成 ——"
+  };
+
   // Preset thresholds for the "最大生成长度" dropdown. Covers short replies up
   // to long reasoning outputs; chosen as common power-of-two checkpoints so
   // users don't have to think about exact token counts.
@@ -83,6 +88,11 @@
     var cfg = saved || DEFAULTS;
     state.set("config.llm", cfg);
 
+    // Load report config.
+    var reportSaved = storage.get("config", "report", null);
+    var reportCfg = reportSaved || REPORT_DEFAULTS;
+    state.set("config.report", reportCfg);
+
     var btn = document.getElementById("rf-btn-settings");
     if (btn) btn.addEventListener("click", openModal);
   }
@@ -93,6 +103,16 @@
     state.set("config.llm", cfg);
     storage.set("config", "llm", cfg);
     bus.emit("config:saved", cfg);
+  }
+
+  function getReport() { return state.get("config.report") || REPORT_DEFAULTS; }
+
+  function saveReport(cfg) {
+    state.set("config.report", cfg);
+    storage.set("config", "report", cfg);
+    bus.emit("config:report:saved", cfg);
+    // Footer text/visibility affects the rendered output — force a re-render.
+    bus.emit("preview:force", {});
   }
 
   function openModal() {
@@ -147,6 +167,45 @@
     body.appendChild(field("CORS 代理 URL（可选）", corsProxy,
       "若勾上面带 ⚠ 的预设、或浏览器直连失败时填写。常见格式末尾为 ?url=，客户端会把真实 API URL 编码后追加。⚠ 不要把真实密钥发给陌生公共代理。"));
 
+    // ----- 报告设置 -----
+    var reportDiv = document.createElement("div");
+    reportDiv.style.cssText = "margin-top:20px;padding-top:16px;border-top:1px solid var(--rf-line)";
+    var reportTitle = document.createElement("div");
+    reportTitle.className = "rf-field__label";
+    reportTitle.style.cssText = "font-size:13px;font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--rf-text-muted)";
+    reportTitle.textContent = "报告设置";
+    reportDiv.appendChild(reportTitle);
+
+    var reportCfg = Object.assign({}, REPORT_DEFAULTS, getReport());
+    var showFooterCheck = document.createElement("input");
+    showFooterCheck.type = "checkbox";
+    showFooterCheck.className = "rf-checkbox";
+    showFooterCheck.checked = reportCfg.showFooter;
+    var showFooterWrap = document.createElement("label");
+    showFooterWrap.style.cssText = "display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px";
+    showFooterWrap.appendChild(showFooterCheck);
+    showFooterWrap.appendChild(document.createTextNode("显示底部生成标识"));
+    reportDiv.appendChild(showFooterWrap);
+
+    var footerTextInp = document.createElement("input");
+    footerTextInp.type = "text";
+    footerTextInp.className = "rf-input";
+    footerTextInp.style.marginTop = "8px";
+    footerTextInp.value = reportCfg.footerText;
+    footerTextInp.placeholder = "—— 本报告由 ReportFlow 生成 ——";
+    reportDiv.appendChild(footerTextInp);
+    var footerHint = document.createElement("span");
+    footerHint.className = "rf-field__hint";
+    footerHint.style.cssText = "display:block;margin-top:4px";
+    footerHint.textContent = "显示在每页报告底部的文字。取消勾选则不显示。导出（PDF/PNG/HTML）同步生效。";
+    reportDiv.appendChild(footerHint);
+    // Toggle disabled state
+    function syncFooterDisabled() { footerTextInp.disabled = !showFooterCheck.checked; }
+    showFooterCheck.addEventListener("change", syncFooterDisabled);
+    syncFooterDisabled();
+
+    body.appendChild(reportDiv);
+
     // Test connection result
     var testBox = document.createElement("div");
     testBox.style.cssText = "margin-top:6px;font-size:12px;color:var(--rf-text-muted);min-height:18px;";
@@ -176,7 +235,7 @@
     foot.appendChild(rightFoot);
 
     var modal = window.RF_UI.modal.open({
-      title: "大模型设置",
+      title: "设置",
       bodyEl: body,
       footerEl: foot,
       size: "lg"
@@ -206,6 +265,9 @@
       rps.value = DEFAULTS.rps;
       corsProxy.value = "";
       hintBox.textContent = (PRESETS.find(function (p) { return p.id === DEFAULTS.preset; }) || {}).hint || "";
+      showFooterCheck.checked = REPORT_DEFAULTS.showFooter;
+      footerTextInp.value = REPORT_DEFAULTS.footerText;
+      syncFooterDisabled();
     });
 
     function gather() {
@@ -268,6 +330,10 @@
         return;
       }
       save(c);
+      saveReport({
+        showFooter: showFooterCheck.checked,
+        footerText: footerTextInp.value.trim() || REPORT_DEFAULTS.footerText
+      });
       window.RF_UI.toast.ok("配置已保存");
       modal.close();
     });
@@ -370,5 +436,5 @@
     return s;
   }
 
-  window.RF_ConfigManager = { init: init, get: get, save: save, openModal: openModal };
+  window.RF_ConfigManager = { init: init, get: get, save: save, getReport: getReport, saveReport: saveReport, openModal: openModal };
 })();

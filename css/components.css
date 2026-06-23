@@ -123,6 +123,14 @@
 
 .rf-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
+/* Checkbox in the settings modal (报告设置 → 显示底部生成标识) */
+.rf-checkbox {
+  width: 15px; height: 15px;
+  accent-color: var(--rf-accent);
+  cursor: pointer;
+  margin: 0;
+}
+
 /* ===== Modal =====
    Modal title gets the display serif — a quiet earned moment. */
 .rf-modal-root[hidden] { display: none; }
