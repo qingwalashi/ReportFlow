@@ -225,6 +225,9 @@
                 title="请先在文本框中选中要改写的内容" disabled>
           <span class="rf-icon">✎</span><span>AI 改写选区</span>
         </button>
+        <button class="rf-btn rf-btn--ghost" id="rf-btn-import-docx" title="从 Word 文档 (.docx) 导入文字和图片">
+          <span class="rf-icon">📄</span><span>导入 Word</span>
+        </button>
         <button class="rf-btn rf-btn--ghost" id="rf-btn-load-sample">载入示例</button>
         <button class="rf-btn rf-btn--ghost" id="rf-btn-clear-input">清空</button>
       </div>
@@ -307,6 +310,7 @@
   <!-- ============ 第三方依赖（vendored） ============ -->
   <script defer src="libs/echarts.min.js"></script>
   <script defer src="libs/jszip.min.js"></script>
+  <script defer src="libs/mammoth.browser.min.js"></script>
   <script defer src="libs/html2pdf.bundle.min.js"></script>
   <script defer src="libs/marked.min.js"></script>
 
@@ -328,6 +332,7 @@
   <script defer src="js/modules/template-registry.js"></script>
   <script defer src="js/modules/chart-adapter.js"></script>
   <script defer src="js/modules/image-manager.js"></script>
+  <script defer src="js/modules/docx-import.js"></script>
   <script defer src="js/modules/table-format.js"></script>
   <script defer src="js/modules/table-paste.js"></script>
   <script defer src="js/modules/table-editor.js"></script>

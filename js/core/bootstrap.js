@@ -57,6 +57,10 @@
     // ===== Buttons =====
     bindButton("rf-btn-parse",          onParse);
     bindButton("rf-btn-load-sample",    onLoadSample);
+    if (window.RF_DocxImport) {
+      window.RF_DocxImport.init();
+      bindButton("rf-btn-import-docx", function () { window.RF_DocxImport.openPicker(); });
+    }
     bindButton("rf-btn-clear-input",    onClearInput);
     bindButton("rf-btn-clear",          onClearReport);
     if (window.RF_InputRewrite) window.RF_InputRewrite.init();
