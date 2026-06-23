@@ -59,7 +59,7 @@
     ctx.root.appendChild(ctx.toolbarEl);
 
     // 粘贴提示
-    var hint = el("div", "rf-table-edit__paste-hint", "💡 在表格中按 Ctrl/Cmd+V 可整体替换或填入数据");
+    var hint = el("div", "rf-table-edit__paste-hint", "💡 单元格内按 Alt+Enter 换行；Ctrl/Cmd+V 粘贴整体替换或填入数据");
     ctx.root.appendChild(hint);
 
     // 网格
@@ -256,7 +256,7 @@
     html += '<tr class="rf-table-edit__header"><th class="rf-table-edit__rownum">表头</th>';
     spec.columns.forEach(function (c, ci) {
       html += '<th class="rf-table-edit__th" data-r="-1" data-c="' + ci + '" contenteditable="true" data-kind="header" style="' +
-        styleStr({ align: c.align }) + '">' + esc(c.header || "") + '</th>';
+        styleStr({ align: c.align }) + '">' + escMultiline(c.header || "") + '</th>';
     });
     html += '</tr>';
     html += '</thead>';
@@ -279,7 +279,7 @@
         var displayed = fmt.formatCell(cell.v, cell.format || (spec.columns[ci] && spec.columns[ci].format));
         html += '<td class="rf-table-edit__td" data-r="' + ri + '" data-c="' + ci + '"' +
           attrs + (st ? ' style="' + st + '"' : '') +
-          ' contenteditable="true">' + esc(displayed) + '</td>';
+          ' contenteditable="true">' + escMultiline(displayed) + '</td>';
       });
       html += '</tr>';
     });
@@ -376,7 +376,7 @@
       if (r === -1) {
         // 表头编辑
         ctx.spec.columns[c].header = raw;
-        td.textContent = raw;
+        td.innerHTML = escMultiline(raw);
         emitChange(ctx);
         return;
       }
@@ -385,9 +385,9 @@
       cell.v = parsed.value;
       // 自动 detected 不主动回写——避免每次都改用户的格式。仅当 cell.format 为空且 detected 存在时才接管。
       if (parsed.detected && !cell.format) cell.format = parsed.detected;
-      // 重新格式化显示
+      // 重新格式化显示（保留单元格内换行）
       var displayed = fmt.formatCell(cell.v, cell.format || (ctx.spec.columns[c] && ctx.spec.columns[c].format));
-      td.textContent = displayed;
+      td.innerHTML = escMultiline(displayed);
       emitChange(ctx);
     });
 
@@ -411,6 +411,10 @@
         e.preventDefault();
         td.blur();
         focusCell(ctx, r + 1, c);
+      } else if (e.key === "Enter" && (e.altKey || e.shiftKey)) {
+        // 单元格内换行（Alt+Enter 同 Excel，Shift+Enter 同通用编辑器）
+        e.preventDefault();
+        insertLineBreak(td);
       } else if (e.key === "Escape") {
         td.blur();
       } else if (e.key === "ArrowUp" && (e.metaKey || e.ctrlKey)) {
@@ -477,6 +481,35 @@
     var sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
+  }
+
+  /**
+   * 在 contentEditable 单元格的光标处插入一个换行（<br>）。
+   * 用于 Alt+Enter / Shift+Enter：单元格内多行编辑。
+   * 空单元格里插入 <br> 后再补一个，否则光标会停在 <br> 之前、视觉上看不到新行。
+   */
+  function insertLineBreak(td) {
+    var sel = window.getSelection();
+    var br = document.createElement("br");
+    if (!sel || !sel.rangeCount) {
+      td.appendChild(br);
+    } else {
+      var range = sel.getRangeAt(0);
+      if (!td.contains(range.commonAncestorContainer)) {
+        td.appendChild(br);
+      } else {
+        range.deleteContents();
+        range.insertNode(br);
+        range.setStartAfter(br);
+        range.setEndAfter(br);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }
+    // 空单元格末尾补一个 <br> 撑高，避免光标停在不可见位置
+    if (!td.textContent && td.querySelectorAll("br").length < 2) {
+      td.appendChild(document.createElement("br"));
+    }
   }
 
   function highlightSelection(ctx) {
@@ -717,6 +750,11 @@
   function esc(s) {
     return String(s == null ? "" : s)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // 单元格内换行：先转义再把 \n 渲染成 <br>，复用 table-format 的实现保持一致。
+  function escMultiline(s) {
+    return fmt.escMultiline(s);
   }
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }

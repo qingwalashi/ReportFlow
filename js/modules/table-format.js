@@ -130,7 +130,8 @@
   window.RF_TableFormat = {
     formatCell: formatCell,
     parseCell:  parseCell,
-    renderTableHtml: renderTableHtml
+    renderTableHtml: renderTableHtml,
+    escMultiline: escMultiline
   };
 
   /**
@@ -159,7 +160,7 @@
     html += '<thead><tr>';
     columns.forEach(function (c) {
       var st = c.align ? ' style="text-align:' + c.align + '"' : '';
-      html += '<th' + st + '>' + esc(c.header || "") + '</th>';
+      html += '<th' + st + '>' + escMultiline(c.header || "") + '</th>';
     });
     html += '</tr>';
     // 多级表头（headerRows > 1）：把 rows[0..headerRows-2] 也作为 thead 行渲染
@@ -225,7 +226,7 @@
     var styleStr = composeCellStyle(cell, col);
     if (styleStr) attrs += ' style="' + styleStr + '"';
     var displayed = formatCell(cell.v, cell.format || (col && col.format));
-    return "<" + tag + attrs + ">" + esc(displayed) + "</" + tag + ">";
+    return "<" + tag + attrs + ">" + escMultiline(displayed) + "</" + tag + ">";
   }
 
   function composeCellStyle(cell, col) {
@@ -252,5 +253,14 @@
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+
+  /**
+   * 先 HTML 转义，再把换行符转成 <br>，使单元格内的多行文本能正确渲染。
+   * 与纯文本块 escapeHtml(...).replace(/\n/g, "<br>") 的约定一致。
+   * \r 顺带剔除，避免 \r\n 在渲染时产生多余空行。
+   */
+  function escMultiline(s) {
+    return esc(s).replace(/\r\n?/g, "\n").replace(/\n/g, "<br>");
   }
 })();

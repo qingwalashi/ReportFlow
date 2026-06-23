@@ -291,6 +291,22 @@
     var s = String(text).replace(/^﻿/, "").replace(/\r\n?/g, "\n");
     s = s.replace(/\n+$/, "");
     if (s === "") return null;
+
+    // 制表符分隔：按 RFC4180 风格解析，支持带引号的多行单元格。
+    // Excel/WPS/Sheets 复制含换行的单元格时，会用双引号包裹该字段并把 \n/\t 转义在内——
+    // 直接 split("\n") 会把一个多行单元格错拆成多行，所以制表符路径走逐字符解析。
+    if (s.indexOf("\t") >= 0) {
+      return buildSpec(parseDelimitedRows(s, "\t").map(function (row) {
+        return row.map(function (cellField) {
+          var raw = cellField.replace(/ /g, " ").trim();
+          return {
+            v: extractCellValue(raw),
+            rowspan: 1, colspan: 1, hidden: false, style: {}, format: detectFormat(raw)
+          };
+        });
+      }));
+    }
+
     var lines = s.split("\n");
     if (!lines.length) return null;
 
@@ -314,7 +330,16 @@
       });
     });
 
-    if (!grid.length) return null;
+    return buildSpec(grid);
+  }
+
+  /**
+   * 把二维 grid（每格已是 cell 对象）补齐成 table spec：第一行作表头，
+   * 其余作数据行；列数对齐到最长行；至少 1 行 1 列避免空表。
+   * 制表符路径与空格路径共用。
+   */
+  function buildSpec(grid) {
+    if (!grid || !grid.length) return null;
     var maxCols = 0;
     grid.forEach(function (r) { if (r.length > maxCols) maxCols = r.length; });
     if (!maxCols) return null;
@@ -351,6 +376,44 @@
       defaultAlign: "left",
       unit: ""
     };
+  }
+
+  /**
+   * RFC4180 风格的分隔文本解析：字段可用双引号包裹，字段内可含分隔符或换行，
+   * 双引号本身用 "" 转义。用于解析 Excel/WPS/Sheets 复制多行单元格时的 TSV。
+   *
+   * 仅在字段起始位置（前一字符是 delim / \n / 文本开头）才把 " 视作引用起点，
+   * 因此未引用字段里的字面引号（如 say "hi"）会原样保留，行为与 split 一致。
+   * @param {string} text  已统一为 \n 换行、去除行尾 \n 的文本
+   * @param {string} delim 单字符字段分隔符（"\t"）
+   * @returns {string[][]}
+   */
+  function parseDelimitedRows(text, delim) {
+    var rows = [], row = [], field = "";
+    var inQuotes = false;
+    var fieldStart = true;
+    var i = 0, n = text.length;
+    while (i < n) {
+      var ch = text.charAt(i);
+      if (inQuotes) {
+        if (ch === '"') {
+          if (text.charAt(i + 1) === '"') { field += '"'; i += 2; continue; }
+          inQuotes = false; i++;
+        } else {
+          field += ch; i++;
+        }
+      } else if (fieldStart && ch === '"') {
+        inQuotes = true; fieldStart = false; i++;
+      } else if (ch === delim) {
+        row.push(field); field = ""; fieldStart = true; i++;
+      } else if (ch === '\n') {
+        row.push(field); rows.push(row); row = []; field = ""; fieldStart = true; i++;
+      } else {
+        field += ch; fieldStart = false; i++;
+      }
+    }
+    if (field !== "" || row.length > 0) { row.push(field); rows.push(row); }
+    return rows;
   }
 
   window.RF_TablePaste = {

@@ -64,6 +64,7 @@
     bindButton("rf-btn-export-pdf",     function () { window.RF_ExportPdf.exportPdf(); });
     bindButton("rf-btn-export-html",    function () { window.RF_ExportHtml.exportHtml(); });
     bindButton("rf-btn-export-png",     function () { window.RF_ExportPng.exportPng(); });
+    bindButton("rf-btn-export-docx",    function () { window.RF_ExportDocx.exportDocx(); });
     bindButton("rf-btn-fullscreen-preview", toggleFullscreenPreview);
     bindButton("rf-btn-help",           openHelp);
 
