@@ -32,8 +32,9 @@
       position:fixed; inset:0; z-index:99999;
       display:flex; align-items:center; justify-content:center;
       background:linear-gradient(135deg,#f7f9fc 0%,#eaf1fb 60%,#dbe7f7 100%);
-      animation:rf-splash-fade .45s ease .95s forwards;
     }
+    /* 淡出由 JS 在「前端真正就绪」时触发（preview:rendered），不再用固定时间 */
+    .rf-splash.is-leaving{ animation:rf-splash-fade .45s ease forwards; }
     .rf-splash[hidden]{ display:none !important; }
     .rf-splash__inner{
       display:flex; flex-direction:column; align-items:center; gap:18px;
@@ -103,22 +104,55 @@
     </div>
   </div>
   <script>
-    // 动画结束后从 DOM 中移除，避免遗留节点拦截事件
+    // 启动画面在「前端真正就绪」时淡出：
+    //   就绪信号 = preview.js 渲染完首帧后发出的 RF_Bus 事件 "preview:rendered"
+    //   （iframe ready 仅代表空壳加载完，CSS/报告/图表尚未上屏，故不采用）。
+    // 同时保证最短展示时间，让入场动画完整播放；并设兜底超时，避免事件丢失时卡住。
     (function(){
       var el = document.getElementById('rf-splash');
       if(!el) return;
-      var done = false;
-      var remove = function(){
+      var START = (window.performance && performance.now) ? performance.now() : 0;
+      var MIN_MS = 900;     // 最短展示，入场动画完整播放
+      var FALLBACK_MS = 6000; // 兜底：即使从未就绪也不长期遮挡
+      var done = false, leaving = false;
+
+      var unmount = function(){
         if(done) return; done = true;
         el.setAttribute('hidden','');
-        // 下一帧再卸载，给 CSS 收尾时间
         setTimeout(function(){ el.parentNode && el.parentNode.removeChild(el); }, 50);
       };
-      el.addEventListener('animationend', function(e){
-        if(e.animationName === 'rf-splash-fade') remove();
-      });
-      // 兜底：1.8s 后强制移除（即使动画事件丢失）
-      setTimeout(remove, 1800);
+      var startLeave = function(){
+        if(leaving) return; leaving = true;
+        el.classList.add('is-leaving');
+        // 动画结束后卸载；并设短兜底以防 animationend 丢失
+        el.addEventListener('animationend', function(e){
+          if(e.animationName === 'rf-splash-fade') unmount();
+        });
+        setTimeout(unmount, 700);
+      };
+      var requestLeave = function(){
+        var now = (window.performance && performance.now) ? performance.now() : MIN_MS;
+        var waited = now - START;
+        if(waited >= MIN_MS) startLeave();
+        else setTimeout(startLeave, MIN_MS - waited);
+      };
+
+      // 主信号：预览首帧渲染完成 = 前端完全加载
+      function bindReady(){
+        if(window.RF_Bus && window.RF_Bus.once){
+          window.RF_Bus.once('preview:rendered', requestLeave);
+          return true;
+        }
+        return false;
+      }
+      if(!bindReady()){
+        // 模块脚本是 defer，可能晚于本内联脚本就绪：轮询挂载
+        var tries = 0, t = setInterval(function(){
+          if(bindReady() || ++tries > 200){ clearInterval(t); }
+        }, 30);
+      }
+      // 兜底：无论是否收到就绪事件，超时后强制淡出
+      setTimeout(requestLeave, FALLBACK_MS);
     })();
   </script>
   <header class="rf-topbar">
@@ -350,6 +384,7 @@
   <script defer src="js/modules/parser.js"></script>
   <script defer src="js/modules/parse-progress.js"></script>
   <script defer src="js/modules/history.js"></script>
+  <script defer src="js/modules/export-css-inline.js"></script>
   <script defer src="js/modules/exporter-zip.js"></script>
   <script defer src="js/modules/exporter-pdf.js"></script>
   <script defer src="js/modules/exporter-html.js"></script>
@@ -362,6 +397,7 @@
   <script defer src="templates/formal-gov/render.js"></script>
   <script defer src="templates/mono-print/render.js"></script>
   <script defer src="templates/tech-minimal/render.js"></script>
+  <script defer src="templates/supercomputing/render.js"></script>
 
   <!-- ============ 入口（最后） ============ -->
   <script defer src="js/core/pwa-register.js"></script>

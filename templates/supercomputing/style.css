@@ -1,0 +1,352 @@
+/* ============================================================================
+   Template: supercomputing — 超算中心主题
+   设计基调：浅色蓝色科技风 + 毛玻璃
+     · 冷调蓝白底 (#F4F8FD) + 深蓝石板字 (#16202E)
+     · 电光蓝强调 (#2563EB) + 天空蓝 (#0EA5E9)，克制使用
+     · 半透明磨砂卡片 backdrop-filter blur，底层蓝色光晕作折射衬底
+   Hero：实景照片 + 蓝调玻璃蒙版，标题压在蒙版之上
+   ============================================================================ */
+
+.rf-tpl-supercomputing {
+  /* —— 配色 token（浅色蓝）—— */
+  --tpl-bg:        #f4f8fd;   /* 冷调蓝白 */
+  --tpl-ink:       #16202e;   /* 深蓝石板正文 */
+  --tpl-ink-soft:  #3c4858;   /* 次级文字 */
+  --tpl-muted:     #7a869a;   /* 辅助/说明 */
+  --tpl-line:      #dce6f5;   /* 蓝调发丝线 */
+  --tpl-accent:    #2563eb;   /* 电光蓝 */
+  --tpl-accent-2:  #0ea5e9;   /* 天空蓝 */
+
+  /* —— 毛玻璃材质 —— */
+  --tpl-glass:        rgba(255, 255, 255, 0.55);   /* 磨砂面 */
+  --tpl-glass-strong: rgba(255, 255, 255, 0.72);   /* 较实的磨砂面 */
+  --tpl-glass-line:   rgba(255, 255, 255, 0.65);   /* 高光描边 */
+  --tpl-blur:         saturate(150%) blur(14px);
+
+  /* —— 头图（替换这里即可换照片）——
+     默认用本文件夹的 header.svg 占位；
+     换成你的照片：把文件命名为 header.jpg 放到同目录，再改成 url("header.jpg") */
+  --tpl-header-image: url("header.jpg");
+
+  /* —— 蒙版（蓝调玻璃，适配任意照片，可独立调节）——
+     左下深蓝、向右上渐隐 + 底部额外压暗，保证标题/署名区始终可读 */
+  --tpl-scrim:
+    linear-gradient(
+      to top,
+      rgba(7, 17, 35, 0.78) 0%,
+      rgba(7, 17, 35, 0.20) 42%,
+      rgba(7, 17, 35, 0.04) 100%),
+    linear-gradient(
+      105deg,
+      rgba(9, 21, 43, 0.88) 0%,
+      rgba(11, 28, 56, 0.66) 42%,
+      rgba(13, 35, 70, 0.28) 76%,
+      rgba(15, 42, 84, 0.12) 100%);
+
+  background: var(--tpl-bg);
+  color: var(--tpl-ink);
+  font-family: "Inter", "PingFang SC", "SF Pro Text", "Microsoft YaHei", sans-serif;
+  font-size: 15px;
+  line-height: 1.72;
+  padding-bottom: 64px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 底层蓝色 ambient 光晕 —— 给毛玻璃提供折射衬底 */
+.rf-tpl-supercomputing::before {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(620px 460px at 12% -6%,  rgba(37, 99, 235, 0.18), transparent 70%),
+    radial-gradient(560px 420px at 92% 8%,   rgba(14, 165, 233, 0.16), transparent 72%),
+    radial-gradient(700px 540px at 70% 104%, rgba(59, 130, 246, 0.12), transparent 70%),
+    var(--tpl-bg);
+  z-index: -1;
+}
+
+/* ===== Hero ================================================================ */
+.rf-tpl-supercomputing .rf-hero {
+  position: relative;
+  isolation: isolate;
+  min-height: 340px;
+  margin-bottom: 48px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0b1c38;          /* 照片加载前的兜底色（深蓝） */
+  border: 1px solid var(--tpl-glass-line);
+  box-shadow:
+    0 18px 48px -22px rgba(21, 54, 110, 0.55),
+    0 2px 0 rgba(255, 255, 255, 0.4) inset;
+}
+.rf-tpl-supercomputing .rf-hero__photo {
+  position: absolute; inset: 0;
+  background-image: var(--tpl-header-image);
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+}
+.rf-tpl-supercomputing .rf-hero__scrim {
+  position: absolute; inset: 0;
+  background: var(--tpl-scrim);
+  z-index: 1;
+}
+.rf-tpl-supercomputing .rf-hero__inner {
+  position: relative;
+  z-index: 2;
+  padding: 44px 48px 40px;
+  max-width: 760px;
+}
+
+/* 机构署名 */
+.rf-tpl-supercomputing .rf-hero__org {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 5px 14px 5px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  -webkit-backdrop-filter: var(--tpl-blur);
+  backdrop-filter: var(--tpl-blur);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.92);
+  margin-bottom: 22px;
+}
+.rf-tpl-supercomputing .rf-hero__dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--tpl-accent-2);
+  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.30), 0 0 12px rgba(14, 165, 233, 0.8);
+}
+
+.rf-tpl-supercomputing .rf-hero__title {
+  font-size: 34px;
+  font-weight: 680;
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  margin: 0 0 12px;
+  text-wrap: balance;
+}
+.rf-tpl-supercomputing .rf-hero__subtitle {
+  font-size: 16px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.82);
+  margin-bottom: 26px;
+  max-width: 56ch;
+}
+
+/* hero meta（撰写 / 日期 / 版本）*/
+.rf-tpl-supercomputing .rf-hero__byline {
+  display: flex; flex-wrap: wrap; gap: 28px;
+}
+.rf-tpl-supercomputing .rf-hero__meta {
+  display: flex; flex-direction: column; gap: 3px;
+}
+.rf-tpl-supercomputing .rf-hero__meta-key {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.58);
+}
+.rf-tpl-supercomputing .rf-hero__meta-val {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.94);
+  font-variant-numeric: tabular-nums;
+}
+
+.rf-tpl-supercomputing .rf-hero__tags {
+  margin-top: 24px;
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.rf-tpl-supercomputing .rf-tag {
+  font-size: 12px;
+  padding: 3px 11px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+/* ===== Body ================================================================ */
+.rf-tpl-supercomputing .rf-body {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 8px;
+}
+
+.rf-tpl-supercomputing .rf-section {
+  margin-bottom: 44px;
+  page-break-inside: avoid;
+}
+.rf-tpl-supercomputing .rf-section__heading {
+  font-size: 21px;
+  font-weight: 640;
+  letter-spacing: -0.005em;
+  color: var(--tpl-ink);
+  margin: 0 0 18px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--tpl-line);
+  position: relative;
+}
+.rf-tpl-supercomputing .rf-section__heading::after {
+  content: "";
+  position: absolute; left: 0; bottom: -1px;
+  width: 38px; height: 2px;
+  background: linear-gradient(90deg, var(--tpl-accent), var(--tpl-accent-2));
+}
+
+.rf-tpl-supercomputing .rf-block { margin-bottom: 18px; }
+
+/* 正文 */
+.rf-tpl-supercomputing .rf-text { color: var(--tpl-ink-soft); }
+.rf-tpl-supercomputing .rf-text p { margin: 0 0 12px; }
+.rf-tpl-supercomputing .rf-text strong { color: var(--tpl-ink); font-weight: 640; }
+.rf-tpl-supercomputing .rf-text a {
+  color: var(--tpl-accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(37, 99, 235, 0.35);
+}
+.rf-tpl-supercomputing .rf-text a:hover { border-bottom-color: var(--tpl-accent); }
+.rf-tpl-supercomputing .rf-text ul,
+.rf-tpl-supercomputing .rf-text ol { padding-left: 22px; margin: 8px 0 14px; }
+.rf-tpl-supercomputing .rf-text li { margin-bottom: 5px; }
+.rf-tpl-supercomputing .rf-text ul li::marker { color: var(--tpl-accent); }
+.rf-tpl-supercomputing .rf-text blockquote {
+  margin: 12px 0;
+  padding: 10px 16px;
+  border-left: 3px solid var(--tpl-accent);
+  background: var(--tpl-glass);
+  -webkit-backdrop-filter: var(--tpl-blur);
+  backdrop-filter: var(--tpl-blur);
+  color: var(--tpl-ink-soft);
+  border-radius: 0 8px 8px 0;
+}
+.rf-tpl-supercomputing .rf-text code {
+  background: rgba(37, 99, 235, 0.08);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  font-size: 90%;
+  color: var(--tpl-accent);
+}
+
+/* 图表卡片（毛玻璃） */
+.rf-tpl-supercomputing .rf-chart-card {
+  background: var(--tpl-glass-strong);
+  border: 1px solid var(--tpl-glass-line);
+  border-radius: 14px;
+  padding: 18px 20px 10px;
+  -webkit-backdrop-filter: var(--tpl-blur);
+  backdrop-filter: var(--tpl-blur);
+  box-shadow:
+    0 12px 32px -18px rgba(21, 54, 110, 0.40),
+    0 1px 0 rgba(255, 255, 255, 0.6) inset;
+}
+.rf-tpl-supercomputing .rf-chart-card__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tpl-ink);
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.rf-tpl-supercomputing .rf-chart-card__title::before {
+  content: "";
+  width: 6px; height: 6px; border-radius: 2px;
+  background: linear-gradient(135deg, var(--tpl-accent), var(--tpl-accent-2));
+}
+.rf-tpl-supercomputing .rf-chart-card__body { width: 100%; height: 320px; }
+
+/* 图片 */
+.rf-tpl-supercomputing .rf-img { margin: 14px 0; }
+.rf-tpl-supercomputing .rf-img img {
+  max-width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--tpl-line);
+  box-shadow: 0 10px 28px -18px rgba(21, 54, 110, 0.45);
+}
+.rf-tpl-supercomputing .rf-img__caption {
+  font-size: 12.5px;
+  color: var(--tpl-muted);
+  margin-top: 8px;
+  padding-left: 12px;
+  border-left: 2px solid var(--tpl-line);
+}
+
+/* 页脚 */
+.rf-tpl-supercomputing .rf-doc-footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--tpl-line);
+  font-size: 12.5px;
+  color: var(--tpl-muted);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+/* ===== Table（毛玻璃面 + 蓝调发丝线 + 渐变表头线）==================== */
+.rf-tpl-supercomputing .rf-tpl-supercomputing-table {
+  margin: 20px 0;
+  background: var(--tpl-glass);
+  border: 1px solid var(--tpl-glass-line);
+  border-radius: 14px;
+  padding: 16px 18px;
+  -webkit-backdrop-filter: var(--tpl-blur);
+  backdrop-filter: var(--tpl-blur);
+  box-shadow: 0 10px 28px -20px rgba(21, 54, 110, 0.40);
+}
+.rf-tpl-supercomputing .rf-table-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tpl-ink);
+  margin-bottom: 10px;
+}
+.rf-tpl-supercomputing .rf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  color: var(--tpl-ink);
+  font-variant-numeric: tabular-nums;
+}
+.rf-tpl-supercomputing .rf-table th,
+.rf-tpl-supercomputing .rf-table td {
+  padding: 10px 14px;
+  text-align: left;
+  border: none;
+  border-bottom: 1px solid var(--tpl-line);
+}
+.rf-tpl-supercomputing .rf-table thead th {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--tpl-accent);
+  border-bottom: 2px solid var(--tpl-accent);
+  background: rgba(37, 99, 235, 0.06);
+}
+.rf-tpl-supercomputing .rf-table tbody tr:hover td {
+  background: rgba(37, 99, 235, 0.06);
+}
+.rf-tpl-supercomputing .rf-table tfoot td {
+  border-top: 1px solid var(--tpl-line);
+  font-weight: 640;
+  color: var(--tpl-ink);
+}
+.rf-tpl-supercomputing .rf-table-caption {
+  font-size: 12px;
+  color: var(--tpl-muted);
+  margin-top: 8px;
+}
+
+/* ===== 响应式 ============================================================== */
+@media (max-width: 640px) {
+  .rf-tpl-supercomputing .rf-hero__inner { padding: 32px 24px 28px; }
+  .rf-tpl-supercomputing .rf-hero__title { font-size: 26px; }
+  .rf-tpl-supercomputing .rf-hero__byline { gap: 18px; }
+  .rf-tpl-supercomputing .rf-body { padding: 0 4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rf-tpl-supercomputing * { animation: none !important; transition: none !important; }
+}

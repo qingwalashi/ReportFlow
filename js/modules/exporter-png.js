@@ -50,10 +50,12 @@
     // Inline preview CSS, then layer the same export-specific overrides used
     // by the HTML exporter so the two outputs render identically.
     var styleEl = document.createElement("style");
-    styleEl.textContent = collectCssText(snap.doc) +
+    var rawCss = collectCssText(snap.doc);
+    var overrideCss =
       "\n/* png-export overrides — kept in sync with exporter-html.js */\n" +
       "#rf-png-host{margin:0;padding:0;min-height:100%;}" +
       "#rf-png-host #root{box-sizing:border-box;max-width:920px;margin:0 auto;padding:32px 36px;}";
+    styleEl.textContent = rawCss + overrideCss;
     host.appendChild(styleEl);
 
     var srcRoot = snap.doc.getElementById("root");
@@ -101,7 +103,11 @@
     document.body.appendChild(host);
     log.info("png: start");
 
-    return Promise.all(imgPromises).then(function () {
+    return Promise.all([
+      window.RF_ExportCss.inlineCssUrls(rawCss).then(function (css) {
+        styleEl.textContent = css + overrideCss;
+      })
+    ].concat(imgPromises)).then(function () {
       var opts = {
         // We don't actually emit a PDF — these options are forwarded by
         // html2pdf to its underlying html2canvas call.
@@ -145,19 +151,7 @@
   }
 
   function collectCssText(doc) {
-    var out = [];
-    Array.prototype.forEach.call(doc.querySelectorAll("style"), function (s) {
-      if (s.textContent) out.push(s.textContent);
-    });
-    Array.prototype.forEach.call(doc.styleSheets, function (sheet) {
-      try {
-        var rules = sheet.cssRules; if (!rules) return;
-        var buf = [];
-        for (var i = 0; i < rules.length; i++) buf.push(rules[i].cssText);
-        out.push(buf.join("\n"));
-      } catch (e) {}
-    });
-    return out.join("\n\n");
+    return window.RF_ExportCss.collectCssText(doc);
   }
 
   function triggerDownload(blob, filename) {

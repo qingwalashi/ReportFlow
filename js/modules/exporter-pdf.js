@@ -36,9 +36,12 @@
       "font-family:'PingFang SC','Microsoft YaHei',sans-serif"
     ].join(";");
 
-    // Inline the CSS gathered from the preview iframe.
+    // Inline the CSS gathered from the preview iframe. The url() assets it
+    // references (e.g. a template hero background) are inlined to data: URLs
+    // below so html2canvas reliably captures them regardless of base path.
     var styleEl = document.createElement("style");
-    styleEl.textContent = collectCssText(snap.doc);
+    var rawCss = collectCssText(snap.doc);
+    styleEl.textContent = rawCss;
     host.appendChild(styleEl);
 
     // Clone the rendered root and replace charts with SVG.
@@ -84,7 +87,11 @@
     document.body.appendChild(host);
     log.info("pdf: start");
 
-    return Promise.all(imgPromises).then(function () {
+    return Promise.all([
+      window.RF_ExportCss.inlineCssUrls(rawCss).then(function (css) {
+        styleEl.textContent = css;
+      })
+    ].concat(imgPromises)).then(function () {
       var opts = {
         margin: [12, 12, 14, 12],
         filename: safeFileName(report) + ".pdf",
@@ -119,19 +126,7 @@
   }
 
   function collectCssText(doc) {
-    var out = [];
-    Array.prototype.forEach.call(doc.querySelectorAll("style"), function (s) {
-      if (s.textContent) out.push(s.textContent);
-    });
-    Array.prototype.forEach.call(doc.styleSheets, function (sheet) {
-      try {
-        var rules = sheet.cssRules; if (!rules) return;
-        var buf = [];
-        for (var i = 0; i < rules.length; i++) buf.push(rules[i].cssText);
-        out.push(buf.join("\n"));
-      } catch (e) {}
-    });
-    return out.join("\n\n");
+    return window.RF_ExportCss.collectCssText(doc);
   }
 
   function safeFileName(report) {

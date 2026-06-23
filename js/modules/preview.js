@@ -226,6 +226,14 @@
     link.rel = "stylesheet";
     link.href = href;
     link.dataset.rfTpl = tplId;
+    // The chart containers get their size (e.g. height:320px) from this
+    // stylesheet. On the FIRST switch to a template the link loads async, so
+    // the initial doRender measures a 0-height container and echarts paints a
+    // blank chart ("有的时候模板切换，图表没有绘制出来"). Re-render once the CSS
+    // lands so charts are measured against the real, styled dimensions.
+    // onerror also re-renders so a missing stylesheet doesn't wedge us.
+    link.addEventListener("load", scheduleRender);
+    link.addEventListener("error", scheduleRender);
     doc.head.appendChild(link);
     attachedTemplateIds[tplId] = true;
   }

@@ -37,8 +37,9 @@
     return Promise.resolve()
       .then(function () { return collectAssets(report); })
       .then(function (assetMap) {
-        var html = buildExportHtml(snap, assetMap, report);
-        return packageZip(html, assetMap, report);
+        return buildExportHtml(snap, assetMap, report).then(function (html) {
+          return packageZip(html, assetMap, report);
+        });
       })
       .then(function (blob) {
         triggerDownload(blob, safeFileName(report) + ".zip");
@@ -75,7 +76,7 @@
     });
   }
 
-  /** Build the self-contained report.html string. */
+  /** Build the self-contained report.html string. Returns Promise<string>. */
   function buildExportHtml(snap, assetMap, report) {
     // 1) Get a clone of the rendered root so we can mutate without disturbing preview.
     var srcDoc = snap.doc;
@@ -138,52 +139,38 @@
 
     var meta = report.meta || {};
     var title = (meta.title || "ReportFlow 报告");
-    var html = [
-      "<!doctype html>",
-      "<html lang='zh-CN'><head><meta charset='utf-8'>",
-      "<meta name='viewport' content='width=device-width,initial-scale=1'>",
-      "<title>" + escapeHtml(title) + "</title>",
-      "<style>",
-      // 1) Inline ALL CSS gathered from the preview iframe first (base + template).
-      cssText,
-      // 2) Then our export-specific overrides — ordered last so they win
-      //    against any conflicting rules from the collected sheets.
-      //    Body fills the viewport (so any template background or page color
-      //    extends edge-to-edge), and a centered, max-width #root holds the
-      //    actual report content.
-      "html,body{margin:0;padding:0;min-height:100%;background:#fff;color:#1a1f2c;",
-      "font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:1.7;}",
-      "#root{box-sizing:border-box;max-width:920px;margin:0 auto;padding:32px 36px;}",
-      "</style>",
-      "</head><body class='" + escapeHtml(snap.bodyClass || "") + "'>",
-      "<div id='root' class='" + escapeHtml(rootClone.className || "") + "'>",
-      rootClone.innerHTML,
-      "</div>",
-      "</body></html>"
-    ].join("\n");
-    return html;
+    // Inline url() assets referenced from CSS (e.g. a template hero background)
+    // so report.html renders the background even without the dev server.
+    return window.RF_ExportCss.inlineCssUrls(cssText).then(function (inlinedCss) {
+      var html = [
+        "<!doctype html>",
+        "<html lang='zh-CN'><head><meta charset='utf-8'>",
+        "<meta name='viewport' content='width=device-width,initial-scale=1'>",
+        "<title>" + escapeHtml(title) + "</title>",
+        "<style>",
+        // 1) Inline ALL CSS gathered from the preview iframe first (base + template).
+        inlinedCss,
+        // 2) Then our export-specific overrides — ordered last so they win
+        //    against any conflicting rules from the collected sheets.
+        //    Body fills the viewport (so any template background or page color
+        //    extends edge-to-edge), and a centered, max-width #root holds the
+        //    actual report content.
+        "html,body{margin:0;padding:0;min-height:100%;background:#fff;color:#1a1f2c;",
+        "font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:1.7;}",
+        "#root{box-sizing:border-box;max-width:920px;margin:0 auto;padding:32px 36px;}",
+        "</style>",
+        "</head><body class='" + escapeHtml(snap.bodyClass || "") + "'>",
+        "<div id='root' class='" + escapeHtml(rootClone.className || "") + "'>",
+        rootClone.innerHTML,
+        "</div>",
+        "</body></html>"
+      ].join("\n");
+      return html;
+    });
   }
 
   function collectCssText(doc) {
-    var out = [];
-    // <style> tags
-    Array.prototype.forEach.call(doc.querySelectorAll("style"), function (s) {
-      if (s.textContent) out.push(s.textContent);
-    });
-    // <link rel="stylesheet"> resolved via cssRules (works on same-origin only;
-    // file:// usually OK, http(s) requires CORS-safe). Catch errors silently.
-    Array.prototype.forEach.call(doc.styleSheets, function (sheet) {
-      try {
-        var rules = sheet.cssRules;
-        if (!rules) return;
-        var buf = [];
-        for (var i = 0; i < rules.length; i++) buf.push(rules[i].cssText);
-        out.push(buf.join("\n"));
-      } catch (e) {
-        // Cross-origin or file:// without permission — skip
-      }
-    });
-    return out.join("\n\n");
+    return window.RF_ExportCss.collectCssText(doc);
   }
 
   function packageZip(html, assetMap, report) {

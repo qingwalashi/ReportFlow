@@ -29,7 +29,9 @@
 
     return collectAssetsAsDataUrls(report)
       .then(function (assetMap) {
-        var html = buildExportHtml(snap, assetMap, report);
+        return buildExportHtml(snap, assetMap, report);
+      })
+      .then(function (html) {
         var blob = new Blob([html], { type: "text/html;charset=utf-8" });
         triggerDownload(blob, safeFileName(report) + ".html");
         window.RF_UI.toast.ok("已导出 HTML");
@@ -66,7 +68,7 @@
     });
   }
 
-  /** Build the self-contained report.html string. */
+  /** Build the self-contained report.html string. Returns Promise<string>. */
   function buildExportHtml(snap, assetMap, report) {
     var srcDoc = snap.doc;
     var srcRoot = srcDoc.getElementById("root");
@@ -116,44 +118,33 @@
 
     var meta = report.meta || {};
     var title = (meta.title || "ReportFlow 报告");
-    var html = [
-      "<!doctype html>",
-      "<html lang='zh-CN'><head><meta charset='utf-8'>",
-      "<meta name='viewport' content='width=device-width,initial-scale=1'>",
-      "<title>" + escapeHtml(title) + "</title>",
-      "<style>",
-      cssText,
-      // Export-specific overrides — ordered last so they win over template CSS.
-      "html,body{margin:0;padding:0;min-height:100%;background:#fff;color:#1a1f2c;",
-      "font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:1.7;}",
-      "#root{box-sizing:border-box;max-width:920px;margin:0 auto;padding:32px 36px;}",
-      "</style>",
-      "</head><body class='" + escapeHtml(snap.bodyClass || "") + "'>",
-      "<div id='root' class='" + escapeHtml(rootClone.className || "") + "'>",
-      rootClone.innerHTML,
-      "</div>",
-      "</body></html>"
-    ].join("\n");
-    return html;
+    // Inline url() assets referenced from CSS (e.g. a template hero background)
+    // so the single file survives being moved off the dev server.
+    return window.RF_ExportCss.inlineCssUrls(cssText).then(function (inlinedCss) {
+      var html = [
+        "<!doctype html>",
+        "<html lang='zh-CN'><head><meta charset='utf-8'>",
+        "<meta name='viewport' content='width=device-width,initial-scale=1'>",
+        "<title>" + escapeHtml(title) + "</title>",
+        "<style>",
+        inlinedCss,
+        // Export-specific overrides — ordered last so they win over template CSS.
+        "html,body{margin:0;padding:0;min-height:100%;background:#fff;color:#1a1f2c;",
+        "font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:1.7;}",
+        "#root{box-sizing:border-box;max-width:920px;margin:0 auto;padding:32px 36px;}",
+        "</style>",
+        "</head><body class='" + escapeHtml(snap.bodyClass || "") + "'>",
+        "<div id='root' class='" + escapeHtml(rootClone.className || "") + "'>",
+        rootClone.innerHTML,
+        "</div>",
+        "</body></html>"
+      ].join("\n");
+      return html;
+    });
   }
 
   function collectCssText(doc) {
-    var out = [];
-    Array.prototype.forEach.call(doc.querySelectorAll("style"), function (s) {
-      if (s.textContent) out.push(s.textContent);
-    });
-    Array.prototype.forEach.call(doc.styleSheets, function (sheet) {
-      try {
-        var rules = sheet.cssRules;
-        if (!rules) return;
-        var buf = [];
-        for (var i = 0; i < rules.length; i++) buf.push(rules[i].cssText);
-        out.push(buf.join("\n"));
-      } catch (e) {
-        // Cross-origin stylesheet — skip silently.
-      }
-    });
-    return out.join("\n\n");
+    return window.RF_ExportCss.collectCssText(doc);
   }
 
   function blobToDataUrl(blob) {

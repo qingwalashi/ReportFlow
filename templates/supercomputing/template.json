@@ -1,0 +1,14 @@
+{
+  "id": "supercomputing",
+  "name": "超算中心",
+  "version": "1.0.0",
+  "author": "ReportFlow",
+  "description": "Codex 浅色风格：纸白底 + 石墨黑字 + 单一青色强调，头部带可替换的实景照片与渐变蒙版，适合宁波市人工智能超算中心的对外汇报。",
+  "stylesheet": "style.css",
+  "preview": "preview.png",
+  "capabilities": {
+    "charts": ["pie", "bar", "line"],
+    "images": true,
+    "pdfSafe": true
+  }
+}

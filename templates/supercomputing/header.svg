@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-label="宁波市人工智能超算中心">
+  <!--
+    占位头图 — 宁波市人工智能超算中心
+    替换方式：把你自己的照片放到本文件夹，命名为 header.jpg（或 header.png），
+    然后在 style.css 中把 --tpl-header-image 改为 url("header.jpg") 即可。
+    本 SVG 仅作为默认占位，渐变蒙版在 style.css 中，对任意照片都适用。
+  -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#13315f"/>
+      <stop offset="1" stop-color="#0a1a38"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0c1c3a"/>
+      <stop offset="1" stop-color="#06101f"/>
+    </linearGradient>
+    <linearGradient id="rack" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1e3a66"/>
+      <stop offset="1" stop-color="#122444"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <rect y="560" width="1600" height="340" fill="url(#floor)"/>
+
+  <!-- 机柜阵列，营造透视纵深 -->
+  <g opacity="0.96">
+    <!-- 左列 -->
+    <g>
+      <polygon points="120,300 360,340 360,720 120,760" fill="url(#rack)"/>
+      <polygon points="360,340 470,360 470,700 360,720" fill="#0c1c38"/>
+    </g>
+    <!-- 右列 -->
+    <g>
+      <polygon points="1480,300 1240,340 1240,720 1480,760" fill="url(#rack)"/>
+      <polygon points="1240,340 1130,360 1130,700 1240,720" fill="#0c1c38"/>
+    </g>
+  </g>
+
+  <!-- 机柜状态灯带 -->
+  <g>
+    <g fill="#38bdf8">
+      <rect x="150" y="360" width="180" height="6" rx="3" opacity="0.9"/>
+      <rect x="150" y="420" width="180" height="6" rx="3" opacity="0.6"/>
+      <rect x="150" y="480" width="180" height="6" rx="3" opacity="0.85"/>
+      <rect x="150" y="540" width="180" height="6" rx="3" opacity="0.5"/>
+      <rect x="150" y="600" width="180" height="6" rx="3" opacity="0.75"/>
+    </g>
+    <g fill="#3b82f6">
+      <rect x="150" y="390" width="180" height="4" rx="2" opacity="0.7"/>
+      <rect x="150" y="510" width="180" height="4" rx="2" opacity="0.7"/>
+      <rect x="150" y="570" width="180" height="4" rx="2" opacity="0.55"/>
+    </g>
+    <g fill="#38bdf8">
+      <rect x="1270" y="360" width="180" height="6" rx="3" opacity="0.85"/>
+      <rect x="1270" y="420" width="180" height="6" rx="3" opacity="0.55"/>
+      <rect x="1270" y="480" width="180" height="6" rx="3" opacity="0.9"/>
+      <rect x="1270" y="540" width="180" height="6" rx="3" opacity="0.6"/>
+      <rect x="1270" y="600" width="180" height="6" rx="3" opacity="0.8"/>
+    </g>
+    <g fill="#3b82f6">
+      <rect x="1270" y="450" width="180" height="4" rx="2" opacity="0.65"/>
+      <rect x="1270" y="570" width="180" height="4" rx="2" opacity="0.6"/>
+    </g>
+  </g>
+
+  <!-- 中央走道地面网格反光 -->
+  <g stroke="#1d3a66" stroke-width="2" opacity="0.7">
+    <line x1="540" y1="900" x2="740" y2="560"/>
+    <line x1="1060" y1="900" x2="860" y2="560"/>
+    <line x1="380" y1="900" x2="700" y2="560"/>
+    <line x1="1220" y1="900" x2="900" y2="560"/>
+  </g>
+  <g stroke="#16294a" stroke-width="2" opacity="0.6">
+    <line x1="500" y1="640" x2="1100" y2="640"/>
+    <line x1="440" y1="720" x2="1160" y2="720"/>
+    <line x1="380" y1="820" x2="1220" y2="820"/>
+  </g>
+
+  <!-- 中央光晕 -->
+  <ellipse cx="800" cy="600" rx="320" ry="120" fill="#38bdf8" opacity="0.12"/>
+</svg>
