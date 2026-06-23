@@ -28,8 +28,17 @@
       root.hidden = true;
       document.body.appendChild(root);
     }
+    // Close only when both the press and the release land on the backdrop.
+    // A text selection that starts inside the modal and ends on the backdrop
+    // (e.g. right-to-left drag-select past the edge) fires a click whose
+    // target is the backdrop — without this guard that would wrongly close.
+    var downOnRoot = false;
+    root.addEventListener("mousedown", function (e) {
+      downOnRoot = e.target === root;
+    });
     root.addEventListener("click", function (e) {
-      if (e.target === root) close();
+      if (e.target === root && downOnRoot) close();
+      downOnRoot = false;
     });
     document.addEventListener("keydown", function (e) {
       if (current && e.key === "Escape") close();
