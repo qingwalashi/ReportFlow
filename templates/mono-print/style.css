@@ -264,3 +264,17 @@
   margin-top: 6px;
   font-family: "PingFang SC", sans-serif;
 }
+
+/* ===== 表格横向滚动 + 移动端适配 ===== */
+/* 默认（桌面 / 导出 PDF）：容器不裁切，表格按内容自然排布，行为同改造前。 */
+.rf-tpl-mono-print .rf-table-scroll { max-width: 100%; }
+/* 窄屏（手机）：容器横向滚动，表格不换行，可左右拖动查看宽表；图表降高自适应。 */
+@media (max-width: 640px) {
+  .rf-tpl-mono-print .rf-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .rf-tpl-mono-print .rf-table th,
+  .rf-tpl-mono-print .rf-table td { white-space: nowrap; }
+  .rf-tpl-mono-print .rf-chart-card__body { height: 240px; }
+}

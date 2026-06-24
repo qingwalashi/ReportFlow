@@ -158,6 +158,9 @@
 
     var html = '<figure class="' + figClass + '">';
     if (blk.title) html += '<figcaption class="rf-table-title">' + esc(blk.title) + '</figcaption>';
+    // 横向滚动容器：窄屏（手机）下表格可左右拖动查看，不被压缩换行。
+    // 标题 / 脚注留在容器外，滚动时保持固定。
+    html += '<div class="rf-table-scroll">';
     html += '<table class="' + tableClass + '">';
 
     // thead — 至少 columns.header 一行
@@ -212,6 +215,7 @@
     }
 
     html += '</table>';
+    html += '</div>';
 
     var captionParts = [];
     if (blk.caption) captionParts.push(blk.caption);
