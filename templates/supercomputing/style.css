@@ -68,15 +68,14 @@
 .rf-tpl-supercomputing .rf-hero {
   position: relative;
   isolation: isolate;
-  min-height: 340px;
-  margin-bottom: 48px;
-  border-radius: 16px;
+  /* 高度由内部文字内容（.rf-hero__inner）自然撑开，照片层 inset:0 跟随；
+     这里只保留一个较小的兜底高度，避免内容极短时头图过扁。 */
+  min-height: 180px;
+  /* 头图满幅平铺：用负外边距抵消宿主 #root 的内边距（预览/HTML 导出为
+     32px 36px），让照片直接顶到预览区左右与顶部边缘，无圆角/描边/卡片感。 */
+  margin: -32px -36px 48px;
   overflow: hidden;
   background: #0b1c38;          /* 照片加载前的兜底色（深蓝） */
-  border: 1px solid var(--tpl-glass-line);
-  box-shadow:
-    0 18px 48px -22px rgba(21, 54, 110, 0.55),
-    0 2px 0 rgba(255, 255, 255, 0.4) inset;
 }
 .rf-tpl-supercomputing .rf-hero__photo {
   position: absolute; inset: 0;
@@ -90,10 +89,23 @@
   background: var(--tpl-scrim);
   z-index: 1;
 }
+/* 接壤过渡：用页面底色做一块「上圆角」的面板，从底部顶进头图，
+   形成内凹的圆角矩形缺口；这块面板与下方正文区同色，视觉上连成一片，
+   不再使用渐变。圆角只在上方两角，下方平接正文。 */
+.rf-tpl-supercomputing .rf-hero::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 28px;
+  z-index: 2;
+  pointer-events: none;
+  background: var(--tpl-bg);
+  border-radius: 22px 22px 0 0;
+}
 .rf-tpl-supercomputing .rf-hero__inner {
   position: relative;
-  z-index: 2;
-  padding: 44px 48px 40px;
+  z-index: 3;
+  padding: 44px 48px 56px;
   max-width: 760px;
 }
 
@@ -340,7 +352,7 @@
 
 /* ===== 响应式 ============================================================== */
 @media (max-width: 640px) {
-  .rf-tpl-supercomputing .rf-hero__inner { padding: 32px 24px 28px; }
+  .rf-tpl-supercomputing .rf-hero__inner { padding: 32px 24px 52px; }
   .rf-tpl-supercomputing .rf-hero__title { font-size: 26px; }
   .rf-tpl-supercomputing .rf-hero__byline { gap: 18px; }
   .rf-tpl-supercomputing .rf-section,
