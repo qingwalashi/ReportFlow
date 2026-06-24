@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-label="宁波市国资云驾驶舱">
+  <!--
+    占位头图 — 宁波市国资云驾驶舱
+    替换方式：把你自己的大屏截图/照片放到本文件夹，命名为 header.jpg（或 header.png），
+    style.css 中 --tpl-header-image 已默认指向 header.jpg。
+    本 SVG 仅作为默认占位，渐变蒙版在 style.css 中，对任意照片都适用。
+  -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a1f44"/>
+      <stop offset="1" stop-color="#040d1c"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#3bc8ff" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#3bc8ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#13315f" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#0a1c3a" stop-opacity="0.9"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+
+  <!-- 中央地图发光区 -->
+  <ellipse cx="960" cy="600" rx="460" ry="300" fill="url(#glow)"/>
+
+  <!-- 中央菱形地图轮廓（抽象宁波） -->
+  <g stroke="#3bc8ff" stroke-width="2" fill="rgba(59,200,255,0.06)" opacity="0.85">
+    <polygon points="720,420 1080,380 1240,560 1140,820 820,860 660,640"/>
+  </g>
+  <g stroke="rgba(86,142,224,0.4)" stroke-width="1.5" fill="none">
+    <line x1="720" y1="420" x2="1140" y2="820"/>
+    <line x1="1080" y1="380" x2="820" y2="860"/>
+    <line x1="660" y1="640" x2="1240" y2="560"/>
+  </g>
+
+  <!-- 中央高亮节点（鄞州区） -->
+  <circle cx="950" cy="600" r="9" fill="#ffd166"/>
+  <circle cx="950" cy="600" r="20" fill="none" stroke="#ffd166" stroke-width="2" opacity="0.5"/>
+
+  <!-- 节点 -->
+  <g fill="#3bc8ff">
+    <circle cx="780" cy="480" r="5"/>
+    <circle cx="1050" cy="500" r="5"/>
+    <circle cx="870" cy="730" r="5"/>
+    <circle cx="1120" cy="700" r="5"/>
+    <circle cx="720" cy="620" r="5"/>
+  </g>
+
+  <!-- 左侧卡片栏 -->
+  <g>
+    <rect x="80" y="160" width="360" height="120" rx="10" fill="url(#card)" stroke="rgba(86,156,255,0.3)"/>
+    <rect x="80" y="300" width="360" height="120" rx="10" fill="url(#card)" stroke="rgba(86,156,255,0.3)"/>
+    <rect x="80" y="440" width="360" height="160" rx="10" fill="url(#card)" stroke="rgba(86,156,255,0.3)"/>
+    <rect x="100" y="185" width="160" height="14" rx="4" fill="#3bc8ff" opacity="0.8"/>
+    <rect x="100" y="325" width="120" height="14" rx="4" fill="#3bc8ff" opacity="0.8"/>
+    <rect x="100" y="465" width="180" height="14" rx="4" fill="#3bc8ff" opacity="0.8"/>
+  </g>
+
+  <!-- 右侧卡片栏 -->
+  <g>
+    <rect x="1480" y="160" width="360" height="120" rx="10" fill="url(#card)" stroke="rgba(86,156,255,0.3)"/>
+    <rect x="1480" y="300" width="360" height="200" rx="10" fill="url(#card)" stroke="rgba(86,156,255,0.3)"/>
+    <rect x="1480" y="520" width="360" height="180" rx="10" fill="url(#card)" stroke="rgba(86,156,255,0.3)"/>
+    <rect x="1500" y="185" width="160" height="14" rx="4" fill="#3bc8ff" opacity="0.8"/>
+    <rect x="1500" y="325" width="120" height="14" rx="4" fill="#3bc8ff" opacity="0.8"/>
+    <rect x="1500" y="545" width="180" height="14" rx="4" fill="#3bc8ff" opacity="0.8"/>
+    <!-- 折线图占位 -->
+    <polyline points="1500,640 1560,610 1620,650 1690,560 1760,600 1820,640" fill="none" stroke="#3bc8ff" stroke-width="3"/>
+  </g>
+
+  <!-- 顶部标题条 -->
+  <rect x="660" y="40" width="600" height="56" rx="8" fill="rgba(59,200,255,0.10)" stroke="rgba(59,200,255,0.35)"/>
+</svg>

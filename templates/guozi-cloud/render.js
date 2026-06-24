@@ -1,9 +1,10 @@
 /**
- * Template: supercomputing (超算中心主题) — render.js
+ * Template: guozi-cloud (国资云主题) — render.js
  *
- * Codex 浅色风格：纸白底、石墨黑字、单一青色强调。
- * 头部是一个实景照片 hero：照片在底层，上面叠一层石墨渐变蒙版，
+ * 浅色蓝色科技风：纸白底、深蓝石板字、青/电光蓝强调。
+ * 头部是一个实景大屏照片 hero：照片在底层，上面叠一层蓝调玻璃蒙版，
  * 标题与机构名压在蒙版之上。蒙版与照片解耦，替换照片不影响可读性。
+ * 参考宁波市国资云驾驶舱大屏配色（深蓝 + 青）。
  *
  * 替换头图：把照片放进本文件夹命名为 header.jpg（或 header.png），
  *           再到 style.css 改 --tpl-header-image 即可。
@@ -12,26 +13,29 @@
   "use strict";
 
   var THEME = {
-    palette: ["#2563eb", "#0ea5e9", "#60a5fa", "#1e3a8a", "#38bdf8", "#7dd3fc"],
+    // 冷色系，但拉开相邻色相以便饼/柱图各系列可区分：
+    // 电光蓝 → 天空青 → 靛蓝 → 青绿 → 浅蓝 → 水蓝
+    palette: ["#1e6fff", "#16b6e8", "#4f46e5", "#06b6a4", "#7aa7ff", "#38bdf8"],
     textColor: "#16202e",
     axisColor: "#7a869a",
-    splitColor: "#dce6f5",
+    splitColor: "#d8e6f7",
     fontFamily: '"Inter", "PingFang SC", "SF Pro Text", "Microsoft YaHei", sans-serif',
     pieBorderColor: "#ffffff",
     pieBorderWidth: 2
   };
 
   // 机构名 — 作为 hero 的固定署名（照片替换后仍然展示）
-  var ORG_NAME = "宁波市人工智能超算中心";
+  var ORG_NAME = "宁波市国资云";
 
-  // 专属平台图标 — 芯片/处理器（表达算力），inline SVG 随署名缩放
+  // 专属平台图标 — 云 + 数据节点（表达「国资云」），inline SVG 随署名缩放
   var ORG_ICON =
-    '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" ' +
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" ' +
     'stroke="currentColor" stroke-width="1.7" stroke-linecap="round" ' +
     'stroke-linejoin="round" aria-hidden="true">' +
-    '<rect x="7" y="7" width="10" height="10" rx="2"/>' +
-    '<rect x="10" y="10" width="4" height="4" rx="0.5"/>' +
-    '<path d="M10 7V4M14 7V4M10 20v-3M14 20v-3M7 10H4M7 14H4M20 10h-3M20 14h-3"/>' +
+    '<path d="M7 18h9.5a3.5 3.5 0 0 0 .6-6.95 5 5 0 0 0-9.66-1.2A4 4 0 0 0 7 18Z"/>' +
+    '<circle cx="9.5" cy="14" r="0.6" fill="currentColor" stroke="none"/>' +
+    '<circle cx="12.5" cy="14" r="0.6" fill="currentColor" stroke="none"/>' +
+    '<circle cx="15.5" cy="14" r="0.6" fill="currentColor" stroke="none"/>' +
     '</svg>';
 
   function renderReport(data, container, ctx) {
@@ -45,7 +49,7 @@
 
     var inner = h(hero, "div", "rf-hero__inner");
     var org = h(inner, "div", "rf-hero__org");
-    // 专属平台标记：芯片/算力图标（表达超算中心）
+    // 专属平台标记：云 + 数据节点图标（表达国资云）
     var icon = h(org, "span", "rf-hero__icon");
     icon.innerHTML = ORG_ICON;
     h(org, "span", "", ORG_NAME);
@@ -66,8 +70,7 @@
     // ---- Body ----
     // 注意：section 必须是 #root 的直接子节点，宿主的滚动联动 / 点击编辑
     // （scroll-sync.js、block-highlight.js）依赖 "#root > section.rf-section"
-    // 这一约定来配对编辑区与预览区的区块。因此这里不再用 .rf-body 包裹，
-    // 居中宽度改由 .rf-section / .rf-doc-footer 自身承担。
+    // 这一约定来配对编辑区与预览区的区块。
     sections.forEach(function (sec) {
       var secEl = h(container, "section", "rf-section");
       if (sec.heading) h(secEl, "h2", "rf-section__heading", sec.heading);
@@ -122,7 +125,7 @@
     if (blk.type === "table") {
       if (window.RF_TableFormat && window.RF_TableFormat.renderTableHtml) {
         wrap.insertAdjacentHTML("beforeend", window.RF_TableFormat.renderTableHtml(blk, {
-          figClass:   "rf-tpl-supercomputing-table",
+          figClass:   "rf-tpl-guozi-cloud-table",
           tableClass: "rf-table"
         }));
       } else {
@@ -141,11 +144,11 @@
 
   window.ReportFlowTemplates.register({
     manifest: {
-      id: "supercomputing",
-      name: "超算中心",
+      id: "guozi-cloud",
+      name: "国资云",
       version: "1.0.0",
       author: "ReportFlow",
-      description: "Codex 浅色风格 + 可替换实景头图，适合超算中心对外汇报。",
+      description: "浅色蓝色科技风 + 可替换实景头图，参考宁波市国资云驾驶舱配色，适合国资云对外汇报。",
       stylesheet: "style.css",
       capabilities: { charts: ["pie", "bar", "line"], images: true, pdfSafe: true }
     },

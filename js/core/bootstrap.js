@@ -202,9 +202,15 @@
         b.setAttribute("role", "option");
         b.setAttribute("aria-selected", opt.value === current ? "true" : "false");
         if (opt.title) b.title = opt.title;
+        // 图标列始终输出（无专属图标则留空占位），保证各项图标对齐
+        var icon =
+          '<span class="rf-template-switch__option-icon" aria-hidden="true">' +
+          (TEMPLATE_ICONS[opt.value] || '') + '</span>';
         b.innerHTML =
-          '<span class="rf-template-switch__option-check" aria-hidden="true">✓</span>' +
-          '<span>' + escapeHtml(opt.textContent) + '</span>';
+          icon +
+          '<span class="rf-template-switch__option-label">' +
+          escapeHtml(opt.textContent) + '</span>' +
+          '<span class="rf-template-switch__option-check" aria-hidden="true">✓</span>';
         b.addEventListener("click", function () {
           if (sel.value !== opt.value) {
             sel.value = opt.value;
@@ -234,6 +240,39 @@
     var trigger = document.getElementById("rf-template-trigger");
     if (trigger && opt && opt.title) trigger.title = opt.title;
   }
+
+  // 模板专属平台图标（与各模板 hero 署名图标一致）：键为模板 id。
+  // stroke=currentColor 跟随菜单项文字色；仅这两个平台主题有专属标记。
+  var TEMPLATE_ICONS = {
+    // 超算中心 — 芯片/处理器（算力）
+    "supercomputing":
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.7" stroke-linecap="round" ' +
+      'stroke-linejoin="round" aria-hidden="true">' +
+      '<rect x="7" y="7" width="10" height="10" rx="2"/>' +
+      '<rect x="10" y="10" width="4" height="4" rx="0.5"/>' +
+      '<path d="M10 7V4M14 7V4M10 20v-3M14 20v-3M7 10H4M7 14H4M20 10h-3M20 14h-3"/>' +
+      '</svg>',
+    // 国资云 — 云 + 数据节点
+    "guozi-cloud":
+      '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.7" stroke-linecap="round" ' +
+      'stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M7 18h9.5a3.5 3.5 0 0 0 .6-6.95 5 5 0 0 0-9.66-1.2A4 4 0 0 0 7 18Z"/>' +
+      '<circle cx="9.5" cy="14" r="0.6" fill="currentColor" stroke="none"/>' +
+      '<circle cx="12.5" cy="14" r="0.6" fill="currentColor" stroke="none"/>' +
+      '<circle cx="15.5" cy="14" r="0.6" fill="currentColor" stroke="none"/>' +
+      '</svg>',
+    // 图书馆 — 翻开的书
+    "library":
+      '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.7" stroke-linecap="round" ' +
+      'stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M12 6.5C10.5 5.3 8.4 4.8 5.5 5 4.7 5 4 5.7 4 6.5v10.4c0 .9.8 1.6 1.7 1.5 2.6-.2 4.7.3 6.3 1.6"/>' +
+      '<path d="M12 6.5c1.5-1.2 3.6-1.7 6.5-1.5.8 0 1.5.7 1.5 1.5v10.4c0 .9-.8 1.6-1.7 1.5-2.6-.2-4.7.3-6.3 1.6"/>' +
+      '<path d="M12 6.5V20"/>' +
+      '</svg>'
+  };
 
   function escapeHtml(s) {
     return String(s == null ? "" : s)

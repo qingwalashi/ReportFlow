@@ -1,0 +1,14 @@
+{
+  "id": "library",
+  "name": "图书馆",
+  "version": "1.0.0",
+  "author": "ReportFlow",
+  "description": "白调阅读室风：建筑白纸底 + 墨灰正文 + 藏书绿/黄铜强调，衬线标题。头部带可替换的中庭实景头图与轻调玻璃蒙版，标题压在明亮蒙版之上，适合宁波市图书馆的对外汇报。",
+  "stylesheet": "style.css",
+  "preview": "preview.png",
+  "capabilities": {
+    "charts": ["pie", "bar", "line"],
+    "images": true,
+    "pdfSafe": true
+  }
+}

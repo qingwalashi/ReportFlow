@@ -1,0 +1,389 @@
+/* ============================================================================
+   Template: library — 图书馆主题
+   设计基调：白调阅读室风（区别于超算/国资云的冷蓝科技 + 深色压暗头图）
+     · 建筑暖白纸底 (#F6F5F1) + 墨灰正文 (#232A2E)
+     · 藏书绿强调 (#2F6B57) + 黄铜金 (#B8924E)，克制使用
+     · 衬线标题（书卷气）+ 无衬线正文（数据可读）
+   Hero：中庭实景照片 + 「轻调」白玻璃蒙版，保留照片明亮白调，
+         标题以墨色压在浅色蒙版之上（不像姊妹模板那样反白）。
+   Signature：细竖向「书脊/廊柱」分隔线，呼应中庭结构肋。
+   参考宁波市图书馆 nblib.cn 与中庭实景头图。
+   ============================================================================ */
+
+.rf-tpl-library {
+  /* —— 配色 token（暖白阅读室）—— */
+  --tpl-bg:        #f6f5f1;   /* 建筑暖白纸 */
+  --tpl-ink:       #232a2e;   /* 墨灰正文 */
+  --tpl-ink-soft:  #4a534f;   /* 次级文字 */
+  --tpl-muted:     #8a8478;   /* 辅助/说明（暖灰） */
+  --tpl-line:      #e4e2da;   /* 暖调发丝线 */
+  --tpl-accent:    #2f6b57;   /* 藏书绿 */
+  --tpl-accent-2:  #b8924e;   /* 黄铜金 */
+
+  /* —— 卡片材质（轻磨砂，偏纸感而非玻璃感）—— */
+  --tpl-glass:        rgba(255, 255, 255, 0.62);
+  --tpl-glass-strong: rgba(255, 255, 255, 0.86);
+  --tpl-glass-line:   rgba(255, 255, 255, 0.9);
+  --tpl-blur:         saturate(115%) blur(10px);
+
+  /* —— 字体 —— */
+  --tpl-serif: "Source Han Serif SC", "Songti SC", "STSong", Georgia,
+               "Times New Roman", "PingFang SC", serif;
+  --tpl-sans:  "Inter", "PingFang SC", "SF Pro Text", "Microsoft YaHei", sans-serif;
+
+  /* —— 头图（替换这里即可换照片）——
+     默认用本文件夹的 header.svg 占位（中庭白调）；
+     换成你的照片：把文件命名为 header.jpg 放到同目录，再改成 url("header.jpg") */
+  --tpl-header-image: url("header.jpg");
+
+  /* —— 蒙版（轻调白玻璃，适配明亮照片，可独立调节）——
+     与姊妹模板相反：这里用偏白的渐变「提亮」照片，让墨色标题压得住，
+     同时保留中庭的白调通透感。左下略加白以托住标题/署名区。 */
+  --tpl-scrim:
+    linear-gradient(
+      to top,
+      rgba(246, 245, 241, 0.92) 0%,
+      rgba(246, 245, 241, 0.55) 30%,
+      rgba(246, 245, 241, 0.12) 64%,
+      rgba(246, 245, 241, 0.00) 100%),
+    linear-gradient(
+      100deg,
+      rgba(246, 245, 241, 0.78) 0%,
+      rgba(246, 245, 241, 0.42) 40%,
+      rgba(246, 245, 241, 0.10) 74%,
+      rgba(246, 245, 241, 0.00) 100%);
+
+  background: var(--tpl-bg);
+  color: var(--tpl-ink);
+  font-family: var(--tpl-sans);
+  font-size: 15px;
+  line-height: 1.74;
+  padding-bottom: 64px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 底层暖光晕 —— 极轻，给页面一点纸张的温度（避免纯平涂） */
+.rf-tpl-library::before {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(640px 460px at 14% -6%,  rgba(47, 107, 87, 0.06), transparent 70%),
+    radial-gradient(560px 420px at 92% 6%,   rgba(184, 146, 78, 0.07), transparent 72%),
+    var(--tpl-bg);
+  z-index: -1;
+}
+
+/* ===== Hero ================================================================ */
+.rf-tpl-library .rf-hero {
+  position: relative;
+  isolation: isolate;
+  min-height: 200px;
+  /* 头图满幅平铺：负外边距抵消宿主 #root 的内边距（预览/HTML 导出为 32px 36px） */
+  margin: -32px -36px 48px;
+  overflow: hidden;
+  background: #eef0ee;          /* 照片加载前的兜底色（浅） */
+}
+.rf-tpl-library .rf-hero__photo {
+  position: absolute; inset: 0;
+  background-image: var(--tpl-header-image);
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+}
+.rf-tpl-library .rf-hero__scrim {
+  position: absolute; inset: 0;
+  background: var(--tpl-scrim);
+  z-index: 1;
+}
+/* 接壤过渡：用页面底色做一块「上圆角」面板从底部顶进头图，与正文同色连成一片 */
+.rf-tpl-library .rf-hero::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 28px;
+  z-index: 2;
+  pointer-events: none;
+  background: var(--tpl-bg);
+  border-radius: 22px 22px 0 0;
+}
+.rf-tpl-library .rf-hero__inner {
+  position: relative;
+  z-index: 3;
+  padding: 48px 48px 56px;
+  max-width: 760px;
+}
+
+/* 机构署名 —— 浅色蒙版上用墨色玻璃药丸（与姊妹模板的反白药丸相反） */
+.rf-tpl-library .rf-hero__org {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 5px 14px 5px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(35, 42, 46, 0.12);
+  -webkit-backdrop-filter: var(--tpl-blur);
+  backdrop-filter: var(--tpl-blur);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--tpl-accent);
+  margin-bottom: 22px;
+}
+.rf-tpl-library .rf-hero__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  color: var(--tpl-accent);
+}
+.rf-tpl-library .rf-hero__icon svg { display: block; }
+
+/* 标题 —— 衬线，墨色压在明亮蒙版上；轻微文字白晕保证任意照片下可读 */
+.rf-tpl-library .rf-hero__title {
+  font-family: var(--tpl-serif);
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.24;
+  letter-spacing: 0.005em;
+  color: var(--tpl-ink);
+  margin: 0 0 12px;
+  text-wrap: balance;
+  text-shadow: 0 1px 16px rgba(246, 245, 241, 0.9);
+}
+.rf-tpl-library .rf-hero__subtitle {
+  font-family: var(--tpl-serif);
+  font-size: 17px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--tpl-ink-soft);
+  margin-bottom: 26px;
+  max-width: 56ch;
+  text-shadow: 0 1px 12px rgba(246, 245, 241, 0.85);
+}
+
+/* hero meta（撰写 / 日期 / 版本）—— 墨色系 */
+.rf-tpl-library .rf-hero__byline {
+  display: flex; flex-wrap: wrap; gap: 28px;
+}
+.rf-tpl-library .rf-hero__meta {
+  display: flex; flex-direction: column; gap: 3px;
+}
+.rf-tpl-library .rf-hero__meta-key {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tpl-muted);
+}
+.rf-tpl-library .rf-hero__meta-val {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tpl-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.rf-tpl-library .rf-hero__tags {
+  margin-top: 24px;
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.rf-tpl-library .rf-tag {
+  font-size: 12px;
+  padding: 3px 11px;
+  border-radius: 999px;
+  color: var(--tpl-accent);
+  background: rgba(47, 107, 87, 0.08);
+  border: 1px solid rgba(47, 107, 87, 0.22);
+}
+
+/* ===== Body ================================================================ */
+.rf-tpl-library .rf-section {
+  max-width: 860px;
+  margin: 0 auto 44px;
+  padding: 0 8px;
+  page-break-inside: avoid;
+}
+/* Section 标题 —— 衬线大字 + 左侧「书脊/廊柱」竖线（呼应中庭结构肋）。
+   双线（绿 + 金）并置，像书脊上的烫金压线。 */
+.rf-tpl-library .rf-section__heading {
+  font-family: var(--tpl-serif);
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--tpl-ink);
+  margin: 0 0 18px;
+  padding: 2px 0 10px 18px;
+  position: relative;
+  border-bottom: 1px solid var(--tpl-line);
+}
+/* 左侧双竖线：藏书绿主线 + 黄铜副线 */
+.rf-tpl-library .rf-section__heading::before {
+  content: "";
+  position: absolute; left: 0; top: 4px; bottom: 14px;
+  width: 3px;
+  background: var(--tpl-accent);
+}
+.rf-tpl-library .rf-section__heading::after {
+  content: "";
+  position: absolute; left: 6px; top: 7px; bottom: 17px;
+  width: 1.5px;
+  background: var(--tpl-accent-2);
+}
+
+.rf-tpl-library .rf-block { margin-bottom: 18px; }
+
+/* 正文 */
+.rf-tpl-library .rf-text { color: var(--tpl-ink-soft); }
+.rf-tpl-library .rf-text p { margin: 0 0 12px; }
+.rf-tpl-library .rf-text strong { color: var(--tpl-ink); font-weight: 680; }
+.rf-tpl-library .rf-text a {
+  color: var(--tpl-accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(47, 107, 87, 0.4);
+}
+.rf-tpl-library .rf-text a:hover { border-bottom-color: var(--tpl-accent); }
+.rf-tpl-library .rf-text ul,
+.rf-tpl-library .rf-text ol { padding-left: 22px; margin: 8px 0 14px; }
+.rf-tpl-library .rf-text li { margin-bottom: 5px; }
+.rf-tpl-library .rf-text ul li::marker { color: var(--tpl-accent-2); }
+.rf-tpl-library .rf-text blockquote {
+  margin: 14px 0;
+  padding: 8px 18px;
+  border-left: 3px solid var(--tpl-accent-2);
+  background: rgba(184, 146, 78, 0.06);
+  color: var(--tpl-ink-soft);
+  font-family: var(--tpl-serif);
+  font-style: italic;
+  border-radius: 0 6px 6px 0;
+}
+.rf-tpl-library .rf-text code {
+  background: rgba(47, 107, 87, 0.08);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  font-size: 90%;
+  color: var(--tpl-accent);
+}
+
+/* 图表卡片（轻磨砂纸感面板） */
+.rf-tpl-library .rf-chart-card {
+  background: var(--tpl-glass-strong);
+  border: 1px solid var(--tpl-line);
+  border-radius: 12px;
+  padding: 18px 20px 10px;
+  -webkit-backdrop-filter: var(--tpl-blur);
+  backdrop-filter: var(--tpl-blur);
+  box-shadow: 0 12px 30px -20px rgba(35, 42, 46, 0.28);
+}
+.rf-tpl-library .rf-chart-card__title {
+  font-size: 14px;
+  font-weight: 680;
+  color: var(--tpl-ink);
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.rf-tpl-library .rf-chart-card__title::before {
+  content: "";
+  width: 3px; height: 14px; border-radius: 1px;
+  background: linear-gradient(180deg, var(--tpl-accent), var(--tpl-accent-2));
+}
+.rf-tpl-library .rf-chart-card__body { width: 100%; height: 320px; }
+
+/* 图片 */
+.rf-tpl-library .rf-img { margin: 14px 0; }
+.rf-tpl-library .rf-img img {
+  max-width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--tpl-line);
+  box-shadow: 0 10px 26px -18px rgba(35, 42, 46, 0.32);
+}
+.rf-tpl-library .rf-img__caption {
+  font-size: 12.5px;
+  color: var(--tpl-muted);
+  margin-top: 8px;
+  padding-left: 12px;
+  border-left: 2px solid var(--tpl-accent-2);
+  font-style: italic;
+}
+
+/* 页脚 */
+.rf-tpl-library .rf-doc-footer {
+  max-width: 860px;
+  margin: 48px auto 0;
+  padding: 16px 8px 0;
+  border-top: 1px solid var(--tpl-line);
+  font-size: 12.5px;
+  color: var(--tpl-muted);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+/* ===== Table（纸感面 + 暖发丝线 + 藏书绿表头线）====================== */
+.rf-tpl-library .rf-tpl-library-table {
+  margin: 20px 0;
+  background: var(--tpl-glass);
+  border: 1px solid var(--tpl-line);
+  border-radius: 12px;
+  padding: 16px 18px;
+  -webkit-backdrop-filter: var(--tpl-blur);
+  backdrop-filter: var(--tpl-blur);
+  box-shadow: 0 10px 26px -20px rgba(35, 42, 46, 0.26);
+}
+.rf-tpl-library .rf-table-title {
+  font-size: 14px;
+  font-weight: 680;
+  color: var(--tpl-ink);
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.rf-tpl-library .rf-table-title::before {
+  content: "";
+  width: 3px; height: 14px; border-radius: 1px;
+  background: linear-gradient(180deg, var(--tpl-accent), var(--tpl-accent-2));
+}
+.rf-tpl-library .rf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  color: var(--tpl-ink);
+  font-variant-numeric: tabular-nums;
+}
+.rf-tpl-library .rf-table th,
+.rf-tpl-library .rf-table td {
+  padding: 10px 14px;
+  text-align: left;
+  border: none;
+  border-bottom: 1px solid var(--tpl-line);
+}
+.rf-tpl-library .rf-table thead th {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--tpl-accent);
+  border-bottom: 2px solid var(--tpl-accent);
+  background: rgba(47, 107, 87, 0.05);
+}
+.rf-tpl-library .rf-table tbody tr:hover td {
+  background: rgba(184, 146, 78, 0.07);
+}
+.rf-tpl-library .rf-table tfoot td {
+  border-top: 1px solid var(--tpl-line);
+  font-weight: 680;
+  color: var(--tpl-ink);
+}
+.rf-tpl-library .rf-table-caption {
+  font-size: 12px;
+  color: var(--tpl-muted);
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* ===== 响应式 ============================================================== */
+@media (max-width: 640px) {
+  .rf-tpl-library .rf-hero__inner { padding: 36px 24px 52px; }
+  .rf-tpl-library .rf-hero__title { font-size: 27px; }
+  .rf-tpl-library .rf-hero__byline { gap: 18px; }
+  .rf-tpl-library .rf-section,
+  .rf-tpl-library .rf-doc-footer { padding-left: 4px; padding-right: 4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rf-tpl-library * { animation: none !important; transition: none !important; }
+}

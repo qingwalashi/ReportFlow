@@ -1,9 +1,10 @@
 /**
- * Template: supercomputing (超算中心主题) — render.js
+ * Template: library (图书馆主题) — render.js
  *
- * Codex 浅色风格：纸白底、石墨黑字、单一青色强调。
- * 头部是一个实景照片 hero：照片在底层，上面叠一层石墨渐变蒙版，
- * 标题与机构名压在蒙版之上。蒙版与照片解耦，替换照片不影响可读性。
+ * 白调阅读室风：建筑白纸底、墨灰正文、藏书绿 + 黄铜强调，衬线标题。
+ * 头部是一个中庭实景照片 hero：照片在底层，上面叠一层「轻调」玻璃蒙版
+ * （区别于超算/国资云的深色压暗蒙版——这里保留照片的明亮白调，
+ * 标题用墨色压在浅色蒙版之上）。蒙版与照片解耦，替换照片不影响可读性。
  *
  * 替换头图：把照片放进本文件夹命名为 header.jpg（或 header.png），
  *           再到 style.css 改 --tpl-header-image 即可。
@@ -12,26 +13,28 @@
   "use strict";
 
   var THEME = {
-    palette: ["#2563eb", "#0ea5e9", "#60a5fa", "#1e3a8a", "#38bdf8", "#7dd3fc"],
-    textColor: "#16202e",
-    axisColor: "#7a869a",
-    splitColor: "#dce6f5",
+    // 暖中性 + 藏书绿/黄铜的克制点缀，拉开相邻色相以便饼/柱图各系列可区分：
+    // 藏书绿 → 黄铜金 → 鼠尾草绿 → 赭石 → 青灰 → 浅金
+    palette: ["#2f6b57", "#b8924e", "#5c8a6f", "#a9683f", "#6f8a93", "#d8b878"],
+    textColor: "#232a2e",
+    axisColor: "#8a8478",
+    splitColor: "#e4e2da",
     fontFamily: '"Inter", "PingFang SC", "SF Pro Text", "Microsoft YaHei", sans-serif',
     pieBorderColor: "#ffffff",
     pieBorderWidth: 2
   };
 
   // 机构名 — 作为 hero 的固定署名（照片替换后仍然展示）
-  var ORG_NAME = "宁波市人工智能超算中心";
+  var ORG_NAME = "宁波市图书馆";
 
-  // 专属平台图标 — 芯片/处理器（表达算力），inline SVG 随署名缩放
+  // 专属平台图标 — 翻开的书（表达「图书馆」），inline SVG 随署名缩放
   var ORG_ICON =
-    '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" ' +
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" ' +
     'stroke="currentColor" stroke-width="1.7" stroke-linecap="round" ' +
     'stroke-linejoin="round" aria-hidden="true">' +
-    '<rect x="7" y="7" width="10" height="10" rx="2"/>' +
-    '<rect x="10" y="10" width="4" height="4" rx="0.5"/>' +
-    '<path d="M10 7V4M14 7V4M10 20v-3M14 20v-3M7 10H4M7 14H4M20 10h-3M20 14h-3"/>' +
+    '<path d="M12 6.5C10.5 5.3 8.4 4.8 5.5 5 4.7 5 4 5.7 4 6.5v10.4c0 .9.8 1.6 1.7 1.5 2.6-.2 4.7.3 6.3 1.6"/>' +
+    '<path d="M12 6.5c1.5-1.2 3.6-1.7 6.5-1.5.8 0 1.5.7 1.5 1.5v10.4c0 .9-.8 1.6-1.7 1.5-2.6-.2-4.7.3-6.3 1.6"/>' +
+    '<path d="M12 6.5V20"/>' +
     '</svg>';
 
   function renderReport(data, container, ctx) {
@@ -41,11 +44,11 @@
     // ---- Hero header（照片 + 蒙版 + 标题）----
     var hero = h(container, "div", "rf-hero");
     h(hero, "div", "rf-hero__photo");     // 背景照片层（CSS 变量控制图片）
-    h(hero, "div", "rf-hero__scrim");     // 渐变蒙版层
+    h(hero, "div", "rf-hero__scrim");     // 渐变蒙版层（轻调）
 
     var inner = h(hero, "div", "rf-hero__inner");
     var org = h(inner, "div", "rf-hero__org");
-    // 专属平台标记：芯片/算力图标（表达超算中心）
+    // 专属平台标记：翻开的书图标（表达图书馆）
     var icon = h(org, "span", "rf-hero__icon");
     icon.innerHTML = ORG_ICON;
     h(org, "span", "", ORG_NAME);
@@ -66,8 +69,7 @@
     // ---- Body ----
     // 注意：section 必须是 #root 的直接子节点，宿主的滚动联动 / 点击编辑
     // （scroll-sync.js、block-highlight.js）依赖 "#root > section.rf-section"
-    // 这一约定来配对编辑区与预览区的区块。因此这里不再用 .rf-body 包裹，
-    // 居中宽度改由 .rf-section / .rf-doc-footer 自身承担。
+    // 这一约定来配对编辑区与预览区的区块。
     sections.forEach(function (sec) {
       var secEl = h(container, "section", "rf-section");
       if (sec.heading) h(secEl, "h2", "rf-section__heading", sec.heading);
@@ -122,7 +124,7 @@
     if (blk.type === "table") {
       if (window.RF_TableFormat && window.RF_TableFormat.renderTableHtml) {
         wrap.insertAdjacentHTML("beforeend", window.RF_TableFormat.renderTableHtml(blk, {
-          figClass:   "rf-tpl-supercomputing-table",
+          figClass:   "rf-tpl-library-table",
           tableClass: "rf-table"
         }));
       } else {
@@ -141,11 +143,11 @@
 
   window.ReportFlowTemplates.register({
     manifest: {
-      id: "supercomputing",
-      name: "超算中心",
+      id: "library",
+      name: "图书馆",
       version: "1.0.0",
       author: "ReportFlow",
-      description: "Codex 浅色风格 + 可替换实景头图，适合超算中心对外汇报。",
+      description: "白调阅读室风 + 可替换中庭实景头图，墨灰正文与藏书绿/黄铜强调、衬线标题，适合宁波市图书馆对外汇报。",
       stylesheet: "style.css",
       capabilities: { charts: ["pie", "bar", "line"], images: true, pdfSafe: true }
     },

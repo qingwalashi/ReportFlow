@@ -1,0 +1,14 @@
+{
+  "id": "guozi-cloud",
+  "name": "国资云",
+  "version": "1.0.0",
+  "author": "ReportFlow",
+  "description": "浅色科技风：冷调蓝白底 + 深蓝石板字 + 青/电光蓝强调。参考宁波市国资云驾驶舱大屏配色，头部带可替换的实景大屏头图与蓝调玻璃蒙版，适合宁波市国资云对外汇报。",
+  "stylesheet": "style.css",
+  "preview": "preview.png",
+  "capabilities": {
+    "charts": ["pie", "bar", "line"],
+    "images": true,
+    "pdfSafe": true
+  }
+}

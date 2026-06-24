@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-label="宁波市图书馆中庭">
+  <!--
+    占位头图 — 宁波市图书馆中庭（白调建筑）
+    替换方式：把你自己的中庭照片放到本文件夹，命名为 header.jpg（或 header.png），
+    再到 style.css 把 --tpl-header-image 改成 url("header.jpg")。
+    本 SVG 仅作默认占位；轻调白蒙版在 style.css 中，对任意明亮照片都适用。
+  -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.55" stop-color="#f3f4f2"/>
+      <stop offset="1" stop-color="#e7e9e6"/>
+    </linearGradient>
+    <linearGradient id="rib" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#dfe2de"/>
+    </linearGradient>
+    <radialGradient id="skylight" cx="0.5" cy="0.04" r="0.6">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+
+  <!-- 顶部天窗光 -->
+  <ellipse cx="960" cy="40" rx="620" ry="300" fill="url(#skylight)"/>
+  <!-- 天窗格栅 -->
+  <g stroke="#cfd4cf" stroke-width="2" opacity="0.8">
+    <line x1="760" y1="0" x2="820" y2="240"/>
+    <line x1="900" y1="0" x2="930" y2="240"/>
+    <line x1="1020" y1="0" x2="1010" y2="240"/>
+    <line x1="1160" y1="0" x2="1110" y2="240"/>
+    <line x1="700" y1="90" x2="1220" y2="90"/>
+    <line x1="730" y1="170" x2="1190" y2="170"/>
+  </g>
+
+  <!-- 左侧楼层结构肋（垂直廊柱 + 层板） -->
+  <g fill="url(#rib)" stroke="#d4d8d3" stroke-width="1.5">
+    <rect x="120" y="120" width="70" height="840"/>
+    <rect x="240" y="120" width="70" height="840"/>
+    <rect x="360" y="120" width="70" height="840"/>
+  </g>
+  <g stroke="#cdd2cd" stroke-width="2" opacity="0.85">
+    <line x1="120" y1="300" x2="430" y2="320"/>
+    <line x1="120" y1="470" x2="430" y2="490"/>
+    <line x1="120" y1="640" x2="430" y2="660"/>
+    <line x1="120" y1="810" x2="430" y2="830"/>
+  </g>
+
+  <!-- 右侧竖向百叶/肋条墙 -->
+  <g stroke="#d2d6d1" stroke-width="3" opacity="0.7">
+    <line x1="1520" y1="80" x2="1520" y2="1000"/>
+    <line x1="1580" y1="80" x2="1580" y2="1000"/>
+    <line x1="1640" y1="80" x2="1640" y2="1000"/>
+    <line x1="1700" y1="80" x2="1700" y2="1000"/>
+    <line x1="1760" y1="80" x2="1760" y2="1000"/>
+    <line x1="1820" y1="80" x2="1820" y2="1000"/>
+  </g>
+  <!-- 右侧斜向高光（呼应实景照片的细长灯带） -->
+  <g stroke="#aeb4ae" stroke-width="2.5" opacity="0.55">
+    <line x1="1540" y1="200" x2="1620" y2="150"/>
+    <line x1="1640" y1="380" x2="1720" y2="330"/>
+    <line x1="1740" y1="560" x2="1820" y2="510"/>
+  </g>
+
+  <!-- 底部扶梯（深色对角线，呼应实景前景） -->
+  <g>
+    <polygon points="560,1080 980,820 1160,820 740,1080" fill="#2b2f2c" opacity="0.92"/>
+    <polygon points="980,820 1160,820 1160,860 1010,860" fill="#3a3f3b"/>
+    <g stroke="#5a5f5a" stroke-width="2" opacity="0.7">
+      <line x1="640" y1="1040" x2="1010" y2="840"/>
+      <line x1="700" y1="1060" x2="1060" y2="845"/>
+    </g>
+  </g>
+
+  <!-- 中央通透留白（中庭采光井） -->
+  <rect x="700" y="300" width="520" height="520" fill="#ffffff" opacity="0.35"/>
+</svg>

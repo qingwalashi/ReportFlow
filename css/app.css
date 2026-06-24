@@ -236,13 +236,12 @@ body { background: var(--rf-bg); }
   z-index: 50;
 }
 .rf-template-switch__option {
-  display: flex;
+  display: grid;
+  grid-template-columns: 18px 1fr 14px;  /* 图标列 | 文字列 | 勾号列 */
   align-items: center;
-  justify-content: center;  /* 文本水平居中（勾号绝对定位不参与布局，不会偏移文字） */
-  gap: 6px;
+  gap: 8px;
   width: 100%;             /* 铺满菜单宽度，避免短选项右侧出现留白 */
   box-sizing: border-box;
-  position: relative;       /* 给绝对定位的勾号做参照 */
   padding: 6px 10px;
   font-size: var(--rf-text-xs);
   font-weight: 500;
@@ -253,7 +252,6 @@ body { background: var(--rf-bg); }
   border-radius: 4px;
   cursor: pointer;
   white-space: nowrap;
-  text-align: left;
   transition: background .1s ease, color .1s ease, border-color .1s ease;
 }
 .rf-template-switch__option:hover,
@@ -267,17 +265,29 @@ body { background: var(--rf-bg); }
   background: var(--rf-bg-soft);
   border-color: var(--rf-accent-soft);
 }
+/* 文字列：两端对齐，让各项中文标题左右边缘统一齐整 */
+.rf-template-switch__option-label {
+  text-align: justify;
+  text-align-last: justify;
+  text-justify: inter-character;
+}
 .rf-template-switch__option-check {
-  position: absolute;       /* 抽离 flex 流，文本居中时勾号不参与对齐 */
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
+  justify-self: center;
   font-size: 11px;
   opacity: 0;
 }
 .rf-template-switch__option.is-active .rf-template-switch__option-check {
   opacity: 1;
 }
+/* 平台专属图标（超算/国资云）：图标列内固定居中、与文字同色 */
+.rf-template-switch__option-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  color: var(--rf-accent);
+}
+.rf-template-switch__option-icon svg { display: block; }
 
 .rf-topbar__actions { display: flex; gap: 6px; justify-content: flex-end; min-width: 0; }
 
