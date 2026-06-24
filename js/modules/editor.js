@@ -597,8 +597,6 @@
 
   // ---- Markdown ↔ 富文本 HTML（仅处理 **加粗** 与 <mark> 高亮）----
   // 其它 Markdown 一律按原文（转义后）保留为纯文本节点。
-  var HL_MARK_RE = /<mark class="rf-hl rf-hl--(num|text)">([\s\S]*?)<\/mark>/g;
-
   function escHtml(s) {
     return String(s == null ? "" : s)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -616,15 +614,31 @@
 
   function mdToRichHtml(md) {
     md = String(md == null ? "" : md);
-    var out = "", last = 0, m;
-    HL_MARK_RE.lastIndex = 0;
-    while ((m = HL_MARK_RE.exec(md))) {
-      out += inlineBold(md.slice(last, m.index));
-      out += '<mark class="rf-hl rf-hl--' + m[1] + '">' + inlineBold(m[2]) + "</mark>";
-      last = m.index + m[0].length;
-    }
-    out += inlineBold(md.slice(last));
-    return out.replace(/\n/g, "<br>");
+    // 关键：**加粗** 可能跨越 <mark> 边界（如 `**前<mark…>中</mark>后**` 或
+    // `**<mark…>文本</mark>**`）。若先按 <mark> 切片再各自跑 inlineBold，**
+    // 会被拆散、无法配对，导致编辑器里显示成字面星号。
+    // 因此先把 <mark> 起止标签替换成哨兵占位符（不含 & < > 不会被转义影响），
+    // 在「整串」上做加粗匹配，最后再把占位符还原成真正的 <mark> 标签。
+    // 占位符用 NUL 控制字符做边界：用户在 contentEditable 中无法输入，
+    // 因此绝不会与正文冲突；也不含 & < >（不受 escHtml 影响），更不会被 ** 误吞。
+    var Z = String.fromCharCode(0);            // 边界标记
+    var opens = [];
+    var tmp = md
+      .replace(/<mark class="rf-hl rf-hl--(num|text)">/g, function (_, kind) {
+        opens.push(kind);
+        return Z + "o" + (opens.length - 1) + Z;   // 起始：Zo<idx>Z
+      })
+      .replace(/<\/mark>/g, Z + "c" + Z);          // 结束：ZcZ
+
+    var openRe = new RegExp(Z + "o(\\d+)" + Z, "g");
+    var closeRe = new RegExp(Z + "c" + Z, "g");
+    var html = inlineBold(tmp)
+      .replace(openRe, function (_, i) {
+        return "<mark class=\"rf-hl rf-hl--" + opens[Number(i)] + "\">";
+      })
+      .replace(closeRe, "</mark>");
+
+    return html.replace(/\n/g, "<br>");
   }
 
   function richHtmlToMd(ed) {

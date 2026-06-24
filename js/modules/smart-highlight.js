@@ -32,6 +32,8 @@
   function init() {
     var btn = document.getElementById("rf-btn-smart-highlight");
     if (btn) btn.addEventListener("click", open);
+    var clearBtn = document.getElementById("rf-btn-clear-highlight");
+    if (clearBtn) clearBtn.addEventListener("click", confirmClear);
   }
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -111,15 +113,7 @@
     });
 
     clearBtn.addEventListener("click", function () {
-      window.RF_UI.confirm({
-        title: "清除全部高亮？",
-        body: "将移除正文与表格上的所有智能高亮标记。",
-        danger: true,
-        confirmLabel: "清除"
-      }).then(function (ok) {
-        if (!ok) return;
-        clearAll();
-      });
+      confirmClear();
     });
   }
 
@@ -457,6 +451,24 @@
   }
 
   // ===== 清除 =====
+  // 先确认再清除。供工具栏「🧹 清除高亮」按钮与弹窗内「清除全部高亮」共用。
+  function confirmClear() {
+    var report = state.get("report");
+    if (!report || !(report.sections || []).length) {
+      window.RF_UI.toast.warn("尚无内容");
+      return;
+    }
+    window.RF_UI.confirm({
+      title: "清除全部高亮？",
+      body: "将移除正文与表格上的所有智能高亮标记。",
+      danger: true,
+      confirmLabel: "清除"
+    }).then(function (ok) {
+      if (!ok) return;
+      clearAll();
+    });
+  }
+
   function clearAll() {
     var rep = clone(state.get("report"));
     var removed = 0;
@@ -489,5 +501,5 @@
     } catch (e) { /* 持久化失败不阻塞 */ }
   }
 
-  window.RF_SmartHighlight = { init: init, open: open };
+  window.RF_SmartHighlight = { init: init, open: open, clear: confirmClear };
 })();

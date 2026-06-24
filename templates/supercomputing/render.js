@@ -52,15 +52,18 @@
     }
 
     // ---- Body ----
-    var body = h(container, "div", "rf-body");
+    // 注意：section 必须是 #root 的直接子节点，宿主的滚动联动 / 点击编辑
+    // （scroll-sync.js、block-highlight.js）依赖 "#root > section.rf-section"
+    // 这一约定来配对编辑区与预览区的区块。因此这里不再用 .rf-body 包裹，
+    // 居中宽度改由 .rf-section / .rf-doc-footer 自身承担。
     sections.forEach(function (sec) {
-      var secEl = h(body, "section", "rf-section");
+      var secEl = h(container, "section", "rf-section");
       if (sec.heading) h(secEl, "h2", "rf-section__heading", sec.heading);
       (sec.blocks || []).forEach(function (blk) { renderBlock(blk, secEl, ctx); });
     });
 
     var footText = ctx.footerText && ctx.footerText();
-    if (footText) h(body, "div", "rf-doc-footer", footText);
+    if (footText) h(container, "div", "rf-doc-footer", footText);
   }
 
   function addMeta(host, key, val) {

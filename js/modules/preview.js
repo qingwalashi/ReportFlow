@@ -211,7 +211,8 @@
           : String(value == null ? "" : value);
       },
       footerText: function () {
-        var cfg = window.RF_ConfigManager && window.RF_ConfigManager.getReport();
+        var cm = window.RF_ConfigManager;
+        var cfg = cm && typeof cm.getReport === "function" ? cm.getReport() : null;
         return (cfg && cfg.showFooter && cfg.footerText) || "";
       }
     };
