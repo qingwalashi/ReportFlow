@@ -33,6 +33,26 @@
     return base + "/" + path;
   }
 
+  // Distinguish a network-level fetch failure (always a TypeError) between the
+  // browser's mixed-content block and a genuine CORS/unreachable error.
+  //
+  // Mixed content: an HTTPS page can't fetch an http:// URL — the browser kills
+  // the request before it leaves, so it looks identical to CORS. This is the
+  // common production trap: the page is served over a domain (HTTPS) but the
+  // API is plain http:// (often an internal IP like http://172.16.x.x:8080).
+  // No client-side code or CORS proxy can bypass it — the API must be HTTPS.
+  function networkErrorHint(targetUrl) {
+    var pageHttps = false;
+    try { pageHttps = window.location && window.location.protocol === "https:"; } catch (e) {}
+    var targetHttp = /^http:\/\//i.test(String(targetUrl || ""));
+    if (pageHttps && targetHttp) {
+      return "请求被浏览器「混合内容」策略拦截：当前页面是 HTTPS，但 API 地址是 http:// 明文（如内网 IP）。"
+           + "浏览器禁止 HTTPS 页面访问 http 接口，这无法用 CORS 代理或前端代码绕过。"
+           + "解决：给该 API 配置 HTTPS 地址（例如在内网用反向代理为其套上有效证书的域名），再把「API 地址」改为 https://… 。";
+    }
+    return "请求失败（可能是 CORS 跨域被阻止，或地址不可达）。建议：① 切换到 DeepSeek/Moonshot 等浏览器友好的预设；② 或在设置里填写「CORS 代理 URL」；③ 确认该地址可从你的浏览器直接访问。";
+  }
+
   function rateGate(rps) {
     if (!rps || rps <= 0) return Promise.resolve();
     var minInterval = 1000 / rps;
@@ -182,7 +202,7 @@
         to.cause = err; throw to;
       }
       if (err instanceof TypeError) {
-        var hint = "请求失败（可能是 CORS 跨域被阻止）。建议：① 切换到 DeepSeek/Moonshot 等浏览器友好的预设；② 或在设置里填写「CORS 代理 URL」。";
+        var hint = networkErrorHint(url);
         var ne = new Error(hint);
         ne.cause = err; throw ne;
       }
@@ -252,7 +272,7 @@
       }
       // Network errors (most common: CORS) — surface a tailored hint.
       if (err instanceof TypeError) {
-        var hint = "请求失败（可能是 CORS 跨域被阻止）。建议：① 切换到 DeepSeek/Moonshot 等浏览器友好的预设；② 或在设置里填写「CORS 代理 URL」。";
+        var hint = networkErrorHint(url);
         var ne = new Error(hint);
         ne.cause = err; throw ne;
       }
@@ -400,7 +420,7 @@
         to.cause = err; throw to;
       }
       if (err instanceof TypeError) {
-        var hint = "请求失败（可能是 CORS 跨域被阻止）。建议在设置里填写「CORS 代理 URL」，或确认 Dify API 地址可从浏览器访问。";
+        var hint = networkErrorHint(url);
         var ne = new Error(hint);
         ne.cause = err; throw ne;
       }
@@ -442,7 +462,7 @@
         to.cause = err; throw to;
       }
       if (err instanceof TypeError) {
-        var hint = "请求失败（可能是 CORS 跨域被阻止）。建议在设置里填写「CORS 代理 URL」，或确认 Dify API 地址可从浏览器访问。";
+        var hint = networkErrorHint(url);
         var ne = new Error(hint);
         ne.cause = err; throw ne;
       }

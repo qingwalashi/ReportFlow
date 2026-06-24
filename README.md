@@ -136,6 +136,10 @@ python3 -m http.server 8080
 > 若必须走代理，在设置里填「CORS 代理 URL」字段（形如 `https://your-proxy.example.com/?url=`）。
 > ⚠️ **切勿把真实 API Key 发给来历不明的公共代理。**
 
+> **⚠️ 混合内容（Mixed Content）拦截**：当页面以 HTTPS 域名访问、而 API 地址是 `http://` 明文（常见于内网 IP，如 `http://172.16.x.x:8080/v1`）时，浏览器会强制拦截请求，报错形似 CORS 但**无法用 CORS 代理或任何前端手段绕过**。
+> 典型现象：本地开发（`http://localhost`）正常，部署到 HTTPS 域名后失败。
+> 解决：让该 API 具备 **HTTPS** 地址——例如在内网用 Nginx/Caddy 反向代理为其套上带有效证书的域名（`https://dify.example.intra/v1`），再把「API 地址」改为该 HTTPS 地址。若用 EdgeOne Pages 等公有云托管页面，注意其边缘节点无法访问你的内网 IP，反代须部署在内网侧、由内网用户的浏览器直连。
+
 ---
 
 ## 🔒 隐私
