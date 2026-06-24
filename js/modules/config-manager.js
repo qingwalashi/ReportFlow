@@ -48,14 +48,29 @@
       hint: "浏览器直连通常被拒，请配合 CORS 代理使用。"
     },
     {
+      id: "dify-chatflow", label: "Dify Chatflow（工作流编排）",
+      api: "dify",
+      baseUrl: "https://api.dify.ai/v1", model: "",
+      hint: "对接 Dify Chatflow 应用：模型与提示词已在 Dify 端配置，此处无需填模型名。只需填 Dify 应用的 API 服务地址（形如 https://api.dify.ai/v1）与该应用的 API 密钥（App API Key，形如 app-…），客户端会按 Dify /chat-messages 规范请求。"
+    },
+    {
       id: "custom", label: "自定义 OpenAI 兼容端点",
       baseUrl: "", model: "",
       hint: "任何兼容 /chat/completions 的端点。"
     }
   ];
 
+  // Preset id -> API protocol. Anything not listed defaults to "openai"
+  // (the OpenAI-compatible /chat/completions schema). "dify" routes through
+  // the Dify Chatflow /chat-messages schema instead.
+  function presetApi(id) {
+    var p = PRESETS.find(function (x) { return x.id === id; });
+    return (p && p.api) || "openai";
+  }
+
   var DEFAULTS = {
     preset:      "deepseek",
+    api:         "openai",
     baseUrl:     "https://api.deepseek.com/v1",
     apiKey:      "",
     model:       "deepseek-chat",
@@ -99,6 +114,16 @@
 
   function get() { return state.get("config.llm") || DEFAULTS; }
 
+  // True when the active LLM config has everything it needs to make a call.
+  // Dify Chatflow has its model configured inside the workflow, so the model
+  // name is not required there.
+  function isConfigured(cfg) {
+    var c = cfg || get();
+    if (!c || !c.baseUrl || !c.apiKey) return false;
+    if (c.api === "dify") return true;
+    return !!c.model;
+  }
+
   function save(cfg) {
     state.set("config.llm", cfg);
     storage.set("config", "llm", cfg);
@@ -140,14 +165,17 @@
 
     // Inputs
     var baseUrl = inputText(current.baseUrl, "https://api.example.com/v1");
-    body.appendChild(field("API 地址 (baseUrl)", baseUrl, "应为以 /v1 等结尾的 OpenAI 兼容根；客户端会自动追加 /chat/completions。"));
+    var baseUrlField = field("API 地址 (baseUrl)", baseUrl, "应为以 /v1 等结尾的 OpenAI 兼容根；客户端会自动追加 /chat/completions。");
+    var baseUrlHint = baseUrlField.querySelector(".rf-field__hint");
+    body.appendChild(baseUrlField);
 
     var apiKey = inputText(current.apiKey, "sk-…", true);
     var apiKeyWrap = wrapWithToggle(apiKey);
     body.appendChild(field("API 密钥", apiKeyWrap, "明文存储于浏览器 localStorage，仅在本地。点击右侧按钮切换显示/隐藏。"));
 
     var model = inputText(current.model, "deepseek-chat");
-    body.appendChild(field("模型名", model));
+    var modelField = field("模型名", model);
+    body.appendChild(modelField);
 
     var row = document.createElement("div"); row.className = "rf-field-row";
     var temp = inputNumber(current.temperature, 0, 2, 0.05);
@@ -155,6 +183,7 @@
     var maxT = inputSelect(current.maxTokens, MAX_TOKEN_OPTIONS);
     row.appendChild(field("最大生成长度 (tokens)", maxT, "1024 适合短回复；2048（默认）适合解析；推理类模型建议 ≥ 4096"));
     body.appendChild(row);
+    var genParamsRow = row;
 
     var row2 = document.createElement("div"); row2.className = "rf-field-row";
     var timeout = inputNumber(current.timeoutMs, 5000, 600000, 1000);
@@ -245,6 +274,23 @@
     // result without scrolling away from the test button.
     body.appendChild(testBox);
 
+    // Show/hide the model-name field depending on the selected API protocol.
+    // Dify Chatflow configures the model and generation params (temperature,
+    // max tokens) inside the workflow, so those fields are hidden and not
+    // required there. Timeout / rate-limit are client-side, so they stay.
+    function syncApiUI() {
+      var api = presetApi(presetSel.value);
+      var isDify = (api === "dify");
+      modelField.style.display = isDify ? "none" : "";
+      genParamsRow.style.display = isDify ? "none" : "";
+      if (baseUrlHint) {
+        baseUrlHint.textContent = isDify
+          ? "填 Dify 应用的 API 服务地址（形如 https://api.dify.ai/v1）；客户端会自动追加 /chat-messages。"
+          : "应为以 /v1 等结尾的 OpenAI 兼容根；客户端会自动追加 /chat/completions。";
+      }
+    }
+    syncApiUI();
+
     presetSel.addEventListener("change", function () {
       var p = PRESETS.find(function (x) { return x.id === presetSel.value; }) || {};
       hintBox.textContent = p.hint || "";
@@ -252,6 +298,7 @@
         baseUrl.value = p.baseUrl || "";
         if (p.model) model.value = p.model;
       }
+      syncApiUI();
     });
 
     resetBtn.addEventListener("click", function () {
@@ -268,11 +315,13 @@
       showFooterCheck.checked = REPORT_DEFAULTS.showFooter;
       footerTextInp.value = REPORT_DEFAULTS.footerText;
       syncFooterDisabled();
+      syncApiUI();
     });
 
     function gather() {
       return {
         preset:      presetSel.value,
+        api:         presetApi(presetSel.value),
         baseUrl:     baseUrl.value.trim(),
         apiKey:      apiKey.value.trim(),
         model:       model.value.trim(),
@@ -287,7 +336,9 @@
       var errs = [];
       if (!/^https?:\/\//i.test(c.baseUrl)) errs.push("API 地址需以 http(s):// 开头");
       if (!c.apiKey) errs.push("缺少 API 密钥");
-      if (!c.model) errs.push("缺少模型名");
+      // Dify Chatflow has the model configured inside the workflow, so the
+      // model name is optional there; required for OpenAI-compatible endpoints.
+      if (c.api !== "dify" && !c.model) errs.push("缺少模型名");
       if (c.temperature < 0 || c.temperature > 2) errs.push("Temperature 应在 0~2");
       return errs;
     }
@@ -436,5 +487,5 @@
     return s;
   }
 
-  window.RF_ConfigManager = { init: init, get: get, save: save, getReport: getReport, saveReport: saveReport, openModal: openModal };
+  window.RF_ConfigManager = { init: init, get: get, isConfigured: isConfigured, save: save, getReport: getReport, saveReport: saveReport, openModal: openModal };
 })();

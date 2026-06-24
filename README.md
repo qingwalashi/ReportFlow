@@ -131,6 +131,7 @@ python3 -m http.server 8080
 | **本地 Ollama** | ✅ | 启动时设 `OLLAMA_ORIGINS=*`，完全离线 |
 | **OpenAI** | ❌ | 通常被 CORS 拦截，需自建代理 |
 | **通义千问 / 文心一言** | ❌ | 同上 |
+| **Dify Chatflow** | ⚠️ | 工作流编排；模型在 Dify 端配置，无需填模型名，按 `/chat-messages` 规范请求。直连受 Dify 服务 CORS 策略影响，必要时配合代理 |
 
 > 若必须走代理，在设置里填「CORS 代理 URL」字段（形如 `https://your-proxy.example.com/?url=`）。
 > ⚠️ **切勿把真实 API Key 发给来历不明的公共代理。**

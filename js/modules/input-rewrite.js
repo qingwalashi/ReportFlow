@@ -107,8 +107,7 @@
     }
 
     // Reuse the parse flow's config check — same UX shape, no surprises.
-    var c = window.RF_ConfigManager.get();
-    if (!c.apiKey || !c.baseUrl || !c.model) {
+    if (!window.RF_ConfigManager.isConfigured()) {
       window.RF_UI.toast.warn("请先在「设置」配置大模型 API");
       window.RF_ConfigManager.openModal();
       return;

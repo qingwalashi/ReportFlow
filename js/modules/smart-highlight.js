@@ -39,8 +39,7 @@
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
   function llmConfigured() {
-    var c = (window.RF_ConfigManager && window.RF_ConfigManager.get()) || {};
-    return !!(c.baseUrl && c.apiKey && c.model);
+    return !!(window.RF_ConfigManager && window.RF_ConfigManager.isConfigured());
   }
 
   // ===== 弹窗 =====

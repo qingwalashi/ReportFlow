@@ -61,6 +61,14 @@
   function complete(opts) {
     opts = opts || {};
     var c = cfg();
+
+    // Dify Chatflow uses a different protocol (/chat-messages, query string,
+    // model configured inside the workflow). Route there when the active
+    // preset is a Dify one.
+    if (c && c.api === "dify") {
+      return completeDify(opts, c);
+    }
+
     if (!c || !c.baseUrl || !c.apiKey || !c.model) {
       return Promise.reject(new Error("LLM 未配置：请先在「设置」中填写 API 地址、密钥和模型名"));
     }
@@ -253,6 +261,194 @@
   }
 
   function truncate(s, n) { s = String(s || ""); return s.length > n ? s.slice(0, n) + "…" : s; }
+
+  // ===== Dify Chatflow =====
+  //
+  // Dify's chat apps (Chatflow / Agent / Chatbot) speak a different protocol
+  // from OpenAI: POST {baseUrl}/chat-messages with a `query` string. The model
+  // and prompt are configured inside the Dify app, so we don't send a model
+  // name or temperature — we just flatten our messages into a single query.
+  //
+  // Streaming response is SSE with `data: {event, answer, ...}` chunks; the
+  // visible answer arrives as `answer` deltas on `event: "message"`. Blocking
+  // mode returns `{answer, ...}` as plain JSON.
+
+  // Flatten an OpenAI-style messages array into one query string. System and
+  // prior turns are prefixed so the chatflow still sees the full instruction.
+  function difyQueryFromMessages(messages) {
+    if (!Array.isArray(messages)) return String(messages || "");
+    return messages.map(function (m) {
+      var role = m && m.role;
+      var content = (m && m.content) || "";
+      if (role === "user" || !role) return content;
+      if (role === "system") return content;
+      if (role === "assistant") return "（助手历史回复）" + content;
+      return content;
+    }).filter(Boolean).join("\n\n");
+  }
+
+  function difyUrl(c) {
+    var base = (c.baseUrl || "").trim();
+    var direct = joinUrl(base, "/chat-messages");
+    if (c.corsProxy) {
+      var proxy = c.corsProxy.trim();
+      if (proxy.indexOf("?url=") >= 0 || proxy.endsWith("?")) {
+        return proxy + encodeURIComponent(direct);
+      }
+      if (proxy.endsWith("/")) return proxy + direct;
+      return proxy + "/" + direct;
+    }
+    return direct;
+  }
+
+  function completeDify(opts, c) {
+    if (!c || !c.baseUrl || !c.apiKey) {
+      return Promise.reject(new Error("Dify 未配置：请先在「设置」中填写 API 地址与 API 密钥"));
+    }
+    var stream = !!opts.stream && typeof opts.onDelta === "function";
+    var query = difyQueryFromMessages(opts.messages);
+    var body = {
+      inputs: {},
+      query: query,
+      response_mode: stream ? "streaming" : "blocking",
+      user: "reportflow",
+      conversation_id: ""
+    };
+    var url = difyUrl(c);
+    var timeoutMs = opts.timeoutMs || c.timeoutMs || 60000;
+
+    return rateGate(c.rps || 1).then(function () {
+      if (stream) return difyStreamFetch(url, c.apiKey, body, timeoutMs, opts.onDelta);
+      return difyBlockingFetch(url, c.apiKey, body, timeoutMs);
+    });
+  }
+
+  function difyStreamFetch(url, apiKey, body, timeoutMs, onDelta) {
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); }, timeoutMs);
+    var t0 = Date.now();
+
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + apiKey,
+        "Accept": "text/event-stream"
+      },
+      body: JSON.stringify(body),
+      signal: ctrl.signal
+    }).then(function (r) {
+      if (!r.ok) {
+        clearTimeout(timer);
+        return r.text().then(function (txt) {
+          var err = new Error("Dify HTTP " + r.status + ": " + truncate(txt, 220));
+          err.status = r.status; err.body = txt;
+          throw err;
+        });
+      }
+      if (!r.body || !r.body.getReader) {
+        clearTimeout(timer);
+        return r.json().then(function (j) { return String(j && j.answer || ""); });
+      }
+      var reader = r.body.getReader();
+      var decoder = new TextDecoder("utf-8");
+      var buf = "";
+      var answerBuf = "";
+
+      function pump() {
+        return reader.read().then(function (chunk) {
+          if (chunk.done) {
+            clearTimeout(timer);
+            log.info("dify: stream ok " + (Date.now() - t0) + "ms, " + answerBuf.length + " chars");
+            return answerBuf;
+          }
+          buf += decoder.decode(chunk.value, { stream: true });
+          var idx;
+          while ((idx = buf.indexOf("\n\n")) >= 0) {
+            var raw = buf.slice(0, idx);
+            buf = buf.slice(idx + 2);
+            raw.split("\n").forEach(function (line) {
+              line = line.trim();
+              if (!line.startsWith("data:")) return;
+              var payload = line.slice(5).trim();
+              if (!payload || payload === "[DONE]") return;
+              try {
+                var ev = JSON.parse(payload);
+                // chatflow/advanced-chat emit answer deltas on "message";
+                // legacy "agent_message" carries the same field.
+                if ((ev.event === "message" || ev.event === "agent_message")
+                    && typeof ev.answer === "string" && ev.answer) {
+                  answerBuf += ev.answer;
+                  try { onDelta({ delta: ev.answer, kind: "content", total: answerBuf.length }); } catch (e) {}
+                } else if (ev.event === "error") {
+                  throw new Error("Dify: " + (ev.message || "stream error"));
+                }
+              } catch (e) {
+                if (e && /^Dify:/.test(e.message)) throw e;
+                // keep-alive / partial chunk — ignore
+              }
+            });
+          }
+          return pump();
+        });
+      }
+      return pump();
+    }).catch(function (err) {
+      clearTimeout(timer);
+      if (err.name === "AbortError") {
+        var to = new Error("Dify 请求超时（" + timeoutMs + "ms）。可在设置中调高超时。");
+        to.cause = err; throw to;
+      }
+      if (err instanceof TypeError) {
+        var hint = "请求失败（可能是 CORS 跨域被阻止）。建议在设置里填写「CORS 代理 URL」，或确认 Dify API 地址可从浏览器访问。";
+        var ne = new Error(hint);
+        ne.cause = err; throw ne;
+      }
+      throw err;
+    });
+  }
+
+  function difyBlockingFetch(url, apiKey, body, timeoutMs) {
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); }, timeoutMs);
+    var t0 = Date.now();
+
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + apiKey
+      },
+      body: JSON.stringify(body),
+      signal: ctrl.signal
+    }).then(function (r) {
+      clearTimeout(timer);
+      if (r.ok) {
+        return r.json().then(function (j) {
+          var answer = String(j && j.answer || "");
+          log.info("dify: ok " + (Date.now() - t0) + "ms, " + answer.length + " chars");
+          return answer;
+        });
+      }
+      return r.text().then(function (txt) {
+        var err = new Error("Dify HTTP " + r.status + ": " + truncate(txt, 220));
+        err.status = r.status; err.body = txt;
+        throw err;
+      });
+    }).catch(function (err) {
+      clearTimeout(timer);
+      if (err.name === "AbortError") {
+        var to = new Error("Dify 请求超时（" + timeoutMs + "ms）。可在设置中调高超时。");
+        to.cause = err; throw to;
+      }
+      if (err instanceof TypeError) {
+        var hint = "请求失败（可能是 CORS 跨域被阻止）。建议在设置里填写「CORS 代理 URL」，或确认 Dify API 地址可从浏览器访问。";
+        var ne = new Error(hint);
+        ne.cause = err; throw ne;
+      }
+      throw err;
+    });
+  }
 
   /**
    * Quick health check. We don't care WHAT the model says — only that the

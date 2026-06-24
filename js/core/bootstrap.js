@@ -305,8 +305,7 @@
     if (!ta || !ta.value.trim()) {
       window.RF_UI.toast.warn("请先在左侧输入文本"); return;
     }
-    var c = window.RF_ConfigManager.get();
-    if (!c.apiKey || !c.baseUrl || !c.model) {
+    if (!window.RF_ConfigManager.isConfigured()) {
       window.RF_UI.toast.warn("请先在「设置」配置大模型 API");
       window.RF_ConfigManager.openModal();
       return;
