@@ -29,6 +29,33 @@
   var state = window.RF_State;
   var log   = window.RF_Log;
 
+  // 智能高亮 <mark> 与 **加粗** 相邻时会破坏 CommonMark 的定界符配对（漏出裸 **）。
+  // 跑 marked 前先把 <mark> 标签换成私有区哨兵字符，渲染后再还原。详见 renderer-host.js。
+  var HL_OPEN_TOKEN  = String.fromCharCode(0xE000);
+  var HL_CLOSE_TOKEN = String.fromCharCode(0xE001);
+  var HL_KIND = { num: "0", text: "1" };
+  var HL_KIND_REV = { "0": "num", "1": "text" };
+  // 高亮底色（与预览 .rf-hl--num/.rf-hl--text 保持一致）。
+  var HL_FILL = { num: "FFF1A8", text: "C8F2D4" };
+
+  function markedWithHl(text) {
+    var s = String(text);
+    if (!(window.marked && window.marked.parse)) {
+      return "<p>" + escapeXml(s) + "</p>";
+    }
+    if (s.indexOf("<mark class=\"rf-hl") < 0) return window.marked.parse(s);
+    var tmp = s
+      .replace(/<mark class="rf-hl rf-hl--(num|text)">/g, function (_, kind) {
+        return HL_OPEN_TOKEN + (HL_KIND[kind] || "0");
+      })
+      .replace(/<\/mark>/g, HL_CLOSE_TOKEN);
+    return window.marked.parse(tmp)
+      .replace(new RegExp(HL_OPEN_TOKEN + "([01])", "g"), function (_, k) {
+        return '<mark class="rf-hl rf-hl--' + (HL_KIND_REV[k] || "num") + '">';
+      })
+      .replace(new RegExp(HL_CLOSE_TOKEN, "g"), "</mark>");
+  }
+
   // Content width on an A4 portrait page with 1in margins ≈ 6.27in.
   // 1px@96dpi = 9525 EMU; 1in = 914400 EMU.
   var CONTENT_WIDTH_EMU = 5731510; // ≈ 602px
@@ -224,9 +251,7 @@
     if (!content) return "";
     var html;
     try {
-      html = (window.marked && window.marked.parse)
-        ? window.marked.parse(String(content))
-        : "<p>" + escapeXml(content) + "</p>";
+      html = markedWithHl(content);
     } catch (e) {
       html = "<p>" + escapeXml(content) + "</p>";
     }
@@ -332,6 +357,9 @@
           items = items.concat(inlineRuns(c, ctx, mergeFmt(fmt, { strike: true })));
         } else if (tag === "code") {
           items = items.concat(inlineRuns(c, ctx, mergeFmt(fmt, { code: true })));
+        } else if (tag === "mark") {
+          var hlKind = /rf-hl--text/.test(c.className || "") ? "text" : "num";
+          items = items.concat(inlineRuns(c, ctx, mergeFmt(fmt, { hl: hlKind })));
         } else if (tag === "a") {
           var href = c.getAttribute("href") || "";
           var sub = inlineRuns(c, ctx, fmt);
@@ -613,6 +641,7 @@
     if (fmt.strike) rPr += "<w:strike/>";
     if (fmt.sz) rPr += '<w:sz w:val="' + fmt.sz + '"/><w:szCs w:val="' + fmt.sz + '"/>';
     if (fmt.code) rPr += '<w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:cs="Consolas"/><w:shd w:val="clear" w:color="auto" w:fill="F2F4F8"/>';
+    if (fmt.hl) rPr += '<w:shd w:val="clear" w:color="auto" w:fill="' + (HL_FILL[fmt.hl] || HL_FILL.num) + '"/>';
     if (fmt.color) rPr += '<w:color w:val="' + hexColor(fmt.color) + '"/>';
     if (extraRPr) rPr += extraRPr;
     var rPrTag = rPr ? "<w:rPr>" + rPr + "</w:rPr>" : "";

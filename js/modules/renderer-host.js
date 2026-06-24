@@ -15,6 +15,33 @@
 (function () {
   "use strict";
 
+  // 关键：智能高亮把命中片段包成 <mark class="rf-hl rf-hl--num|text">…</mark>，
+  // 而正文又常用 **加粗**。当 ** 紧贴 <mark> 标签时（如 `**<mark…>668天</mark>…**`），
+  // CommonMark 的“flanking”规则会因为定界符旁边是 HTML 标签而无法配对，
+  // 导致字面 ** 漏到渲染结果里（预览/导出都会出现裸星号）。
+  // 解决：先把 <mark> 起止标签换成纯文本哨兵（用私有区字符，marked 视作普通字符、
+  // 不会触发 HTML 解析也不影响 ** 配对），整串跑 marked 后再还原成真正的 <mark>。
+  // 私有区字符用户无法在编辑器输入，绝不会与正文冲突。
+  var HL_OPEN_TOKEN  = String.fromCharCode(0xE000); // 私有区：<mark> 起始占位（后跟 0=num / 1=text）
+  var HL_CLOSE_TOKEN = String.fromCharCode(0xE001); // 私有区：</mark> 占位
+  var HL_KIND = { num: "0", text: "1" };
+  var HL_KIND_REV = { "0": "num", "1": "text" };
+
+  function markedWithHl(parse, text) {
+    if (text.indexOf("<mark class=\"rf-hl") < 0) return parse(text);
+    var tmp = text
+      .replace(/<mark class="rf-hl rf-hl--(num|text)">/g, function (_, kind) {
+        return HL_OPEN_TOKEN + (HL_KIND[kind] || "0");
+      })
+      .replace(/<\/mark>/g, HL_CLOSE_TOKEN);
+    var html = parse(tmp);
+    return html
+      .replace(new RegExp(HL_OPEN_TOKEN + "([01])", "g"), function (_, k) {
+        return '<mark class="rf-hl rf-hl--' + (HL_KIND_REV[k] || "num") + '">';
+      })
+      .replace(new RegExp(HL_CLOSE_TOKEN, "g"), "</mark>");
+  }
+
   function buildCtx(opts) {
     opts = opts || {};
     return {
@@ -33,7 +60,7 @@
         if (!text) return "";
         try {
           if (window.marked && window.marked.parse) {
-            return window.marked.parse(String(text));
+            return markedWithHl(window.marked.parse, String(text));
           }
         } catch (e) { console.warn("marked failed", e); }
         // Fallback: escape + simple newline -> <br>.
