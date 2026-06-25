@@ -230,16 +230,18 @@
     "transition:background .15s,box-shadow .15s;}",
     ".rf-chart-fs-btn:hover{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.14);}",
     ".rf-chart-fs-btn svg{width:16px;height:16px;display:block;}",
-    // Fullscreen overlay
-    ".rf-chart-fs{position:fixed;inset:0;z-index:99999;background:rgba(15,18,24,.94);",
-    "display:flex;align-items:center;justify-content:center;}",
-    ".rf-chart-fs__stage{width:96vw;height:90vh;display:flex;align-items:center;justify-content:center;}",
-    ".rf-chart-fs__stage svg{width:100%!important;height:100%!important;max-width:100%;max-height:100%;}",
-    ".rf-chart-fs.is-rotated .rf-chart-fs__stage{transform:rotate(90deg);width:90vh;height:96vw;}",
+    // Fullscreen overlay — light background, scrollable, keeps SVG aspect ratio
+    ".rf-chart-fs{position:fixed;inset:0;z-index:99999;background:rgba(250,250,252,.98);",
+    "overflow:auto;-webkit-overflow-scrolling:touch;",
+    "display:flex;flex-direction:column;align-items:center;justify-content:center;",
+    "padding:48px 16px;}",
+    ".rf-chart-fs__stage{width:96vw;display:flex;justify-content:center;flex:none;}",
+    ".rf-chart-fs__stage svg{width:100%;height:auto;max-width:100%;}",
+    ".rf-chart-fs.is-rotated .rf-chart-fs__stage{transform:rotate(90deg);width:90vh;height:auto;}",
     ".rf-chart-fs__close{position:fixed;top:14px;right:16px;z-index:1;width:40px;height:40px;",
-    "border:none;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:20px;",
+    "border:none;border-radius:50%;background:rgba(0,0,0,.08);color:#1a1f2c;font-size:20px;",
     "line-height:40px;text-align:center;cursor:pointer;}",
-    ".rf-chart-fs__close:hover{background:rgba(255,255,255,.28);}",
+    ".rf-chart-fs__close:hover{background:rgba(0,0,0,.14);}",
     "@media print{.rf-chart-fs-btn,.rf-chart-fs{display:none!important;}}"
   ].join("");
 
