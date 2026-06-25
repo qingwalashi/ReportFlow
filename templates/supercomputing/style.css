@@ -378,5 +378,5 @@
   }
   .rf-tpl-supercomputing .rf-table th,
   .rf-tpl-supercomputing .rf-table td { white-space: nowrap; }
-  .rf-tpl-supercomputing .rf-chart-card__body { height: 240px; }
+  .rf-tpl-supercomputing .rf-chart-card__body { height: auto; }
 }

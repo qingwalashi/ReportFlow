@@ -193,5 +193,5 @@
   }
   .rf-tpl-minimal-business .rf-table th,
   .rf-tpl-minimal-business .rf-table td { white-space: nowrap; }
-  .rf-tpl-minimal-business .rf-chart-card__body { height: 240px; }
+  .rf-tpl-minimal-business .rf-chart-card__body { height: auto; }
 }

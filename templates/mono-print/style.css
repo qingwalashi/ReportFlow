@@ -276,5 +276,5 @@
   }
   .rf-tpl-mono-print .rf-table th,
   .rf-tpl-mono-print .rf-table td { white-space: nowrap; }
-  .rf-tpl-mono-print .rf-chart-card__body { height: 240px; }
+  .rf-tpl-mono-print .rf-chart-card__body { height: auto; }
 }

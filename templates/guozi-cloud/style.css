@@ -408,5 +408,5 @@
   }
   .rf-tpl-guozi-cloud .rf-table th,
   .rf-tpl-guozi-cloud .rf-table td { white-space: nowrap; }
-  .rf-tpl-guozi-cloud .rf-chart-card__body { height: 240px; }
+  .rf-tpl-guozi-cloud .rf-chart-card__body { height: auto; }
 }

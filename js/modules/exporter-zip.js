@@ -109,11 +109,15 @@
         var svg = window.RF_Chart.toSvgString(blk.spec,
           Object.assign({ width: 720, height: 320, disableAnimation: true }, tplTheme));
         host.innerHTML = "";
-        // Wrap so it is responsive in the exported file.
+        // Responsive SVG wrapper so the chart scales to the container on mobile.
         var wrap = srcDoc.createElement("div");
-        wrap.style.cssText = "width:100%;max-width:100%;";
+        wrap.className = "rf-chart-resp";
         wrap.innerHTML = svg.replace(/<svg /, '<svg style="width:100%;height:auto;" ');
         host.appendChild(wrap);
+        // Fullscreen preview button
+        if (window.RF_Chart.addFullscreenButton) {
+          window.RF_Chart.addFullscreenButton(host, srcDoc);
+        }
       } catch (e) {
         log.warn("export: chart svg failed " + e.message);
       }
@@ -158,11 +162,17 @@
         "html,body{margin:0;padding:0;min-height:100%;background:#fff;color:#1a1f2c;",
         "font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:1.7;}",
         "#root{box-sizing:border-box;max-width:920px;margin:0 auto;padding:32px 36px;}",
+        // --- chart export: responsive SVG + fullscreen overlay ---
+        window.RF_Chart.exportFullscreenCss || "",
         "</style>",
         "</head><body class='" + escapeHtml(snap.bodyClass || "") + "'>",
         "<div id='root' class='" + escapeHtml(rootClone.className || "") + "'>",
         rootClone.innerHTML,
         "</div>",
+        // --- chart fullscreen runtime (delegated, no deps) ---
+        "<script>",
+        window.RF_Chart.exportFullscreenScript || "",
+        "</scr" + "ipt>",
         "</body></html>"
       ].join("\n");
       return html;

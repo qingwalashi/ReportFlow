@@ -193,5 +193,5 @@
   }
   .rf-tpl-formal-gov .rf-table th,
   .rf-tpl-formal-gov .rf-table td { white-space: nowrap; }
-  .rf-tpl-formal-gov .rf-chart-card__body { height: 240px; }
+  .rf-tpl-formal-gov .rf-chart-card__body { height: auto; }
 }

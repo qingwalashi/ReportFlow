@@ -399,5 +399,5 @@
   }
   .rf-tpl-library .rf-table th,
   .rf-tpl-library .rf-table td { white-space: nowrap; }
-  .rf-tpl-library .rf-chart-card__body { height: 240px; }
+  .rf-tpl-library .rf-chart-card__body { height: auto; }
 }

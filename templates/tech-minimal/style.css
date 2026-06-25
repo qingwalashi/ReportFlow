@@ -223,5 +223,5 @@
   }
   .rf-tpl-tech-minimal .rf-table th,
   .rf-tpl-tech-minimal .rf-table td { white-space: nowrap; }
-  .rf-tpl-tech-minimal .rf-chart-card__body { height: 240px; }
+  .rf-tpl-tech-minimal .rf-chart-card__body { height: auto; }
 }
