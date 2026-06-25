@@ -179,8 +179,71 @@
     });
   }
 
+  // html2canvas (used by PDF/PNG export) mis-parses comma-separated backgrounds
+  // that mix gradients with a trailing solid color — it treats the color token as
+  // an image URL and throws "Unsupported image type". The hero templates
+  // (guozi-cloud / supercomputing / library) paint ambient glow on ::before.
+  // Hide that pseudo-element for raster export (page bg already comes from
+  // .rf-tpl-* { background: var(--tpl-bg) }). Do NOT restyle ::before with
+  // z-index:0 — html2canvas stacks it above section text and wipes the body.
+  var RASTER_CSS_OVERRIDES = [
+    ".rf-tpl-guozi-cloud::before,.rf-tpl-supercomputing::before,.rf-tpl-library::before{",
+    "display:none!important;content:none!important;background:none!important;}",
+    ".rf-tpl-guozi-cloud .rf-section__heading{",
+    "background:rgba(255,255,255,.86)!important;background-image:none!important;}",
+    ".rf-tpl-guozi-cloud *,.rf-tpl-supercomputing *,.rf-tpl-library *{",
+    "-webkit-backdrop-filter:none!important;backdrop-filter:none!important;}"
+  ].join("");
+
+  function stripAmbiguousBeforeGlow(cssText) {
+    if (!cssText) return "";
+    // Drop the ambient ::before block entirely — html2canvas chokes on its
+    // gradient+,color background even when the pseudo-element is hidden.
+    return cssText.replace(
+      /\.rf-tpl-(?:guozi-cloud|supercomputing|library)::before\s*\{[^}]*\}/g,
+      ""
+    );
+  }
+
+  var HEADER_IMAGE_VAR_RE = /--tpl-header-image:\s*url\(\s*(['"]?)([^'")]+)\1\s*\)/;
+
+  function extractHeaderImageUrl(cssText) {
+    var m = cssText && cssText.match(HEADER_IMAGE_VAR_RE);
+    return m ? (m[2] || "").trim() : "";
+  }
+
+  function stripHeaderImageVar(cssText) {
+    if (!cssText) return "";
+    return cssText.replace(/--tpl-header-image:\s*url\([^)]+\)/g, "--tpl-header-image: none");
+  }
+
+  /** Move hero header photos from a CSS custom property onto inline styles. */
+  function applyHeroPhotoInline(rootEl, imageUrl) {
+    if (!rootEl || !imageUrl) return;
+    rootEl.querySelectorAll(".rf-hero__photo").forEach(function (el) {
+      el.style.backgroundImage = 'url("' + imageUrl + '")';
+      el.style.backgroundSize = "cover";
+      el.style.backgroundPosition = "center";
+    });
+  }
+
+  /**
+   * prepareRasterCss(cssText) -> { css, headerImageUrl }
+   * Post-process inlined CSS for html2canvas-based exporters (PDF/PNG).
+   */
+  function prepareRasterCss(cssText) {
+    var headerImageUrl = extractHeaderImageUrl(cssText);
+    var css = stripAmbiguousBeforeGlow(stripHeaderImageVar(cssText));
+    return {
+      css: css + "\n" + RASTER_CSS_OVERRIDES,
+      headerImageUrl: headerImageUrl
+    };
+  }
+
   window.RF_ExportCss = {
     collectCssText: collectCssText,
-    inlineCssUrls: inlineCssUrls
+    inlineCssUrls: inlineCssUrls,
+    applyHeroPhotoInline: applyHeroPhotoInline,
+    prepareRasterCss: prepareRasterCss
   };
 })();

@@ -89,7 +89,9 @@
 
     return Promise.all([
       window.RF_ExportCss.inlineCssUrls(rawCss).then(function (css) {
-        styleEl.textContent = css;
+        var prep = window.RF_ExportCss.prepareRasterCss(css);
+        styleEl.textContent = prep.css;
+        window.RF_ExportCss.applyHeroPhotoInline(rootEl, prep.headerImageUrl);
       })
     ].concat(imgPromises)).then(function () {
       var opts = {
