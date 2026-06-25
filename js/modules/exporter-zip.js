@@ -112,16 +112,16 @@
         // Responsive SVG wrapper so the chart scales to the container on mobile.
         var wrap = srcDoc.createElement("div");
         wrap.className = "rf-chart-resp";
-        wrap.innerHTML = svg.replace(/<svg /, '<svg style="width:100%;height:auto;" ');
+        wrap.innerHTML = window.RF_Chart.makeSvgResponsive(svg);
         host.appendChild(wrap);
-        // Fullscreen preview button
-        if (window.RF_Chart.addFullscreenButton) {
-          window.RF_Chart.addFullscreenButton(host, srcDoc);
-        }
       } catch (e) {
         log.warn("export: chart svg failed " + e.message);
       }
     });
+
+    if (window.RF_ExportFullscreen) {
+      window.RF_ExportFullscreen.decorateExportRoot(rootClone, srcDoc);
+    }
 
     // 3) Rewrite <img data-rf-asset="..."> to relative paths.
     var imgs = rootClone.querySelectorAll('img[data-rf-asset]');
@@ -162,16 +162,16 @@
         "html,body{margin:0;padding:0;min-height:100%;background:#fff;color:#1a1f2c;",
         "font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:1.7;}",
         "#root{box-sizing:border-box;max-width:920px;margin:0 auto;padding:32px 36px;}",
-        // --- chart export: responsive SVG + fullscreen overlay ---
-        window.RF_Chart.exportFullscreenCss || "",
+        // --- export: responsive charts/tables + fullscreen overlay ---
+        (window.RF_ExportFullscreen && window.RF_ExportFullscreen.exportCss) || "",
         "</style>",
         "</head><body class='" + escapeHtml(snap.bodyClass || "") + "'>",
         "<div id='root' class='" + escapeHtml(rootClone.className || "") + "'>",
         rootClone.innerHTML,
         "</div>",
-        // --- chart fullscreen runtime (delegated, no deps) ---
+        // --- fullscreen runtime (charts + tables, delegated, no deps) ---
         "<script>",
-        window.RF_Chart.exportFullscreenScript || "",
+        (window.RF_ExportFullscreen && window.RF_ExportFullscreen.exportScript) || "",
         "</scr" + "ipt>",
         "</body></html>"
       ].join("\n");

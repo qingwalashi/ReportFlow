@@ -183,115 +183,45 @@
     return (spec && spec.theme) || {};
   }
 
-  // ============================================================
-  // Export-only: responsive SVG charts + per-chart fullscreen view
-  // ------------------------------------------------------------
-  // Exported HTML/ZIP charts are static SVG (no ECharts in the output).
-  // To make them usable on phones we (1) scale the SVG to the container
-  // width, and (2) add a fullscreen button that — on mobile — flips the
-  // chart to landscape so a wide chart can be read without squinting.
-  // PDF/PNG exports use their own chart path and never see these helpers.
-  // ============================================================
-
-  // 16×16 "expand corners" icon (inherits currentColor).
-  var FS_ICON =
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
-    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-    '<path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3' +
-    'M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>';
+  // Export-only: make inline SVG charts scale on narrow screens.
+  // Fullscreen buttons live in export-fullscreen.js.
 
   /**
-   * Append a fullscreen-preview button to a chart card (the parent of the
-   * chart body). Idempotent — won't add a second button to the same card.
-   * Used by the HTML/ZIP exporters after they inject the responsive SVG.
+   * Rewrite an ECharts SVG string so it scales to the container width on
+   * narrow screens. Strips fixed width/height attributes (which mobile
+   * browsers honour over CSS), injects viewBox when missing, and sets
+   * preserveAspectRatio so the chart is never clipped.
    */
-  function addFullscreenButton(bodyEl, doc) {
-    var card = bodyEl && bodyEl.parentNode;
-    if (!card || !card.querySelector) return;
-    if (card.querySelector(".rf-chart-fs-btn")) return;
-    var btn = (doc || document).createElement("button");
-    btn.className = "rf-chart-fs-btn";
-    btn.type = "button";
-    btn.setAttribute("aria-label", "全屏查看");
-    btn.title = "全屏查看";
-    btn.innerHTML = FS_ICON;
-    card.appendChild(btn);
+  function makeSvgResponsive(svgStr) {
+    if (!svgStr) return svgStr;
+    var openRe = /<svg\b([^>]*)>/;
+    var m = svgStr.match(openRe);
+    if (!m) return svgStr;
+
+    var attrs = m[1];
+    var w = (attrs.match(/\bwidth="(\d+(?:\.\d+)?)"/) || [])[1];
+    var h = (attrs.match(/\bheight="(\d+(?:\.\d+)?)"/) || [])[1];
+    var hasViewBox = /\bviewBox\s*=/.test(attrs);
+
+    var cleaned = attrs
+      .replace(/\bwidth="[^"]*"/g, "")
+      .replace(/\bheight="[^"]*"/g, "")
+      .replace(/\sstyle="[^"]*"/g, "");
+
+    if (!hasViewBox && w && h) {
+      cleaned += ' viewBox="0 0 ' + w + " " + h + '"';
+    }
+    cleaned += ' preserveAspectRatio="xMidYMid meet"';
+    cleaned += ' style="width:100%;height:auto;max-width:100%;display:block;"';
+
+    return svgStr.replace(openRe, "<svg" + cleaned + ">");
   }
-
-  // Styles injected (after template CSS, so they win) into the exported file.
-  var EXPORT_FS_CSS = [
-    ".rf-chart-card{position:relative;}",
-    ".rf-chart-resp{width:100%;max-width:100%;}",
-    ".rf-chart-resp svg{width:100%;height:auto;display:block;}",
-    ".rf-chart-fs-btn{position:absolute;top:8px;right:8px;z-index:3;width:30px;height:30px;",
-    "display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:0;",
-    "border:1px solid rgba(0,0,0,.12);border-radius:6px;background:rgba(255,255,255,.82);",
-    "color:#444;cursor:pointer;-webkit-tap-highlight-color:transparent;",
-    "transition:background .15s,box-shadow .15s;}",
-    ".rf-chart-fs-btn:hover{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.14);}",
-    ".rf-chart-fs-btn svg{width:16px;height:16px;display:block;}",
-    // Fullscreen overlay — light background, scrollable, keeps SVG aspect ratio
-    ".rf-chart-fs{position:fixed;inset:0;z-index:99999;background:rgba(250,250,252,.98);",
-    "overflow:auto;-webkit-overflow-scrolling:touch;",
-    "display:flex;flex-direction:column;align-items:center;justify-content:center;",
-    "padding:48px 16px;}",
-    ".rf-chart-fs__stage{width:96vw;display:flex;justify-content:center;flex:none;}",
-    ".rf-chart-fs__stage svg{width:100%;height:auto;max-width:100%;}",
-    ".rf-chart-fs.is-rotated .rf-chart-fs__stage{transform:rotate(90deg);width:90vh;height:auto;}",
-    ".rf-chart-fs__close{position:fixed;top:14px;right:16px;z-index:1;width:40px;height:40px;",
-    "border:none;border-radius:50%;background:rgba(0,0,0,.08);color:#1a1f2c;font-size:20px;",
-    "line-height:40px;text-align:center;cursor:pointer;}",
-    ".rf-chart-fs__close:hover{background:rgba(0,0,0,.14);}",
-    "@media print{.rf-chart-fs-btn,.rf-chart-fs{display:none!important;}}"
-  ].join("");
-
-  // Self-contained runtime for the exported file. Bound via event delegation,
-  // so it works regardless of how many charts the report has.
-  var EXPORT_FS_SCRIPT = [
-    "(function(){",
-    "var mqCoarse=window.matchMedia&&window.matchMedia('(pointer: coarse)');",
-    "function coarse(){return mqCoarse?mqCoarse.matches:false;}",
-    "function portrait(){return window.matchMedia('(orientation: portrait)').matches;}",
-    "function lockLandscape(){try{if(screen.orientation&&screen.orientation.lock)return screen.orientation.lock('landscape');}catch(e){}return null;}",
-    "function unlock(){try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();}catch(e){}}",
-    "function open(card){",
-    "var svg=card.querySelector('.rf-chart-card__body svg');if(!svg)return;",
-    "var ov=document.createElement('div');ov.className='rf-chart-fs';",
-    "var close=document.createElement('button');close.className='rf-chart-fs__close';",
-    "close.setAttribute('aria-label','关闭');close.innerHTML='\\u2715';",
-    "var stage=document.createElement('div');stage.className='rf-chart-fs__stage';",
-    "stage.appendChild(svg.cloneNode(true));ov.appendChild(close);ov.appendChild(stage);",
-    "document.body.appendChild(ov);document.body.style.overflow='hidden';",
-    "var locked=false;",
-    "function sync(){if(!locked&&portrait()&&coarse())ov.classList.add('is-rotated');else ov.classList.remove('is-rotated');}",
-    "var req=ov.requestFullscreen||ov.webkitRequestFullscreen||ov.msRequestFullscreen;",
-    "Promise.resolve().then(function(){if(req)return req.call(ov);}).then(function(){",
-    "var p=lockLandscape();if(p&&p.then)return p.then(function(){locked=true;},function(){});",
-    "}).catch(function(){}).then(sync);",
-    "sync();window.addEventListener('resize',sync);",
-    "function destroy(){window.removeEventListener('resize',sync);unlock();",
-    "var ex=document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen;",
-    "try{if((document.fullscreenElement||document.webkitFullscreenElement)&&ex)ex.call(document);}catch(e){}",
-    "document.body.style.overflow='';if(ov.parentNode)ov.parentNode.removeChild(ov);",
-    "document.removeEventListener('keydown',onKey);}",
-    "function onKey(e){if(e.key==='Escape'||e.keyCode===27)destroy();}",
-    "close.addEventListener('click',destroy);",
-    "ov.addEventListener('click',function(e){if(e.target===ov)destroy();});",
-    "document.addEventListener('keydown',onKey);",
-    "}",
-    "document.addEventListener('click',function(e){",
-    "var btn=e.target.closest&&e.target.closest('.rf-chart-fs-btn');if(!btn)return;",
-    "var card=btn.closest('.rf-chart-card');if(card)open(card);});",
-    "})();"
-  ].join("");
 
   window.RF_Chart = {
     buildOption: buildOption,
     renderChart: renderChart,
     toSvgString: toSvgString,
-    themeOf: themeOf,
-    addFullscreenButton: addFullscreenButton,
-    exportFullscreenCss: EXPORT_FS_CSS,
-    exportFullscreenScript: EXPORT_FS_SCRIPT
+    makeSvgResponsive: makeSvgResponsive,
+    themeOf: themeOf
   };
 })();

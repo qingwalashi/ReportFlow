@@ -78,6 +78,7 @@ const PRECACHE_URLS = [
   "./js/modules/parser.js",
   "./js/modules/history.js",
   "./js/modules/export-css-inline.js",
+  "./js/modules/export-fullscreen.js",
   "./js/modules/exporter-zip.js",
   "./js/modules/exporter-pdf.js",
   "./js/modules/exporter-html.js",
