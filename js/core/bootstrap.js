@@ -23,6 +23,7 @@
     if (window.RF_ScrollSync) window.RF_ScrollSync.init();  // editor ↔ preview scroll sync
     if (window.RF_BlockHighlight) window.RF_BlockHighlight.init();  // block click highlight
     if (window.RF_SmartHighlight) window.RF_SmartHighlight.init();  // 智能高亮按钮
+    if (window.RF_ChartSuggestion) window.RF_ChartSuggestion.init(); // 图表建议按钮
     window.RF_History.init();          // history button + Ctrl+S
 
     // ===== Template selector =====
