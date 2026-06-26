@@ -29,6 +29,8 @@
     var card = bodyEl && bodyEl.parentNode;
     if (!card || !card.querySelector) return;
     if (card.querySelector(".rf-export-fs-btn--chart")) return;
+    // 使用 setAttribute 确保样式在 innerHTML 序列化时被保留
+    card.setAttribute("style", (card.getAttribute("style") || "") + ";position:relative;");
     card.appendChild(makeButton("chart", doc));
   }
 
@@ -37,19 +39,35 @@
     if (!figEl || !figEl.querySelector) return;
     if (!figEl.querySelector(".rf-table-scroll")) return;
     if (figEl.querySelector(".rf-export-fs-btn--table")) return;
+    figEl.setAttribute("style", (figEl.getAttribute("style") || "") + ";position:relative;");
     figEl.appendChild(makeButton("table", doc));
   }
 
-  /** Add fullscreen buttons to all charts & tables in an export DOM clone. */
+  /** Append a fullscreen button to an image container. Idempotent. */
+  function addImageButton(imgWrapEl, doc) {
+    if (!imgWrapEl || !imgWrapEl.querySelector) return;
+    if (!imgWrapEl.querySelector("img")) return;
+    if (imgWrapEl.querySelector(".rf-export-fs-btn--image")) return;
+    imgWrapEl.setAttribute("style", (imgWrapEl.getAttribute("style") || "") + ";position:relative;");
+    imgWrapEl.appendChild(makeButton("image", doc));
+  }
+
+  /** Add fullscreen buttons to all charts, tables & images in an export DOM clone. */
   function decorateExportRoot(rootClone, doc) {
     if (!rootClone) return;
-    rootClone.querySelectorAll(".rf-chart-card__body").forEach(function (body) {
+    var chartBodies = rootClone.querySelectorAll(".rf-chart-card__body");
+    chartBodies.forEach(function (body) {
       addChartButton(body, doc);
     });
-    rootClone.querySelectorAll(".rf-table-scroll").forEach(function (scroll) {
+    var tableScrolls = rootClone.querySelectorAll(".rf-table-scroll");
+    tableScrolls.forEach(function (scroll) {
       var fig = scroll.parentNode;
       while (fig && fig.tagName !== "FIGURE") fig = fig.parentNode;
       if (fig) addTableButton(fig, doc);
+    });
+    var imgFigs = rootClone.querySelectorAll(".rf-block--image .rf-img");
+    imgFigs.forEach(function (fig) {
+      addImageButton(fig, doc);
     });
   }
 
@@ -61,14 +79,15 @@
     ".rf-chart-resp{width:100%;max-width:100%;overflow:visible;}",
     ".rf-chart-resp svg{width:100%!important;height:auto!important;max-width:100%;display:block;}",
     ".rf-block--table figure{position:relative;}",
+    ".rf-block--image .rf-img{position:relative;}",
     "@media(max-width:640px){#root{padding:20px 16px!important;}}",
-    ".rf-export-fs-btn{position:absolute;top:8px;right:8px;z-index:3;width:30px;height:30px;",
+    ".rf-export-fs-btn{position:absolute;top:12px;right:12px;z-index:100;width:36px;height:36px;",
     "display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:0;",
-    "border:1px solid rgba(0,0,0,.12);border-radius:6px;background:rgba(255,255,255,.82);",
-    "color:#444;cursor:pointer;-webkit-tap-highlight-color:transparent;",
-    "transition:background .15s,box-shadow .15s;}",
-    ".rf-export-fs-btn:hover{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.14);}",
-    ".rf-export-fs-btn svg{width:16px;height:16px;display:block;}",
+    "border:2px solid #3b82f6;border-radius:8px;background:#fff;",
+    "color:#3b82f6;cursor:pointer;-webkit-tap-highlight-color:transparent;",
+    "transition:all .15s;box-shadow:0 2px 8px rgba(59,130,246,.3);}",
+    ".rf-export-fs-btn:hover{background:#eff6ff;box-shadow:0 4px 12px rgba(59,130,246,.4);}",
+    ".rf-export-fs-btn svg{width:20px;height:20px;display:block;stroke-width:2.5;}",
     ".rf-export-fs{position:fixed;inset:0;z-index:99999;background:rgba(250,250,252,.98);",
     "overflow:auto;-webkit-overflow-scrolling:touch;",
     "display:flex;flex-direction:column;align-items:center;justify-content:center;",
@@ -83,6 +102,8 @@
     ".rf-export-fs--table .rf-table th,.rf-export-fs--table .rf-table td{white-space:nowrap;}",
     ".rf-export-fs--table .rf-table-title{margin-bottom:12px;}",
     ".rf-export-fs--table .rf-table-caption{margin-top:12px;}",
+    ".rf-export-fs--image .rf-export-fs__stage{align-items:center;max-width:100%;}",
+    ".rf-export-fs--image .rf-export-fs__stage img{max-width:100%;max-height:90vh;width:auto;height:auto;object-fit:contain;}",
     ".rf-export-fs.is-rotated .rf-export-fs__stage{transform:rotate(90deg);width:90vh;height:auto;}",
     ".rf-export-fs__close{position:fixed;top:14px;right:16px;z-index:1;width:40px;height:40px;",
     "border:none;border-radius:50%;background:rgba(0,0,0,.08);color:#1a1f2c;font-size:20px;",
@@ -139,18 +160,33 @@
     "scope.appendChild(clone);stage.appendChild(scope);",
     "mount(ov,stage,'rf-export-fs--table');",
     "}",
+    "function openImage(fig){",
+    "var img=fig.querySelector('img');if(!img)return;",
+    "var ov=document.createElement('div');",
+    "var stage=document.createElement('div');stage.className='rf-export-fs__stage';",
+    "var scope=document.createElement('div');",
+    "var sc=tplScope();if(sc)scope.className=sc;",
+    "var clone=fig.cloneNode(true);",
+    "var btn=clone.querySelector('.rf-export-fs-btn--image');",
+    "if(btn&&btn.parentNode)btn.parentNode.removeChild(btn);",
+    "scope.appendChild(clone);stage.appendChild(scope);",
+    "mount(ov,stage,'rf-export-fs--image');",
+    "}",
     "document.addEventListener('click',function(e){",
     "var t=e.target.closest&&e.target.closest('.rf-export-fs-btn--chart');",
     "if(t){var c=t.closest('.rf-chart-card');if(c)openChart(c);return;}",
     "t=e.target.closest&&e.target.closest('.rf-export-fs-btn--table');",
-    "if(t){var f=t.closest('figure');if(f)openTable(f);}",
-    "});",
+    "if(t){var f=t.closest('figure');if(f)openTable(f);return;}",
+    "t=e.target.closest&&e.target.closest('.rf-export-fs-btn--image');",
+    "if(t){var fi=t.closest('.rf-img');if(fi)openImage(fi);}",
+    "});
     "})();"
   ].join("");
 
   window.RF_ExportFullscreen = {
     addChartButton: addChartButton,
     addTableButton: addTableButton,
+    addImageButton: addImageButton,
     decorateExportRoot: decorateExportRoot,
     exportCss: EXPORT_CSS,
     exportScript: EXPORT_SCRIPT
