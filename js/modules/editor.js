@@ -54,6 +54,10 @@
       });
       commit(rep, { structural: true });
     });
+
+    // Generate summary button
+    var genSummaryBtn = document.getElementById("rf-btn-generate-summary");
+    if (genSummaryBtn) genSummaryBtn.addEventListener("click", generateSummary);
   }
 
   /**
@@ -823,7 +827,102 @@
     return wrap;
   }
 
+  // ===== 摘要生成 =====
+  function generateSummary() {
+    var report = state.get("report");
+    if (!report || !report.sections || report.sections.length === 0) {
+      window.RF_UI.toast.warn("请先解析或创建报告内容");
+      return;
+    }
+
+    // 检查是否已有摘要章节
+    var existingSummaryIdx = report.sections.findIndex(function (s) {
+      return s.heading === "摘要" || s.heading === "报告摘要" || s.heading === "执行摘要";
+    });
+
+    var btn = document.getElementById("rf-btn-generate-summary");
+    var originalText = btn ? btn.innerHTML : "";
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = "⏳ 正在生成...";
+    }
+
+    // 构建 prompt：提取所有文本内容
+    var allText = [];
+    report.sections.forEach(function (sec) {
+      if (existingSummaryIdx >= 0 && sec.heading === report.sections[existingSummaryIdx].heading) return;
+      allText.push("【" + sec.heading + "】");
+      (sec.blocks || []).forEach(function (blk) {
+        if (blk.type === "text") {
+          allText.push(blk.content);
+        } else if (blk.type === "chart") {
+          allText.push("[图表: " + blk.title + "]");
+        } else if (blk.type === "table") {
+          allText.push("[表格: " + blk.title + "]");
+        }
+      });
+    });
+
+    var prompt = [
+      {
+        role: "system",
+        content: "你是报告摘要助手。请基于下面的报告内容，生成一份简洁、专业的执行摘要，长度约 150-250 字。要求：\n"
+               + "1) 涵盖核心结论和关键数据\n"
+               + "2) 使用正式、专业的商务语气\n"
+               + "3) 用 **加粗** 突出最重要的数字或结论\n"
+               + "4) 只输出摘要内容本身，不要任何解释、标题或 markdown 代码块\n"
+               + "5) 摘要应该是一个完整的段落或由几个短句组成"
+      },
+      {
+        role: "user",
+        content: "报告标题：" + (report.meta && report.meta.title || "无标题") + "\n\n"
+               + "报告内容：\n" + allText.join("\n\n")
+      }
+    ];
+
+    window.RF_LLM.complete({
+      messages: prompt,
+      temperature: 0.6,
+      maxTokens: 600
+    }).then(function (summaryText) {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+
+      var rep = clone(report);
+      var summarySection = {
+        id: schema.uid("s-"),
+        heading: "摘要",
+        level: 1,
+        blocks: [{
+          type: "text",
+          format: "markdown",
+          content: String(summaryText || "").trim()
+        }]
+      };
+
+      if (existingSummaryIdx >= 0) {
+        // 更新现有摘要
+        rep.sections[existingSummaryIdx] = summarySection;
+        window.RF_UI.toast.ok("摘要已更新");
+      } else {
+        // 在最前面插入新的摘要章节
+        rep.sections.unshift(summarySection);
+        window.RF_UI.toast.ok("摘要已生成并添加到报告开头");
+      }
+
+      commit(rep, { structural: true });
+    }).catch(function (err) {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+      window.RF_UI.toast.error("摘要生成失败: " + (err.message || String(err)));
+    });
+  }
+
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
-  window.RF_Editor = { init: init, render: render };
+  window.RF_Editor = { init: init, render: render, generateSummary: generateSummary };
 })();
