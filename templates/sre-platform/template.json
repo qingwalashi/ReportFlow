@@ -1,0 +1,14 @@
+{
+  "id": "sre-platform",
+  "name": "SRE 平台服务",
+  "version": "1.0.0",
+  "author": "ReportFlow",
+  "description": "SRE 运维观测主题：打破顶图与正文界限，蓝灰连续渐变背景 + 观测网格 + 数据连接线条，营造专业的监控平台视觉风格。",
+  "stylesheet": "style.css",
+  "preview": "preview.png",
+  "capabilities": {
+    "charts": ["pie", "bar", "line"],
+    "images": true,
+    "pdfSafe": true
+  }
+}

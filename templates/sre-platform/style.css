@@ -1,0 +1,528 @@
+/* ============================================================================
+   Template: sre-platform — SRE 观测主题
+   设计核心：打破顶图与正文界限，建立连续的观测系统视觉语言
+
+   配色体系（避开 AI 常见风格，建立独特的"观测平台"风格）：
+     · 主蓝 #2563eb    - 观测、数据、品牌色
+     · 水鸭绿 #0d9488  - 健康、SLO、正常状态（比普通翠绿更沉稳）
+     · 琥珀 #d97706    - 预警、注意（深琥珀，非亮橙）
+     · 故障红 #dc2626  - 异常、错误
+     · 背景 #f1f5f9 → #e2e8f0 → #f8fafc 蓝灰连续渐变
+     · 文字 #0f172a 深蓝灰
+
+   标志性元素：
+     1. 连续渐变背景 - hero 到正文无断点
+     2. 观测网格 - 全页面细微点阵，随内容延伸
+     3. 数据连接线条 - 章节间蓝线连接，形成数据流
+     4. 状态指示器 - 章节标题旁圆点暗示健康度
+     5. 代码注释装饰 - /* 风格的标题装饰
+
+   排版体系：
+     · 标题：Inter 600，紧缩字间距
+     · 正文：Inter 400，舒适行高
+     · 数据/元数据：JetBrains Mono 等宽字体
+   ============================================================================ */
+
+.rf-tpl-sre-platform {
+  /* ===== 配色 Token - 清爽前端设计风格 ===== */
+  --sre-primary:    #3b82f6;    /* 明亮天蓝 - 更清新 */
+  --sre-healthy:    #14b8a6;    /* 清新水鸭绿 */
+  --sre-warning:    #f59e0b;    /* 明亮琥珀 - 预警 */
+  --sre-critical:   #ef4444;    /* 亮红 - 故障 */
+  --sre-bg-1:       #eff6ff;    /* 非常浅的天蓝（顶部） */
+  --sre-bg-2:       #f8fafc;    /* 近白色（中部） */
+  --sre-bg-3:       #ffffff;    /* 纯白色（底部） */
+  --sre-ink:        #0f172a;    /* 正文深蓝灰 */
+  --sre-ink-soft:   #475569;    /* 次级文字 */
+  --sre-muted:      #94a3b8;    /* 辅助文字 */
+  --sre-line:       #cbd5e1;    /* 分割线 */
+  --sre-line-soft:  #e2e8f0;    /* 淡分割线 */
+  --sre-card-bg:    #ffffff;
+  --sre-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.04),
+                     0 4px 16px rgba(15, 23, 42, 0.06);
+
+  /* ===== 排版 Token ===== */
+  --sre-font-display: "Inter", "PingFang SC", -apple-system, sans-serif;
+  --sre-font-body:    "Inter", "PingFang SC", -apple-system, sans-serif;
+  --sre-font-mono:    "JetBrains Mono", "SF Mono", "Consolas", monospace;
+
+  /* ===== 全局基础 ===== */
+  background: linear-gradient(180deg,
+    var(--sre-bg-1) 0%,
+    var(--sre-bg-2) 35%,
+    var(--sre-bg-3) 100%);
+  color: var(--sre-ink);
+  font-family: var(--sre-font-body);
+  font-size: 14.5px;
+  line-height: 1.75;
+  padding-bottom: 80px;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ===== 全页面观测网格 ===== */
+.rf-tpl-sre-platform::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, var(--sre-muted) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: center center;
+  opacity: 0.15;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ===== Hero 区域 - 打破边界设计 ===== */
+.rf-tpl-sre-platform .rf-hero {
+  position: relative;
+  margin: -32px -36px 56px;
+  padding: 0 36px;
+  /* 根据内容自适应高度，不再固定最小高度 */
+  min-height: 280px;
+  /* SVG 背景从顶部延伸下来 */
+  background-image: url("header-bg.svg");
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  /* 底部使用软渐变淡出，与页面渐变背景无缝融合 */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 75%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 75%,
+    transparent 100%
+  );
+}
+
+/* 移除旧的 photo 层，改用 hero 直接承载背景 */
+.rf-tpl-sre-platform .rf-hero__photo {
+  display: none;
+}
+
+/* 移除旧的接壤过渡圆角 - 我们不需要边界了 */
+.rf-tpl-sre-platform .rf-hero::after {
+  display: none;
+}
+
+.rf-tpl-sre-platform .rf-hero__inner {
+  position: relative;
+  z-index: 2;
+  padding: 56px 0 40px;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+/* 移除无意义的蓝色方块图标容器 */
+.rf-tpl-sre-platform .rf-hero__org {
+  display: none;
+}
+
+/* ===== 标题系统 ===== */
+.rf-tpl-sre-platform .rf-hero__title {
+  font-family: var(--sre-font-display);
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--sre-ink);
+  margin: 0 0 14px;
+  text-wrap: balance;
+}
+
+.rf-tpl-sre-platform .rf-hero__subtitle {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--sre-ink-soft);
+  margin: 0 0 24px;
+  max-width: 600px;
+  line-height: 1.6;
+}
+
+/* 当没有副标题时，缩小与元数据的间距 */
+.rf-tpl-sre-platform .rf-hero__title:only-child,
+.rf-tpl-sre-platform .rf-hero__title:last-child {
+  margin-bottom: 0;
+}
+
+/* ===== 元数据：代码注释风格 ===== */
+.rf-tpl-sre-platform .rf-hero__byline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  font-family: var(--sre-font-mono);
+  font-size: 12px;
+  color: var(--sre-muted);
+  margin-bottom: 4px;
+}
+
+.rf-tpl-sre-platform .rf-hero__meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.rf-tpl-sre-platform .rf-hero__meta-key {
+  color: var(--sre-primary);
+  font-weight: 500;
+}
+
+.rf-tpl-sre-platform .rf-hero__meta-key::before {
+  content: "/* ";
+  opacity: 0.5;
+}
+
+.rf-tpl-sre-platform .rf-hero__meta-val {
+  color: var(--sre-ink-soft);
+}
+
+.rf-tpl-sre-platform .rf-hero__meta-val::after {
+  content: " */";
+  opacity: 0.3;
+}
+
+/* ===== 标签 ===== */
+.rf-tpl-sre-platform .rf-hero__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* 当没有元数据时，标签直接接在副标题后 */
+.rf-tpl-sre-platform .rf-hero__subtitle + .rf-hero__tags {
+  margin-top: 0;
+}
+
+/* 当没有副标题和元数据时，标签直接接在标题后 */
+.rf-tpl-sre-platform .rf-hero__title + .rf-hero__tags {
+  margin-top: 16px;
+}
+
+.rf-tpl-sre-platform .rf-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--sre-font-mono);
+  background: rgba(13, 148, 136, 0.1);
+  color: #0f766e;
+  border: 1px solid rgba(13, 148, 136, 0.2);
+}
+
+/* ===== 章节系统 ===== */
+.rf-tpl-sre-platform .rf-section {
+  position: relative;
+  margin-bottom: 48px;
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 数据连接线条：章节间的垂直连接线 */
+.rf-tpl-sre-platform .rf-section:not(:first-child)::before {
+  content: "";
+  position: absolute;
+  left: -28px;
+  top: -24px;
+  width: 1px;
+  height: 24px;
+  background: linear-gradient(to bottom, transparent, var(--sre-primary));
+  opacity: 0.2;
+}
+
+.rf-tpl-sre-platform .rf-section__heading {
+  position: relative;
+  font-family: var(--sre-font-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--sre-ink);
+  margin: 0 0 20px;
+  padding-left: 28px;
+  letter-spacing: -0.01em;
+}
+
+/* 状态指示器圆点 */
+.rf-tpl-sre-platform .rf-section__heading::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--sre-healthy);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+/* 章节序号：代码风格 */
+.rf-tpl-sre-platform .rf-section__heading::after {
+  content: attr(data-section);
+  position: absolute;
+  left: -16px;
+  top: -6px;
+  font-family: var(--sre-font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--sre-muted);
+  opacity: 0.6;
+}
+
+/* ===== 文本块 ===== */
+.rf-tpl-sre-platform .rf-text {
+  color: var(--sre-ink);
+}
+
+.rf-tpl-sre-platform .rf-text p {
+  margin-bottom: 14px;
+}
+
+.rf-tpl-sre-platform .rf-text strong {
+  color: var(--sre-ink);
+  font-weight: 600;
+}
+
+.rf-tpl-sre-platform .rf-text em {
+  color: var(--sre-warning);
+  font-style: normal;
+  font-weight: 500;
+}
+
+.rf-tpl-sre-platform .rf-text code {
+  background: rgba(37, 99, 235, 0.08);
+  color: #1d4ed8;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-family: var(--sre-font-mono);
+  font-size: 0.88em;
+  border: 1px solid rgba(37, 99, 235, 0.15);
+}
+
+.rf-tpl-sre-platform .rf-text ul,
+.rf-tpl-sre-platform .rf-text ol {
+  padding-left: 22px;
+  margin: 8px 0 14px;
+}
+
+.rf-tpl-sre-platform .rf-text li {
+  margin-bottom: 5px;
+}
+
+.rf-tpl-sre-platform .rf-text li::marker {
+  color: var(--sre-primary);
+  font-weight: 500;
+}
+
+/* ===== 观测面板风格：图表卡片 - 前端设计风格 ===== */
+.rf-tpl-sre-platform .rf-chart-card {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 16px;
+  box-shadow:
+    0 4px 12px -2px rgba(59, 130, 246, 0.06),
+    0 2px 8px -2px rgba(0, 0, 0, 0.04);
+  padding: 24px;
+  margin-bottom: 8px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  transition: all 0.2s ease;
+}
+
+.rf-tpl-sre-platform .rf-chart-card:hover {
+  box-shadow:
+    0 8px 20px -4px rgba(59, 130, 246, 0.1),
+    0 4px 12px -4px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+.rf-tpl-sre-platform .rf-chart-card__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sre-ink);
+  margin-bottom: 20px;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rf-tpl-sre-platform .rf-chart-card__title::before {
+  content: "";
+  width: 4px;
+  height: 16px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--sre-primary), var(--sre-healthy));
+}
+
+.rf-tpl-sre-platform .rf-chart-card__body {
+  min-height: 320px;
+  width: 100%;
+}
+
+/* ===== 图片 ===== */
+.rf-tpl-sre-platform .rf-img {
+  background: var(--sre-card-bg);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  box-shadow: var(--sre-card-shadow);
+  padding: 14px;
+  margin: 0;
+}
+
+.rf-tpl-sre-platform .rf-img img {
+  width: 100%;
+  border-radius: 8px;
+  display: block;
+}
+
+.rf-tpl-sre-platform .rf-img__caption {
+  font-size: 13px;
+  color: var(--sre-ink-soft);
+  text-align: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sre-line-soft);
+}
+
+/* ===== 表格 ===== */
+.rf-tpl-sre-platform .rf-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13.5px;
+}
+
+.rf-tpl-sre-platform .rf-table thead th {
+  background: var(--sre-bg-1);
+  color: var(--sre-ink);
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 2px solid var(--sre-line);
+  font-family: var(--sre-font-display);
+}
+
+.rf-tpl-sre-platform .rf-table thead th:first-child {
+  border-radius: 8px 0 0 0;
+}
+
+.rf-tpl-sre-platform .rf-table thead th:last-child {
+  border-radius: 0 8px 0 0;
+}
+
+.rf-tpl-sre-platform .rf-table tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--sre-line-soft);
+  color: var(--sre-ink-soft);
+}
+
+.rf-tpl-sre-platform .rf-table tbody tr:hover td {
+  background: var(--sre-bg-3);
+}
+
+/* 状态标签 */
+.rf-tpl-sre-platform .status-ok {
+  color: var(--sre-healthy);
+  font-weight: 600;
+}
+
+.rf-tpl-sre-platform .status-warning {
+  color: var(--sre-warning);
+  font-weight: 600;
+}
+
+.rf-tpl-sre-platform .status-error {
+  color: var(--sre-critical);
+  font-weight: 600;
+}
+
+/* ===== 页脚 ===== */
+.rf-tpl-sre-platform .rf-doc-footer {
+  margin-top: 64px;
+  padding-top: 24px;
+  border-top: 1px solid var(--sre-line-soft);
+  font-size: 12px;
+  color: var(--sre-muted);
+  text-align: center;
+  font-family: var(--sre-font-mono);
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 640px) {
+  .rf-tpl-sre-platform {
+    font-size: 14px;
+  }
+
+  .rf-tpl-sre-platform .rf-hero {
+    margin: -32px -20px 40px;
+    padding: 0 20px;
+    min-height: 200px;
+  }
+
+  .rf-tpl-sre-platform .rf-hero__inner {
+    padding: 48px 0 32px;
+  }
+
+  .rf-tpl-sre-platform .rf-hero__title {
+    font-size: 28px;
+  }
+
+  .rf-tpl-sre-platform .rf-chart-card {
+    padding: 16px 18px;
+    border-radius: 10px;
+  }
+
+  .rf-tpl-sre-platform .rf-section {
+    padding-left: 8px;
+  }
+
+  .rf-tpl-sre-platform .rf-section:not(:first-child)::before {
+    left: -12px;
+  }
+}
+
+/* ===== PDF 导出优化 ===== */
+@media print {
+  .rf-tpl-sre-platform {
+    background: #ffffff;
+  }
+
+  .rf-tpl-sre-platform::before {
+    display: none;
+  }
+
+  .rf-tpl-sre-platform .rf-hero {
+    background: #f8fafc;
+    -webkit-mask-image: none;
+    mask-image: none;
+    margin: 0;
+    padding: 32px;
+    min-height: auto;
+  }
+
+  .rf-tpl-sre-platform .rf-chart-card {
+    box-shadow: none;
+    border: 1px solid #e2e8f0;
+  }
+}
+
+/* ===== 减少动效支持 ===== */
+@media (prefers-reduced-motion: reduce) {
+  .rf-tpl-sre-platform * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
