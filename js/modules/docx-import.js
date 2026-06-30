@@ -340,6 +340,16 @@
     window.RF_UI.toast.show("已删除图片 " + imageIndex);
   }
 
+  // 探测一个 text 块的 content 是否包含任何图片占位符（新或旧格式）。
+  // 与 PLACEHOLDER_RE 对应，但用一个独立的 test 实例避免 lastIndex 状态污染。
+  function hasPlaceholder(content) {
+    if (typeof content !== "string" || !content) return false;
+    if (content.indexOf("[[RF-IMG:") >= 0) return true;
+    // 📷[图片N] 视觉新格式。indexOf 比正则便宜，先做廉价短路。
+    if (content.indexOf("📷[图片") < 0) return false;
+    return /📷\[图片\d+\]/.test(content);
+  }
+
   // ------------------------------------------------------------------
   // After parse: replace [[RF-IMG:id]] placeholders with real image blocks.
   // ------------------------------------------------------------------
@@ -356,8 +366,7 @@
       if (!Array.isArray(section.blocks)) return;
       var out = [];
       section.blocks.forEach(function (block) {
-        if (block && block.type === "text" && typeof block.content === "string" &&
-            block.content.indexOf("[[RF-IMG:") >= 0) {
+        if (block && block.type === "text" && hasPlaceholder(block.content)) {
           splitTextBlock(block, byId, used, out);
         } else {
           out.push(block);
