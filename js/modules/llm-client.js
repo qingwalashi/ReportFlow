@@ -80,7 +80,9 @@
 
   function complete(opts) {
     opts = opts || {};
-    var c = cfg();
+    // opts.config 允许调用方传入一份独立配置（例如「多模态模型」配置），
+    // 而不污染默认的 state.config.llm。其余字段都从这份配置中读取。
+    var c = opts.config || cfg();
 
     // Dify Chatflow uses a different protocol (/chat-messages, query string,
     // model configured inside the workflow). Route there when the active
@@ -477,11 +479,12 @@
    * models burn tokens on hidden CoT before producing visible output, and
    * temperature=0 isn't universally accepted).
    */
-  function test() {
+  function test(overrideCfg) {
     // 1024 covers reasoning models that burn most of the budget on hidden CoT
     // before emitting the visible reply. Cheap on non-reasoning models because
     // they stop at the natural end-of-message regardless of the cap.
     return complete({
+      config: overrideCfg,
       messages: [
         { role: "user", content: "你好，请回复一个字。" }
       ],

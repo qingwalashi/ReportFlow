@@ -446,6 +446,20 @@
     var pickBtn = btn("ghost", "上传图片", function () { fileInput.click(); });
     row.appendChild(pickBtn); row.appendChild(fileInput);
 
+    // 「图片转图表」：把【当前块已有的图片】发给多模态大模型，按本项目的图表
+    // 规范识别。适合 → 当前 image 块替换为 chart 块；不适合 → 仅提示，不修改。
+    // 还没上传图片时按钮置灰。
+    var hasImage = !!(blk.assetId || blk.src);
+    var toChartBtn = btn("ghost", "📊 图片转图表", function () {
+      runImageToChart(secIdx, blkIdx, blk);
+    }, hasImage
+      ? "调用大模型识别当前图片中的图表数据，识别成功则把该块转换为图表块"
+      : "请先上传图片再使用此功能");
+    if (!hasImage) {
+      toChartBtn.disabled = true;
+    }
+    row.appendChild(toChartBtn);
+
     var captionInput = text(blk.caption || "", function (v) {
       patchBlock(secIdx, blkIdx, { caption: v });
     });
@@ -461,6 +475,165 @@
     }
     wrap.appendChild(row);
     return wrap;
+  }
+
+  // 调用 RF_ImageToChart 把【当前块的图片】识别为 ChartSpec：
+  //   - blk.assetId：从 IndexedDB 取出 Blob
+  //   - blk.src    ：通过 fetch 拿到 Blob（同源或 data: URL 才能拿到）
+  // 识别成功 → 把当前 image 块整体替换为 chart 块；
+  // 不适合 / 出错 → 保持原样并提示用户。
+  // 注意：这里读取一次最新的 report，再按 secIdx/blkIdx 写回 —— 中途用户切
+  // 模板 / 撤销重做导致结构变化时，校验失败就静默跳过，避免误改其它块。
+  function runImageToChart(secIdx, blkIdx, originalBlk) {
+    if (!window.RF_ImageToChart || !window.RF_LLM) {
+      window.RF_UI.toast.err("图片转图表模块未加载");
+      return;
+    }
+    if (!window.RF_ConfigManager || !window.RF_ConfigManager.isConfiguredVision || !window.RF_ConfigManager.isConfiguredVision()) {
+      window.RF_UI.toast.warn("请先在「设置 → 多模态模型」配置支持视觉的大模型");
+      // 打开设置时直接定位到「多模态模型」标签
+      window.RF_ConfigManager && window.RF_ConfigManager.openModal && window.RF_ConfigManager.openModal({ tab: "vision" });
+      return;
+    }
+    if (!originalBlk || (!originalBlk.assetId && !originalBlk.src)) {
+      window.RF_UI.toast.warn("请先上传图片，再点击「图片转图表」");
+      return;
+    }
+
+    // 让用户先选目标图表类型；点开始才真正调用模型。
+    openImageToChartPicker(function (forceKind) {
+      doImageToChart(secIdx, blkIdx, originalBlk, forceKind);
+    });
+  }
+
+  // 弹一个小弹窗让用户选「自动识别 / 饼图 / 柱状图 / 折线图」。
+  // 选定后调用 onPick(forceKind)；forceKind="auto" 表示自动判断。
+  function openImageToChartPicker(onPick) {
+    var body = document.createElement("div");
+    body.style.cssText = "display:flex;flex-direction:column;gap:8px;min-width:280px";
+
+    var hint = document.createElement("div");
+    hint.className = "rf-field__hint";
+    hint.style.cssText = "margin-bottom:4px";
+    hint.textContent = "选择目标图表类型。指定具体类型时，AI 会尽力按该类型从图中抽取数据；选「自动识别」则由模型自行判断。";
+    body.appendChild(hint);
+
+    var OPTIONS = [
+      { kind: "auto", label: "🤖 自动识别", desc: "由模型自行判断图表类型" },
+      { kind: "pie",  label: "🥧 饼图",     desc: "适合占比、份额、构成比例" },
+      { kind: "bar",  label: "📊 柱状图",   desc: "适合类别间数值对比" },
+      { kind: "line", label: "📈 折线图",   desc: "适合时间趋势、连续变化" }
+    ];
+
+    var modalRef = null;
+    OPTIONS.forEach(function (opt) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "rf-btn rf-btn--ghost";
+      b.style.cssText = "display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 12px;text-align:left;width:100%;height:auto;line-height:1.4";
+      var t = document.createElement("span");
+      t.style.cssText = "font-size:14px;font-weight:500";
+      t.textContent = opt.label;
+      var s = document.createElement("span");
+      s.className = "rf-field__hint";
+      s.style.cssText = "font-size:12px;color:var(--rf-text-muted)";
+      s.textContent = opt.desc;
+      b.appendChild(t); b.appendChild(s);
+      b.addEventListener("click", function () {
+        if (modalRef) modalRef.close();
+        onPick(opt.kind);
+      });
+      body.appendChild(b);
+    });
+
+    var foot = document.createElement("div");
+    foot.style.cssText = "display:flex;justify-content:flex-end;width:100%";
+    var cancel = document.createElement("button");
+    cancel.className = "rf-btn rf-btn--ghost";
+    cancel.textContent = "取消";
+    cancel.addEventListener("click", function () { if (modalRef) modalRef.close(); });
+    foot.appendChild(cancel);
+
+    modalRef = window.RF_UI.modal.open({
+      title: "图片转图表",
+      bodyEl: body,
+      footerEl: foot
+    });
+  }
+
+  // 实际执行识别 + 替换块。forceKind: "auto" | "pie" | "bar" | "line"。
+  function doImageToChart(secIdx, blkIdx, originalBlk, forceKind) {
+    var kindLabel = { auto: "自动识别", pie: "饼图", bar: "柱状图", line: "折线图" }[forceKind] || "自动识别";
+    var progress = window.RF_ParseProgress && window.RF_ParseProgress.start({
+      startLabel: "正在识别图片为图表（" + kindLabel + "）…",
+      doneLabel:  "识别完成",
+      failLabel:  "识别失败"
+    });
+    function onProgress(ev) { if (progress) progress.update(ev); }
+
+    // 取出当前块对应的图片 Blob。assetId 优先，src 兜底。
+    var blobP;
+    if (originalBlk.assetId) {
+      blobP = imgMgr.toBlob(originalBlk.assetId).then(function (blob) {
+        if (!blob) throw new Error("图片资源已丢失，请重新上传");
+        return blob;
+      });
+    } else {
+      // 远程/data URL：用 fetch 拿到 Blob。跨域图床会因 CORS 拿不到，提示用户。
+      blobP = fetch(originalBlk.src).then(function (r) {
+        if (!r.ok) throw new Error("无法读取图片（HTTP " + r.status + "）");
+        return r.blob();
+      }, function () {
+        throw new Error("无法读取该外链图片（可能被跨域策略阻止），请先「上传图片」改为本地资源后再试");
+      });
+    }
+
+    blobP.then(function (blob) {
+      return window.RF_ImageToChart.convert(blob, {
+        forceKind: forceKind,
+        onProgress: onProgress
+      });
+    }).then(function (result) {
+      if (!result) {
+        if (progress) progress.success({ summary: "未识别到图表内容" });
+        window.RF_UI.toast.show("未识别到图表内容，不转换。");
+        return;
+      }
+      var rep = clone(state.get("report"));
+      var sec = rep.sections && rep.sections[secIdx];
+      var cur = sec && sec.blocks && sec.blocks[blkIdx];
+      if (!cur || cur.type !== "image") {
+        // 结构已变化（用户重排/删除），不要误伤别的块
+        if (progress) progress.fail("当前块结构已变化，未应用转换");
+        window.RF_UI.toast.warn("当前图片块已变化，未应用转换");
+        return;
+      }
+
+      // 决定图表标题：优先用模型识别到的标题，回退到图片说明，再回退到默认。
+      var title = (result.title && result.title.trim())
+                  || (originalBlk && originalBlk.caption && originalBlk.caption.trim())
+                  || "新图表";
+
+      sec.blocks[blkIdx] = {
+        type: "chart",
+        title: title,
+        spec: result.spec
+      };
+
+      // 把原 image 块占用的 IndexedDB 资源回收
+      if (cur.assetId) {
+        try { imgMgr.remove(cur.assetId); } catch (e) {}
+      }
+
+      // Structural：块类型从 image 变成 chart，必须重建表单
+      commit(rep, { structural: true });
+      if (progress) progress.success({ summary: "已转为「" + title + "」（" + result.spec.kind + "）" });
+      window.RF_UI.toast.ok("已识别为图表：" + title);
+    }).catch(function (err) {
+      var msg = (err && err.message) || String(err);
+      if (progress) progress.fail("识别失败：" + msg);
+      window.RF_UI.toast.err("识别失败：" + msg);
+    });
   }
 
   function patchBlock(secIdx, blkIdx, partial, opts) {
