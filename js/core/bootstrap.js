@@ -66,6 +66,7 @@
     bindButton("rf-btn-clear-input",    onClearInput);
     bindButton("rf-btn-clear",          onClearReport);
     if (window.RF_InputRewrite) window.RF_InputRewrite.init();
+    if (window.RF_InputImageHighlight) window.RF_InputImageHighlight.init();
     bindButton("rf-btn-export-zip",     function () { window.RF_ExportZip.exportZip(); });
     bindButton("rf-btn-export-pdf",     function () { window.RF_ExportPdf.exportPdf(); });
     bindButton("rf-btn-export-html",    function () { window.RF_ExportHtml.exportHtml(); });
@@ -375,7 +376,11 @@
       .then(function (r) { return r.text(); })
       .then(function (txt) {
         var ta = document.getElementById("rf-input-text");
-        if (ta) ta.value = txt;
+        if (ta) {
+          ta.value = txt;
+          // 通知镜像层（图片占位符高亮）等监听者刷新。
+          ta.dispatchEvent(new Event("input", { bubbles: true }));
+        }
         // Also drop the golden JSON straight into the report so the user can
         // see a populated preview without hitting the LLM.
         return fetch("assets/samples/sample-report.json").then(function (r) { return r.json(); });
@@ -393,7 +398,10 @@
 
   function onClearInput() {
     var ta = document.getElementById("rf-input-text");
-    if (ta) ta.value = "";
+    if (ta) {
+      ta.value = "";
+      ta.dispatchEvent(new Event("input", { bubbles: true }));
+    }
   }
 
   function onClearReport() {
@@ -407,7 +415,10 @@
       window.RF_State.set("report", window.RF_Schema.empty());
       try { window.RF_Storage.remove("draft", "current"); } catch (e) {}
       var ta = document.getElementById("rf-input-text");
-      if (ta) ta.value = "";
+      if (ta) {
+        ta.value = "";
+        ta.dispatchEvent(new Event("input", { bubbles: true }));
+      }
       // Wipe IndexedDB images so the storage indicator actually drops to 0,
       // and broadcast assets:changed so the indicator refreshes immediately
       // instead of waiting for the next 8s poll tick.
@@ -527,6 +538,8 @@
     var v = ta.value;
     ta.value = v.slice(0, start) + text + v.slice(end);
     ta.selectionStart = ta.selectionEnd = start + text.length;
+    // 通知镜像层、自动保存等监听者。
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
   function toggleFullscreenPreview() {

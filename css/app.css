@@ -451,6 +451,7 @@ body { background: var(--rf-bg); }
 /* 折叠态：把 head/textarea/foot 都藏起来，只露 rail */
 .rf-pane.is-collapsed > .rf-pane__head,
 .rf-pane.is-collapsed > .rf-input-text,
+.rf-pane.is-collapsed > .rf-input-wrap,
 .rf-pane.is-collapsed > .rf-pane__foot { display: none; }
 .rf-pane.is-collapsed > .rf-pane__rail { display: flex; }
 
@@ -459,6 +460,15 @@ body { background: var(--rf-bg); }
 .rf-splitter.is-disabled::after { background: transparent; }
 
 /* ===== Input pane ===== */
+/* textarea 与镜像层共用的排版变量，必须严格一致才能让占位符高亮对齐文字。 */
+.rf-input-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;            /* 让内部 textarea 通过 flex:1 自然填充 */
+  flex-direction: column;
+  overflow: hidden;
+}
 .rf-input-text {
   flex: 1; min-height: 0;
   width: 100%;
@@ -472,6 +482,9 @@ body { background: var(--rf-bg); }
   outline: none;
   color: var(--rf-text);
   scroll-behavior: smooth; /* 平滑滚动 */
+  /* 让 textarea 浮在镜像层之上 */
+  position: relative;
+  z-index: 1;
 }
 .rf-input-text::placeholder {
   color: var(--rf-text-dim);
@@ -481,6 +494,47 @@ body { background: var(--rf-bg); }
 .rf-input-text::selection {
   background: #fef08a;
   color: #1f2937;
+}
+
+/* 镜像层：与 textarea 完全相同的排版规则，仅渲染图片占位符的高亮背景。
+   文字本身透明，避免视觉重影；占位符片段用 <mark> 包裹后显示黄色高亮。
+   注意：尺寸（width/height）由 JS 同步 textarea.clientWidth/clientHeight，
+   这样不论是否出现纵向滚动条都能让字符位置严丝合缝对齐。 */
+.rf-input-mirror {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  margin: 0;
+  padding: 14px 16px;
+  border: 0;
+  box-sizing: border-box;
+  font: inherit;                       /* 与 textarea 字体完全一致 */
+  font-size: var(--rf-text-sm);
+  font-family: var(--rf-font);
+  font-feature-settings: "ss01", "cv11"; /* 与 body 保持一致，避免字宽差异 */
+  line-height: 1.7;
+  letter-spacing: normal;
+  tab-size: 8;                          /* textarea 默认 tab-size 是 8 */
+  color: transparent;                   /* 文字隐形，仅作为占位骨架 */
+  background: transparent;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: normal;
+  overflow: hidden;                     /* 滚动由 textarea 主导，镜像 scrollTop 跟随 */
+  pointer-events: none;                 /* 不拦截鼠标，所有交互交给 textarea */
+  user-select: none;
+  text-rendering: auto;
+}
+.rf-input-mirror__mark {
+  background: #fef08a;
+  color: transparent;                   /* 关键：让 textarea 顶部的文字独自显色 */
+  border-radius: 2px;
+  /* 严禁加 padding/margin/border —— 任何盒模型变化都会让字符相对 textarea 偏移 */
+  padding: 0;
+  margin: 0;
+  border: 0;
 }
 
 /* ===== Editor pane ===== */

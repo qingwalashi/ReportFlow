@@ -251,18 +251,34 @@
             ta.focus();
             ta.setSelectionRange(pos, pos + placeholder.length);
 
-            // 精确计算：让占位符出现在文本框可视区域的正中间
-            var lineHeight = 27.2; // 实际行高：1.7 × 16px = 27.2px
-            var paddingTop = 14;   // 文本框的上内边距
-            var textBefore = ta.value.slice(0, pos);
-            var lineCount = textBefore.split("\n").length;
+            // === 精确居中计算 ===
+            // 让占位符出现在「文本框真正可用的可视区域」的正中央
+            // 注意：textarea 的 clientHeight 已经是被预览面板压缩后的高度了
+            //       但滚动到下方时，内容可能被面板视觉遮挡，所以要留底部余量
 
-            // 占位符距离文本顶部的像素位置
-            var placeholderTop = (lineCount - 1) * lineHeight + paddingTop;
-            // 文本框可视区域的一半高度
-            var halfVisibleHeight = ta.clientHeight / 2;
-            // 目标滚动位置 = 占位符位置 - 半高，让占位符居中
-            var targetScrollTop = Math.max(0, placeholderTop - halfVisibleHeight);
+            var computed = window.getComputedStyle(ta);
+            var actualLineHeight = parseFloat(computed.lineHeight);
+            if (isNaN(actualLineHeight) || actualLineHeight < 5) {
+              actualLineHeight = parseFloat(computed.fontSize) * 1.7;
+            }
+            var paddingTop = parseFloat(computed.paddingTop) || 14;
+            var paddingBottom = parseFloat(computed.paddingBottom) || 14;
+
+            // 占位符所在的行号（0-based）
+            var lineIndex = ta.value.slice(0, pos).split("\n").length - 1;
+
+            // 占位符距离全文顶部的像素位置
+            var placeholderTop = lineIndex * actualLineHeight;
+
+            // 额外的底部安全边距（防止被面板视觉遮挡）
+            var safetyMargin = actualLineHeight * 2;
+
+            // 可用高度 = 文本框高度 - 上下内边距 - 安全边距
+            var availableHeight = ta.clientHeight - paddingTop - paddingBottom - safetyMargin;
+
+            // 目标：让占位符在可用高度中垂直居中
+            var centerOffset = (availableHeight - actualLineHeight) / 2;
+            var targetScrollTop = Math.max(0, placeholderTop - centerOffset);
 
             ta.scrollTop = targetScrollTop;
           }
