@@ -37,9 +37,11 @@
   // browser can't paint, so we skip it and tell the user.
   var RENDERABLE = /^image\/(png|jpe?g|gif|webp|bmp)$/i;
 
-  // Stable, LLM-friendly placeholder. assetId is our own id (e.g. "a-xxxx"),
-  // which contains only [a-z0-9-], so this regex is safe.
-  var PLACEHOLDER_RE = /\[\[RF-IMG:([a-zA-Z0-9_-]+)\]\]/g;
+  // Visual placeholder: 📷[图片N] where N is 1-based index.
+  // We also support BOTH formats for backward compatibility:
+  // - 📷[图片N] (new visual format)
+  // - [[RF-IMG:id]] (old format, for backward compatibility)
+  var PLACEHOLDER_RE = /📷\[图片(\d+)\]|\[\[RF-IMG:([a-zA-Z0-9_-]+)\]\]/g;
 
   // Pending images collected during the most recent import, consumed when the
   // next parse completes. Keyed nothing fancy — a flat list is enough.
@@ -65,11 +67,24 @@
     // When a parse completes, fold any pending images back into the report.
     if (window.RF_Bus) {
       window.RF_Bus.on("parser:done", function () {
+        // 隐藏导入图片预览面板
+        var panel = document.getElementById("rf-imported-images");
+        if (panel) panel.hidden = true;
+
         if (awaitingParse) {
           awaitingParse = false;
           // Defer so RF_State.set("report", …) from the parser has settled.
           setTimeout(reinsertImages, 0);
         }
+      });
+    }
+
+    // 清空输入时也隐藏图片预览
+    var clearBtn = document.getElementById("rf-btn-clear-input");
+    if (clearBtn) {
+      clearBtn.addEventListener("click", function () {
+        var panel = document.getElementById("rf-imported-images");
+        if (panel) panel.hidden = true;
       });
     }
   }
@@ -139,9 +154,15 @@
     }).then(function (result) {
       var md = result.value || "";
       // mammoth renders images as ![alt](src). We tagged renderable images
-      // with src="rf-img:<id>" — rewrite each to our bare placeholder token,
-      // regardless of what (possibly escaped) alt text the writer produced.
-      md = md.replace(/!\[[^\]]*\]\(rf-img:([a-zA-Z0-9_-]+)\)/g, "[[RF-IMG:$1]]");
+      // with src="rf-img:<id>" — rewrite each to a VISUAL placeholder.
+      // Use 📷[图片N:id] format with newlines so it stands out in the textarea.
+      var imgNum = 0;
+      var imgOrderMap = {}; // 记录图片序号 → assetId 的映射，供预览面板使用
+      md = md.replace(/!\[[^\]]*\]\(rf-img:([a-zA-Z0-9_-]+)\)/g, function (_, id) {
+        imgNum++;
+        imgOrderMap[imgNum] = id;
+        return "\n\n📷[图片" + imgNum + "]\n\n";
+      });
       // Skipped images: mammoth emitted ![](empty) — strip those leftovers.
       md = md.replace(/!\[[^\]]*\]\(\s*\)/g, "");
 
@@ -153,8 +174,14 @@
         ta.dispatchEvent(new Event("input", { bubbles: true }));
       }
 
+      // 设置图片序号（供删除功能使用）
+      uploaded.forEach(function (item, idx) { item.index = idx + 1; });
+
       pending = uploaded.slice();
       awaitingParse = uploaded.length > 0;
+
+      // 显示导入图片预览面板
+      renderImportedImagesPreview(uploaded);
 
       reportSummary(uploaded.length, skipped, result.messages);
       log && log.info("docx-import: done, " + uploaded.length + " images, " + skipped.count + " skipped");
@@ -162,6 +189,139 @@
       log && log.error("docx-import: " + (err && err.message || err));
       window.RF_UI.toast.err("Word 解析失败：" + (err && err.message || err));
     });
+  }
+
+  // ------------------------------------------------------------------
+  // Import preview: show imported images in a thumbnail grid before parse.
+  // ------------------------------------------------------------------
+  function renderImportedImagesPreview(uploaded) {
+    var panel = document.getElementById("rf-imported-images");
+    var grid = document.getElementById("rf-imported-images-grid");
+    var countEl = document.getElementById("rf-imported-images-count");
+    if (!panel || !grid) return;
+
+    // 清空旧内容
+    grid.innerHTML = "";
+
+    // 无图片时隐藏面板
+    if (!uploaded || !uploaded.length) {
+      panel.hidden = true;
+      return;
+    }
+
+    // 更新计数
+    countEl.textContent = uploaded.length + " 张";
+    panel.hidden = false;
+
+    // 渲染缩略图
+    uploaded.forEach(function (item, idx) {
+      var div = document.createElement("div");
+      div.className = "rf-imported-images__item";
+      div.dataset.index = idx + 1;
+      div.dataset.assetId = item.assetId;
+      div.title = item.name || "图片 " + (idx + 1);
+
+      window.RF_Assets.url(item.assetId).then(function (url) {
+        if (!url) return;
+        var img = document.createElement("img");
+        img.src = url;
+        img.loading = "lazy";
+        div.appendChild(img);
+      });
+
+      // 删除按钮
+      var delBtn = document.createElement("button");
+      delBtn.className = "rf-imported-images__delete";
+      delBtn.innerHTML = "✕";
+      delBtn.title = "删除此图片";
+      delBtn.addEventListener("click", function (e) {
+        e.stopPropagation(); // 阻止触发大图预览
+        deleteImage(idx + 1, item.assetId);
+      });
+      div.appendChild(delBtn);
+
+      // 点击：定位到 textarea 中的对应位置（不触发删除）
+      div.addEventListener("click", function (e) {
+        if (e.target === delBtn) return;
+        var ta = document.getElementById(TA_ID);
+        if (ta) {
+          var placeholder = "📷[图片" + (idx + 1) + "]";
+          var pos = ta.value.indexOf(placeholder);
+          if (pos >= 0) {
+            ta.focus();
+            ta.setSelectionRange(pos, pos + placeholder.length);
+
+            // 精确计算：让占位符出现在文本框可视区域的正中间
+            var lineHeight = 27.2; // 实际行高：1.7 × 16px = 27.2px
+            var paddingTop = 14;   // 文本框的上内边距
+            var textBefore = ta.value.slice(0, pos);
+            var lineCount = textBefore.split("\n").length;
+
+            // 占位符距离文本顶部的像素位置
+            var placeholderTop = (lineCount - 1) * lineHeight + paddingTop;
+            // 文本框可视区域的一半高度
+            var halfVisibleHeight = ta.clientHeight / 2;
+            // 目标滚动位置 = 占位符位置 - 半高，让占位符居中
+            var targetScrollTop = Math.max(0, placeholderTop - halfVisibleHeight);
+
+            ta.scrollTop = targetScrollTop;
+          }
+        }
+        // 显示大图
+        window.RF_Assets.url(item.assetId).then(function (url) {
+          if (!url) return;
+          var modal = document.createElement("div");
+          modal.className = "rf-imported-images__modal";
+          modal.tabIndex = 0;
+          var img = document.createElement("img");
+          img.src = url;
+          modal.appendChild(img);
+          var close = function () { modal.parentNode && modal.parentNode.removeChild(modal); };
+          modal.addEventListener("click", close);
+          modal.addEventListener("keydown", function (e) {
+            if (e.key === "Escape" || e.key === "Enter" || e.key === " ") close();
+          });
+          document.body.appendChild(modal);
+          modal.focus();
+        });
+      });
+
+      grid.appendChild(div);
+    });
+  }
+
+  // 删除图片：从文本框移除占位符，重新编号剩余图片，更新 pending 数组
+  function deleteImage(imageIndex, assetId) {
+    var ta = document.getElementById(TA_ID);
+    if (!ta) return;
+
+    // 1. 从文本框移除被删除的图片占位符
+    var placeholder = "📷[图片" + imageIndex + "]";
+    ta.value = ta.value.replace(new RegExp("\\n*" + placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "\\n*", "g"), "\n");
+
+    // 2. 重新编号剩余图片（序号大于被删除的都要减 1）
+    var maxIndex = 100; // 合理的上限
+    for (var i = imageIndex + 1; i <= maxIndex; i++) {
+      var oldPlaceholder = "📷[图片" + i + "]";
+      var newPlaceholder = "📷[图片" + (i - 1) + "]";
+      if (ta.value.indexOf(oldPlaceholder) === -1) break; // 没有更多了，提前退出
+      ta.value = ta.value.split(oldPlaceholder).join(newPlaceholder);
+    }
+
+    // 3. 更新 pending 数组（移除并重新编号）
+    pending = pending.filter(function (p) { return p.assetId !== assetId; });
+    pending.forEach(function (p, i) { p.index = i + 1; });
+
+    // 4. 移除 IndexedDB 中的图片
+    try { window.RF_Assets.remove(assetId); } catch (e) {}
+
+    // 5. 重新渲染预览面板
+    renderImportedImagesPreview(pending);
+
+    // 6. 触发 input 事件通知其他监听者
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+
+    window.RF_UI.toast.show("已删除图片 " + imageIndex);
   }
 
   // ------------------------------------------------------------------
@@ -228,8 +388,16 @@
       if (before.trim()) {
         out.push({ type: "text", format: block.format || "markdown", content: before.trim() });
       }
-      var id = m[1];
-      if (byId[id] && !used[id]) {
+      // 支持两种格式:
+      // - m[1] = 序号 (新格式 📷[图片N])
+      // - m[2] = assetId (旧格式 [[RF-IMG:id]])
+      var id = m[2]; // 旧格式直接取 assetId
+      if (!id && m[1]) {
+        // 新格式：按序号从 pending 数组中查找 assetId
+        var idx = parseInt(m[1], 10) - 1;
+        if (pending[idx]) id = pending[idx].assetId;
+      }
+      if (id && byId[id] && !used[id]) {
         out.push(imageBlock(id));
         used[id] = true;
       }

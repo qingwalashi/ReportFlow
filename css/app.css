@@ -471,10 +471,16 @@ body { background: var(--rf-bg); }
   resize: none;
   outline: none;
   color: var(--rf-text);
+  scroll-behavior: smooth; /* 平滑滚动 */
 }
 .rf-input-text::placeholder {
   color: var(--rf-text-dim);
   font-style: italic;
+}
+/* 选中高亮：图片占位符使用醒目的黄色高亮 */
+.rf-input-text::selection {
+  background: #fef08a;
+  color: #1f2937;
 }
 
 /* ===== Editor pane ===== */
@@ -831,5 +837,122 @@ body[data-work-mode="suggest"] .rf-pane--preview .rf-pane__head::before { conten
    保证 ⋮ 永远在视口内。 */
 @media (max-width: 360px) {
   .rf-template-switch__label { max-width: 56px; }
+}
+
+/* ===== 导入图片预览面板 =====
+   显示从 Word 导入的图片缩略图，在解析前即可预览。 */
+.rf-imported-images {
+  margin: 8px 12px;
+  padding: 10px;
+  background: var(--rf-bg-elev);
+  border: 1px solid var(--rf-line);
+  border-radius: 6px;
+}
+.rf-imported-images__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: var(--rf-text-sm);
+  color: var(--rf-text-muted);
+}
+.rf-imported-images__title {
+  font-weight: 500;
+  color: var(--rf-text);
+}
+.rf-imported-images__count {
+  font-size: var(--rf-text-xs);
+  padding: 2px 6px;
+  background: var(--rf-btn-ghost-bg);
+  border-radius: 10px;
+}
+.rf-imported-images__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 6px;
+}
+.rf-imported-images__item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--rf-bg);
+  border: 1px solid var(--rf-line);
+  transition: border-color .15s;
+}
+.rf-imported-images__item:hover {
+  border-color: var(--rf-accent);
+}
+.rf-imported-images__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rf-imported-images__item::after {
+  content: attr(data-index);
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  background: rgba(0,0,0,.5);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+.rf-imported-images__delete {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 18px;
+  height: 18px;
+  background: rgba(220, 38, 38, .9);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity .15s, background .15s;
+}
+.rf-imported-images__item:hover .rf-imported-images__delete {
+  opacity: 1;
+}
+.rf-imported-images__delete:hover {
+  background: #dc2626 !important;
+}
+/* 点击放大预览 */
+.rf-imported-images__modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+}
+.rf-imported-images__modal img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.3);
+}
+@media (max-width: 768px) {
+  .rf-imported-images__grid {
+    grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
+  }
 }
 
