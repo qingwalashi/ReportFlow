@@ -35,21 +35,37 @@
     var meta = (data && data.meta) || {};
     var sections = (data && data.sections) || [];
 
+    var hasSubtitle = !!(meta.subtitle && meta.subtitle.trim());
+    var hasAuthor   = !!(meta.author && meta.author.trim());
+    var hasDate     = !!(meta.date && meta.date.trim());
+    var hasVersion  = !!(meta.version && String(meta.version).trim());
+    var hasByline   = hasAuthor || hasDate || hasVersion;
+    var hasTags     = Array.isArray(meta.tags) && meta.tags.length;
+
     // ---- Hero 区域（无边界设计）----
     var hero = h(container, "div", "rf-hero");
     var inner = h(hero, "div", "rf-hero__inner");
 
+    // 根据内容多少给 hero 打状态类，用于自适应紧凑间距
+    if (!hasSubtitle && !hasByline && !hasTags) {
+      hero.classList.add("rf-hero--title-only");
+    } else if (!hasByline && !hasTags) {
+      hero.classList.add("rf-hero--no-meta");
+    }
+
     // 标题与副标题
     h(inner, "h1", "rf-hero__title", meta.title || "未命名报告");
-    if (meta.subtitle) h(inner, "div", "rf-hero__subtitle", meta.subtitle);
+    if (hasSubtitle) h(inner, "div", "rf-hero__subtitle", meta.subtitle);
 
-    // 元数据：代码注释风格 /* key: value */
-    var byline = h(inner, "div", "rf-hero__byline");
-    if (meta.author) addMeta(byline, "author", meta.author);
-    if (meta.date)   addMeta(byline, "date", meta.date);
-    if (meta.version) addMeta(byline, "version", "v" + meta.version);
+    // 元数据：代码注释风格 /* key: value */ —— 仅当有内容时才创建容器
+    if (hasByline) {
+      var byline = h(inner, "div", "rf-hero__byline");
+      if (hasAuthor)  addMeta(byline, "author", meta.author);
+      if (hasDate)    addMeta(byline, "date", meta.date);
+      if (hasVersion) addMeta(byline, "version", "v" + meta.version);
+    }
 
-    if (Array.isArray(meta.tags) && meta.tags.length) {
+    if (hasTags) {
       var tagsBox = h(inner, "div", "rf-hero__tags");
       meta.tags.forEach(function (t) { h(tagsBox, "span", "rf-tag", t); });
     }

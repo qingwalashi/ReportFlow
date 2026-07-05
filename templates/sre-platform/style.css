@@ -77,26 +77,62 @@
 /* ===== Hero 区域 - 打破边界设计 ===== */
 .rf-tpl-sre-platform .rf-hero {
   position: relative;
-  margin: -32px -36px 56px;
+  margin: -32px -36px 40px;
   padding: 0 36px;
-  /* 根据内容自适应高度，不再固定最小高度 */
-  min-height: 280px;
+  /* 默认最小视觉高度，保证头图不会完全消失 */
+  min-height: 180px;
   /* SVG 背景从顶部延伸下来 */
   background-image: url("header-bg.svg");
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
-  /* 底部使用软渐变淡出，与页面渐变背景无缝融合 */
+  /* 底部使用软渐变淡出（最后 60px 透明），与页面渐变背景无缝融合；
+     用固定像素长度让它在短 hero 下也稳定 */
   -webkit-mask-image: linear-gradient(
     to bottom,
     black 0%,
-    black 75%,
+    black calc(100% - 60px),
     transparent 100%
   );
   mask-image: linear-gradient(
     to bottom,
     black 0%,
-    black 75%,
+    black calc(100% - 60px),
+    transparent 100%
+  );
+}
+
+/* 内容稀少（仅标题或标题+副标题）时，压缩最小高度和底部外边距，避免大段空白 */
+.rf-tpl-sre-platform .rf-hero.rf-hero--title-only {
+  min-height: 0;
+  margin-bottom: 16px;
+  /* 内容极少时，缩短淡出区域，防止标题被渐隐 */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black calc(100% - 24px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black calc(100% - 24px),
+    transparent 100%
+  );
+}
+.rf-tpl-sre-platform .rf-hero.rf-hero--no-meta {
+  min-height: 140px;
+  margin-bottom: 24px;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black calc(100% - 40px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black calc(100% - 40px),
     transparent 100%
   );
 }
@@ -114,9 +150,17 @@
 .rf-tpl-sre-platform .rf-hero__inner {
   position: relative;
   z-index: 2;
-  padding: 56px 0 40px;
+  padding: 56px 0 32px;
   max-width: 760px;
   margin: 0 auto;
+}
+
+/* 内容稀少时压缩内部上下 padding，避免顶部/正文之间出现大空隙 */
+.rf-tpl-sre-platform .rf-hero.rf-hero--title-only .rf-hero__inner {
+  padding: 40px 0 12px;
+}
+.rf-tpl-sre-platform .rf-hero.rf-hero--no-meta .rf-hero__inner {
+  padding: 48px 0 20px;
 }
 
 /* 移除无意义的蓝色方块图标容器 */
@@ -467,13 +511,28 @@
   }
 
   .rf-tpl-sre-platform .rf-hero {
-    margin: -32px -20px 40px;
+    margin: -32px -20px 32px;
     padding: 0 20px;
-    min-height: 200px;
+    min-height: 150px;
   }
 
   .rf-tpl-sre-platform .rf-hero__inner {
-    padding: 48px 0 32px;
+    padding: 40px 0 24px;
+  }
+
+  .rf-tpl-sre-platform .rf-hero.rf-hero--title-only {
+    min-height: 0;
+    margin-bottom: 12px;
+  }
+  .rf-tpl-sre-platform .rf-hero.rf-hero--no-meta {
+    min-height: 110px;
+    margin-bottom: 20px;
+  }
+  .rf-tpl-sre-platform .rf-hero.rf-hero--title-only .rf-hero__inner {
+    padding: 32px 0 8px;
+  }
+  .rf-tpl-sre-platform .rf-hero.rf-hero--no-meta .rf-hero__inner {
+    padding: 36px 0 16px;
   }
 
   .rf-tpl-sre-platform .rf-hero__title {
