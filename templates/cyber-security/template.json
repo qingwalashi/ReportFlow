@@ -1,0 +1,14 @@
+{
+  "id": "cyber-security",
+  "name": "网络安全态势",
+  "version": "1.0.0",
+  "author": "ReportFlow",
+  "description": "网络安全态势主题：深邃暗蓝底色 + 盾牌/锁/六边形安全网格 + 威胁等级色条，营造安全运营中心（SOC）指挥大屏视觉风格。",
+  "stylesheet": "style.css",
+  "preview": "preview.png",
+  "capabilities": {
+    "charts": ["pie", "bar", "line"],
+    "images": true,
+    "pdfSafe": true
+  }
+}

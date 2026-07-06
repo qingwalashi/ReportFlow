@@ -1,0 +1,731 @@
+/* ============================================================================
+   Template: cyber-security — 网络安全态势（深色 SOC 模式）
+   参考 sre-platform 模板结构：连续深色背景 + 科技网格 + 连接线 + 状态圆点
+   区别：全深色基调，青/蓝/红安全态势配色，盾牌/锁/终端命令等安全元素。
+
+   配色体系（深色 SOC 主题）：
+     · 主青 #22d3ee  - 安全、防护、监控（cyan-400）
+     · 主蓝 #38bdf8  - 信任、合规、数据流（sky-400）
+     · 深紫 #a78bfa  - 加密、隐私（violet-400）
+     · 安全绿 #34d399 - 通过、合规（emerald-400）
+     · 预警 #fbbf24  - 中危（amber-400）
+     · 故障红 #f87171 - 高危、阻断（red-400）
+     · 背景 深蓝黑 #05091a → #0a0f28 → #0f1633（全页深色）
+     · 卡片 #111a3a / #151f45
+     · 正文 #e2e8f0；次级 #94a3b8
+
+   标志性元素（对齐 SRE 模式）：
+     1. 连续深色渐变背景 - hero 到正文无断点
+     2. 点阵网格 - 全页面 cyan 点阵
+     3. 数据连接线条 - 章节间青色连线
+     4. 状态指示器 - 章节标题旁盾牌图标圆点
+     5. 终端命令装饰 - $ key: value 元数据
+     6. Hero 顶盾牌水印、锁、准星、二进制等安全元素
+   ============================================================================ */
+
+.rf-tpl-cyber-security {
+  /* ===== 配色 Token ===== */
+  --sec-cyan:      #22d3ee;
+  --sec-sky:       #38bdf8;
+  --sec-blue:      #3b82f6;
+  --sec-violet:    #a78bfa;
+  --sec-green:     #34d399;
+  --sec-amber:     #fbbf24;
+  --sec-red:       #f87171;
+  --sec-rose:      #fb7185;
+
+  --sec-bg-0:      #05091a;   /* 最深处 */
+  --sec-bg-1:      #0a0f28;   /* 顶部 */
+  --sec-bg-2:      #0d1330;   /* 中部 */
+  --sec-bg-3:      #0f1633;   /* 底部 */
+
+  --sec-card:      #111a3a;
+  --sec-card-2:    #151f45;
+  --sec-card-hi:   #1a2555;
+
+  --sec-ink:       #e2e8f0;   /* 正文亮字 */
+  --sec-ink-soft:  #b6c0d4;
+  --sec-muted:     #64748b;   /* 辅助 */
+  --sec-line:      #243058;
+  --sec-line-soft: #1a2555;
+
+  --sec-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4),
+                     0 8px 24px -4px rgba(0, 0, 0, 0.5),
+                     inset 0 1px 0 rgba(255, 255, 255, 0.03);
+
+  /* ===== 排版 ===== */
+  --sec-font-display: "Inter", "PingFang SC", -apple-system, sans-serif;
+  --sec-font-body:    "Inter", "PingFang SC", -apple-system, sans-serif;
+  --sec-font-mono:    "JetBrains Mono", "SF Mono", "Consolas", monospace;
+
+  /* ===== 全局基础 - 连续深色渐变（与 header-bg.svg 底部颜色一致） ===== */
+  background: linear-gradient(180deg,
+    var(--sec-bg-1) 0%,
+    var(--sec-bg-2) 40%,
+    var(--sec-bg-3) 100%);
+  color: var(--sec-ink);
+  font-family: var(--sec-font-body);
+  font-size: 14.5px;
+  line-height: 1.78;
+  padding-bottom: 80px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+/* ===== 全页点阵网格（青色科技点）===== */
+.rf-tpl-cyber-security::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, var(--sec-cyan) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: center center;
+  opacity: 0.08;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ===== Hero 区域 - 无边界深色科技大屏 ===== */
+.rf-tpl-cyber-security .rf-hero {
+  position: relative;
+  margin: -32px -36px 44px;
+  padding: 0 36px;
+  min-height: 200px;
+  background-image: url("header-bg.svg");
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  color: var(--sec-ink);
+  /* 底部软淡出，和页面深色渐变无缝融合 */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black calc(100% - 80px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black calc(100% - 80px),
+    transparent 100%
+  );
+}
+
+.rf-tpl-cyber-security .rf-hero.rf-hero--title-only {
+  min-height: 0;
+  margin-bottom: 16px;
+  -webkit-mask-image: linear-gradient(
+    to bottom, black 0%, black calc(100% - 30px), transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom, black 0%, black calc(100% - 30px), transparent 100%
+  );
+}
+.rf-tpl-cyber-security .rf-hero.rf-hero--no-meta {
+  min-height: 160px;
+  margin-bottom: 28px;
+  -webkit-mask-image: linear-gradient(
+    to bottom, black 0%, black calc(100% - 55px), transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom, black 0%, black calc(100% - 55px), transparent 100%
+  );
+}
+
+.rf-tpl-cyber-security .rf-hero__photo,
+.rf-tpl-cyber-security .rf-hero__org,
+.rf-tpl-cyber-security .rf-hero::after { display: none; }
+
+.rf-tpl-cyber-security .rf-hero__inner {
+  position: relative;
+  z-index: 2;
+  padding: 60px 0 60px;
+  max-width: 760px;
+  margin: 0 auto;
+}
+.rf-tpl-cyber-security .rf-hero.rf-hero--title-only .rf-hero__inner { padding: 44px 0 20px; }
+.rf-tpl-cyber-security .rf-hero.rf-hero--no-meta .rf-hero__inner    { padding: 52px 0 40px; }
+
+/* ===== Hero 顶栏：品牌 + 密级徽章 ===== */
+.rf-tpl-cyber-security .rf-hero__top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  font-family: var(--sec-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.rf-tpl-cyber-security .rf-hero__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--sec-cyan);
+  font-weight: 500;
+}
+
+/* 密级徽章 */
+.rf-tpl-cyber-security .sec-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 11px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  font-family: var(--sec-font-mono);
+  border: 1px solid currentColor;
+  background: rgba(0,0,0,0.25);
+}
+.rf-tpl-cyber-security .sec-badge::before {
+  content: "";
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  margin-right: 7px;
+  box-shadow: 0 0 8px currentColor;
+  animation: sec-pulse 2s ease-in-out infinite;
+}
+.rf-tpl-cyber-security .sec-badge--info     { color: var(--sec-cyan);   border-color: rgba(34,211,238,0.4); }
+.rf-tpl-cyber-security .sec-badge--low      { color: var(--sec-green);  border-color: rgba(52,211,153,0.4); }
+.rf-tpl-cyber-security .sec-badge--medium   { color: var(--sec-amber);  border-color: rgba(251,191,36,0.4); }
+.rf-tpl-cyber-security .sec-badge--high     { color: var(--sec-red);    border-color: rgba(248,113,113,0.5); }
+.rf-tpl-cyber-security .sec-badge--critical { color: var(--sec-rose);   border-color: rgba(251,113,133,0.5); background: rgba(251,113,133,0.08); }
+
+@keyframes sec-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ===== 标题系统 ===== */
+.rf-tpl-cyber-security .rf-hero__title {
+  font-family: var(--sec-font-display);
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin: 0 0 14px;
+  text-wrap: balance;
+  text-shadow: 0 0 30px rgba(34, 211, 238, 0.15);
+}
+.rf-tpl-cyber-security .rf-hero__subtitle {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--sec-ink-soft);
+  margin: 0 0 24px;
+  max-width: 620px;
+  line-height: 1.65;
+}
+.rf-tpl-cyber-security .rf-hero__title:only-child,
+.rf-tpl-cyber-security .rf-hero__title:last-child { margin-bottom: 0; }
+
+/* ===== 元数据：终端命令风格 $ key: value ===== */
+.rf-tpl-cyber-security .rf-hero__byline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  font-family: var(--sec-font-mono);
+  font-size: 12px;
+  color: var(--sec-muted);
+  margin-bottom: 4px;
+}
+.rf-tpl-cyber-security .rf-hero__meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+}
+.rf-tpl-cyber-security .rf-hero__prompt {
+  color: var(--sec-cyan);
+  opacity: 0.7;
+  user-select: none;
+}
+.rf-tpl-cyber-security .rf-hero__meta-key {
+  color: var(--sec-cyan);
+  font-weight: 500;
+}
+.rf-tpl-cyber-security .rf-hero__meta-eq {
+  color: var(--sec-muted);
+  opacity: 0.7;
+}
+.rf-tpl-cyber-security .rf-hero__meta-val {
+  color: var(--sec-ink);
+}
+
+/* ===== 标签 ===== */
+.rf-tpl-cyber-security .rf-hero__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+.rf-tpl-cyber-security .rf-hero__subtitle + .rf-hero__tags { margin-top: 0; }
+.rf-tpl-cyber-security .rf-hero__title + .rf-hero__tags    { margin-top: 18px; }
+
+.rf-tpl-cyber-security .rf-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 11px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--sec-font-mono);
+  background: rgba(34, 211, 238, 0.08);
+  color: var(--sec-cyan);
+  border: 1px solid rgba(34, 211, 238, 0.25);
+}
+.rf-tpl-cyber-security .rf-tag::before {
+  content: "#";
+  opacity: 0.6;
+  margin-right: 4px;
+}
+
+/* ===== 章节系统 ===== */
+.rf-tpl-cyber-security .rf-section {
+  position: relative;
+  margin-bottom: 48px;
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 数据连接线：章节间垂直青色连接线 */
+.rf-tpl-cyber-security .rf-section:not(:first-child)::before {
+  content: "";
+  position: absolute;
+  left: -28px;
+  top: -24px;
+  width: 1px;
+  height: 24px;
+  background: linear-gradient(to bottom, transparent, var(--sec-cyan));
+  opacity: 0.35;
+}
+
+.rf-tpl-cyber-security .rf-section__heading {
+  position: relative;
+  font-family: var(--sec-font-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 20px;
+  padding-left: 30px;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 盾牌状态图标（替代 SRE 的圆点）*/
+.rf-tpl-cyber-security .rf-section__icon {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--sec-cyan);
+}
+.rf-tpl-cyber-security .rf-section__icon svg {
+  width: 18px;
+  height: 18px;
+  filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.5));
+}
+
+/* 不同 severity 切换盾牌颜色 */
+.rf-tpl-cyber-security .rf-section[data-severity="low"] .rf-section__icon      { color: var(--sec-green); filter: drop-shadow(0 0 6px rgba(52,211,153,0.5)); }
+.rf-tpl-cyber-security .rf-section[data-severity="medium"] .rf-section__icon   { color: var(--sec-amber); filter: drop-shadow(0 0 6px rgba(251,191,36,0.5)); }
+.rf-tpl-cyber-security .rf-section[data-severity="high"] .rf-section__icon,
+.rf-tpl-cyber-security .rf-section[data-severity="critical"] .rf-section__icon { color: var(--sec-red);   filter: drop-shadow(0 0 8px rgba(248,113,113,0.6)); }
+
+.rf-tpl-cyber-security .rf-section__heading-text { flex: 1; }
+
+/* 章节序号：代码风格 §01 */
+.rf-tpl-cyber-security .rf-section__num {
+  font-family: var(--sec-font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--sec-muted);
+  opacity: 0.7;
+  letter-spacing: 0.04em;
+}
+
+/* ===== 文本块 ===== */
+.rf-tpl-cyber-security .rf-text { color: var(--sec-ink); }
+.rf-tpl-cyber-security .rf-text p { margin-bottom: 14px; }
+.rf-tpl-cyber-security .rf-text strong { color: #ffffff; font-weight: 600; }
+.rf-tpl-cyber-security .rf-text em {
+  color: var(--sec-amber);
+  font-style: normal;
+  font-weight: 500;
+}
+.rf-tpl-cyber-security .rf-text code {
+  background: rgba(34, 211, 238, 0.1);
+  color: var(--sec-cyan);
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: var(--sec-font-mono);
+  font-size: 0.88em;
+  border: 1px solid rgba(34, 211, 238, 0.2);
+}
+.rf-tpl-cyber-security .rf-text ul,
+.rf-tpl-cyber-security .rf-text ol { padding-left: 22px; margin: 8px 0 14px; }
+.rf-tpl-cyber-security .rf-text li { margin-bottom: 6px; }
+.rf-tpl-cyber-security .rf-text li::marker { color: var(--sec-cyan); font-weight: 600; }
+
+.rf-tpl-cyber-security .rf-text h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 22px 0 10px;
+  padding-left: 12px;
+  border-left: 3px solid var(--sec-cyan);
+  letter-spacing: -0.005em;
+}
+.rf-tpl-cyber-security .rf-text blockquote {
+  margin: 16px 0;
+  padding: 12px 16px 12px 44px;
+  background: rgba(59, 130, 246, 0.06);
+  border-left: 3px solid var(--sec-blue);
+  border-radius: 0 6px 6px 0;
+  color: var(--sec-ink-soft);
+  font-size: 14px;
+  position: relative;
+}
+.rf-tpl-cyber-security .rf-text blockquote::before {
+  content: "i";
+  position: absolute;
+  left: 14px; top: 12px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--sec-blue);
+  color: #fff;
+  font-family: var(--sec-font-display);
+  font-weight: 700;
+  font-size: 12px;
+  font-style: italic;
+  line-height: 20px;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(59,130,246,0.5);
+}
+
+/* ===== SOC 仪表盘图表卡片 - 深色玻璃风（对齐 SRE 结构）===== */
+.rf-tpl-cyber-security .rf-chart-card {
+  background: linear-gradient(145deg, var(--sec-card), var(--sec-card-2));
+  border: 1px solid var(--sec-line);
+  border-radius: 12px;
+  box-shadow: var(--sec-card-shadow);
+  padding: 22px;
+  margin-bottom: 8px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+.rf-tpl-cyber-security .rf-chart-card:hover {
+  border-color: rgba(34, 211, 238, 0.3);
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.4),
+    0 12px 28px -4px rgba(0,0,0,0.55),
+    0 0 0 1px rgba(34, 211, 238, 0.15);
+  transform: translateY(-1px);
+}
+
+/* 顶部扫描线（青→蓝渐变）*/
+.rf-tpl-cyber-security .rf-chart-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--sec-cyan), var(--sec-sky), var(--sec-violet));
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
+}
+
+.rf-tpl-cyber-security .rf-chart-card__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 18px;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 60px; /* 给右上角状态点留位 */
+}
+.rf-tpl-cyber-security .rf-chart-card__title::before {
+  content: "";
+  width: 4px;
+  height: 14px;
+  border-radius: 1px;
+  background: linear-gradient(180deg, var(--sec-cyan), var(--sec-sky));
+  box-shadow: 0 0 8px rgba(34,211,238,0.5);
+  flex-shrink: 0;
+}
+
+/* 状态控制点：绝对定位于卡片右上角 */
+.rf-tpl-cyber-security .rf-chart-card__ctrl {
+  position: absolute;
+  top: 20px;
+  right: 22px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  z-index: 2;
+}
+.rf-tpl-cyber-security .rf-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.rf-tpl-cyber-security .rf-dot--danger { background: var(--sec-red);   box-shadow: 0 0 6px rgba(248,113,113,0.6); }
+.rf-tpl-cyber-security .rf-dot--warn   { background: var(--sec-amber); box-shadow: 0 0 6px rgba(251,191,36,0.5); }
+.rf-tpl-cyber-security .rf-dot--ok     { background: var(--sec-green); box-shadow: 0 0 6px rgba(52,211,153,0.5); }
+
+.rf-tpl-cyber-security .rf-chart-card__body {
+  min-height: 300px;
+  width: 100%;
+}
+
+/* ===== 图片 ===== */
+.rf-tpl-cyber-security .rf-img {
+  background: var(--sec-card);
+  border: 1px solid var(--sec-line);
+  border-radius: 10px;
+  box-shadow: var(--sec-card-shadow);
+  padding: 14px;
+  margin: 0;
+  position: relative;
+}
+.rf-tpl-cyber-security .rf-img::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--sec-cyan), var(--sec-sky));
+  border-radius: 10px 10px 0 0;
+  box-shadow: 0 0 10px rgba(34,211,238,0.4);
+}
+.rf-tpl-cyber-security .rf-img img {
+  width: 100%;
+  border-radius: 6px;
+  display: block;
+}
+.rf-tpl-cyber-security .rf-img__caption {
+  font-size: 13px;
+  color: var(--sec-ink-soft);
+  text-align: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--sec-line);
+  font-family: var(--sec-font-mono);
+}
+
+/* ===== 表格（深色 SOC 风格）===== */
+.rf-tpl-cyber-security .rf-tpl-cyber-security-table {
+  margin: 20px 0;
+  background: linear-gradient(145deg, var(--sec-card), var(--sec-card-2));
+  border: 1px solid var(--sec-line);
+  border-radius: 10px;
+  padding: 14px 16px 16px;
+  box-shadow: var(--sec-card-shadow);
+  overflow: hidden;
+  position: relative;
+}
+.rf-tpl-cyber-security .rf-tpl-cyber-security-table::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--sec-cyan), var(--sec-sky));
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+}
+.rf-tpl-cyber-security .rf-table-title {
+  font-family: var(--sec-font-mono);
+  font-size: 12.5px;
+  color: var(--sec-cyan);
+  margin-bottom: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+}
+.rf-tpl-cyber-security .rf-table-title::before {
+  content: "";
+  width: 3px;
+  height: 12px;
+  border-radius: 1px;
+  background: linear-gradient(180deg, var(--sec-cyan), var(--sec-sky));
+  box-shadow: 0 0 6px rgba(34,211,238,0.5);
+}
+
+.rf-tpl-cyber-security .rf-table-scroll {
+  max-width: 100%;
+}
+
+.rf-tpl-cyber-security .rf-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13.5px;
+  table-layout: auto;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.rf-tpl-cyber-security .rf-table thead th {
+  background: linear-gradient(180deg, var(--sec-card-2), var(--sec-card));
+  color: #ffffff;
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 2px solid var(--sec-cyan);
+  font-family: var(--sec-font-display);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.rf-tpl-cyber-security .rf-table thead th:first-child { border-radius: 6px 0 0 0; }
+.rf-tpl-cyber-security .rf-table thead th:last-child  { border-radius: 0 6px 0 0; }
+.rf-tpl-cyber-security .rf-table tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--sec-line-soft);
+  color: var(--sec-ink-soft);
+  background: var(--sec-card);
+}
+.rf-tpl-cyber-security .rf-table tbody tr:last-child td { border-bottom: none; }
+.rf-tpl-cyber-security .rf-table tbody tr:hover td { background: var(--sec-card-hi); }
+.rf-tpl-cyber-security .rf-table tfoot td {
+  padding: 10px 14px;
+  border-top: 2px solid var(--sec-cyan);
+  color: #ffffff;
+  font-weight: 600;
+  background: var(--sec-card-2);
+}
+.rf-tpl-cyber-security .rf-table-caption {
+  font-family: var(--sec-font-mono);
+  font-size: 12px;
+  color: var(--sec-muted);
+  margin-top: 10px;
+  text-align: center;
+}
+.rf-tpl-cyber-security .rf-table-caption::before {
+  content: "// ";
+  color: var(--sec-cyan);
+  opacity: 0.6;
+}
+
+/* 窄屏：容器横向滚动 */
+@media (max-width: 640px) {
+  .rf-tpl-cyber-security .rf-tpl-cyber-security-table {
+    padding: 10px 12px 12px;
+    border-radius: 8px;
+  }
+  .rf-tpl-cyber-security .rf-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .rf-tpl-cyber-security .rf-table th,
+  .rf-tpl-cyber-security .rf-table td { white-space: nowrap; }
+}
+
+.rf-tpl-cyber-security .status-ok      { color: var(--sec-green); font-weight: 600; text-shadow: 0 0 6px rgba(52,211,153,0.4); }
+.rf-tpl-cyber-security .status-warning { color: var(--sec-amber); font-weight: 600; text-shadow: 0 0 6px rgba(251,191,36,0.4); }
+.rf-tpl-cyber-security .status-error   { color: var(--sec-red);   font-weight: 600; text-shadow: 0 0 6px rgba(248,113,113,0.5); }
+
+/* ===== 页脚 ===== */
+.rf-tpl-cyber-security .rf-doc-footer {
+  margin-top: 64px;
+  padding-top: 24px;
+  border-top: 1px dashed var(--sec-line);
+  font-size: 12px;
+  color: var(--sec-muted);
+  text-align: center;
+  font-family: var(--sec-font-mono);
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.rf-tpl-cyber-security .rf-doc-footer::before {
+  content: "// END OF REPORT — SECURE CHANNEL [OK]";
+  display: block;
+  margin-bottom: 8px;
+  color: var(--sec-cyan);
+  opacity: 0.6;
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 8px rgba(34,211,238,0.3);
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 640px) {
+  .rf-tpl-cyber-security { font-size: 14px; }
+  .rf-tpl-cyber-security .rf-hero {
+    margin: -32px -20px 36px;
+    padding: 0 20px;
+    min-height: 180px;
+  }
+  .rf-tpl-cyber-security .rf-hero__inner { padding: 44px 0 44px; }
+  .rf-tpl-cyber-security .rf-hero.rf-hero--title-only .rf-hero__inner { padding: 34px 0 16px; }
+  .rf-tpl-cyber-security .rf-hero.rf-hero--no-meta .rf-hero__inner    { padding: 40px 0 32px; }
+  .rf-tpl-cyber-security .rf-hero__title { font-size: 28px; }
+  .rf-tpl-cyber-security .rf-chart-card { padding: 16px 18px; border-radius: 10px; }
+  .rf-tpl-cyber-security .rf-section { padding-left: 4px; }
+  .rf-tpl-cyber-security .rf-section:not(:first-child)::before { left: -14px; }
+  .rf-tpl-cyber-security .rf-section__heading { padding-left: 26px; }
+}
+
+/* ===== PDF 导出 - 转为白底深色字 ===== */
+@media print {
+  .rf-tpl-cyber-security {
+    background: #ffffff;
+    color: #0f172a;
+    --sec-ink: #0f172a;
+    --sec-ink-soft: #475569;
+    --sec-muted: #94a3b8;
+    --sec-line: #cbd5e1;
+    --sec-line-soft: #e2e8f0;
+    --sec-card: #ffffff;
+    --sec-card-2: #f8fafc;
+  }
+  .rf-tpl-cyber-security::before { display: none; }
+  .rf-tpl-cyber-security .rf-hero {
+    background: #0a0f28;
+    color: #e2e8f0;
+    -webkit-mask-image: none;
+    mask-image: none;
+    margin: 0;
+    padding: 32px;
+    min-height: auto;
+  }
+  .rf-tpl-cyber-security .rf-hero__title { color: #ffffff; }
+  .rf-tpl-cyber-security .sec-badge::before { animation: none; box-shadow: none; }
+  .rf-tpl-cyber-security .rf-chart-card,
+  .rf-tpl-cyber-security .rf-img,
+  .rf-tpl-cyber-security .rf-tpl-cyber-security-table {
+    box-shadow: none;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+  }
+  .rf-tpl-cyber-security .rf-chart-card::before,
+  .rf-tpl-cyber-security .rf-img::before,
+  .rf-tpl-cyber-security .rf-tpl-cyber-security-table::before { display: none; }
+  .rf-tpl-cyber-security .rf-chart-card__title,
+  .rf-tpl-cyber-security .rf-section__heading { color: #0f172a; }
+  .rf-tpl-cyber-security .rf-table thead th {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+  .rf-tpl-cyber-security .rf-table tbody td { background: #ffffff; color: #475569; }
+}
+
+/* ===== 减少动效 ===== */
+@media (prefers-reduced-motion: reduce) {
+  .rf-tpl-cyber-security * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

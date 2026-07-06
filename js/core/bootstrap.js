@@ -243,9 +243,53 @@
     if (trigger && opt && opt.title) trigger.title = opt.title;
   }
 
-  // 模板专属平台图标（与各模板 hero 署名图标一致）：键为模板 id。
-  // stroke=currentColor 跟随菜单项文字色；仅这两个平台主题有专属标记。
+  // 模板专属图标：键为模板 id。
+  // stroke=currentColor 跟随菜单项文字色，保持和胶囊按钮风格一致。
   var TEMPLATE_ICONS = {
+    // 极简商务 — 公文包
+    "minimal-business":
+      '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.7" stroke-linecap="round" ' +
+      'stroke-linejoin="round" aria-hidden="true">' +
+      '<rect x="3" y="7" width="18" height="13" rx="2"/>' +
+      '<path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>' +
+      '<path d="M3 13h18"/>' +
+      '</svg>',
+    // 公务正式 — 印章/公文（带国徽感的方形印章 + 横线）
+    "formal-gov":
+      '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.7" stroke-linecap="round" ' +
+      'stroke-linejoin="round" aria-hidden="true">' +
+      '<rect x="4" y="3" width="16" height="14" rx="1.5"/>' +
+      '<path d="M8 8h8M8 12h5"/>' +
+      '<circle cx="17" cy="17" r="3"/>' +
+      '<path d="M15.6 17l1 1 1.8-2"/>' +
+      '</svg>',
+    // 水墨刊印 — 报刊
+    "mono-print":
+      '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.7" stroke-linecap="round" ' +
+      'stroke-linejoin="round" aria-hidden="true">' +
+      '<rect x="3" y="4" width="18" height="16" rx="1"/>' +
+      '<path d="M7 8h10M7 12h10M7 16h6"/>' +
+      '<path d="M15 15h3v3h-3z"/>' +
+      '</svg>',
+    // 科技简约 — 终端代码 `</>`
+    "tech-minimal":
+      '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.7" stroke-linecap="round" ' +
+      'stroke-linejoin="round" aria-hidden="true">' +
+      '<polyline points="8 8 4 12 8 16"/>' +
+      '<polyline points="16 8 20 12 16 16"/>' +
+      '<line x1="14" y1="6" x2="10" y2="18"/>' +
+      '</svg>',
+    // SRE 平台服务 — 监控波形/心跳（观测）
+    "sre-platform":
+      '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.7" stroke-linecap="round" ' +
+      'stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M3 12h4l2-6 4 12 2-6h6"/>' +
+      '</svg>',
     // 超算中心 — 芯片/处理器（算力）
     "supercomputing":
       '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" ' +
@@ -273,6 +317,14 @@
       '<path d="M12 6.5C10.5 5.3 8.4 4.8 5.5 5 4.7 5 4 5.7 4 6.5v10.4c0 .9.8 1.6 1.7 1.5 2.6-.2 4.7.3 6.3 1.6"/>' +
       '<path d="M12 6.5c1.5-1.2 3.6-1.7 6.5-1.5.8 0 1.5.7 1.5 1.5v10.4c0 .9-.8 1.6-1.7 1.5-2.6-.2-4.7.3-6.3 1.6"/>' +
       '<path d="M12 6.5V20"/>' +
+      '</svg>',
+    // 网络安全态势 — 盾牌 + 勾（安全防护）
+    "cyber-security":
+      '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.7" stroke-linecap="round" ' +
+      'stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>' +
+      '<path d="m9 12 2 2 4-4"/>' +
       '</svg>'
   };
 

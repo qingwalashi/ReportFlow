@@ -1,0 +1,216 @@
+<svg viewBox="0 0 1400 700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 深色基底 - 从深蓝黑到深靛蓝，和正文深色背景无缝 -->
+    <linearGradient id="mainBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"  stop-color="#05091a" />
+      <stop offset="40%" stop-color="#0a0f28" />
+      <stop offset="75%" stop-color="#0d1330" />
+      <stop offset="100%" stop-color="#0f1633" />
+    </linearGradient>
+
+    <!-- 青色安全光晕 -->
+    <radialGradient id="secGlow" cx="50%" cy="0%" r="75%">
+      <stop offset="0%"  stop-color="#06b6d4" stop-opacity="0.15" />
+      <stop offset="45%" stop-color="#0891b2" stop-opacity="0.06" />
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- 右上红色威胁光晕（淡） -->
+    <radialGradient id="threatGlow" cx="80%" cy="0%" r="45%">
+      <stop offset="0%"  stop-color="#dc2626" stop-opacity="0.12" />
+      <stop offset="60%" stop-color="#b45309" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="#dc2626" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- 六边形遮罩 - 长淡出 -->
+    <linearGradient id="hexFade" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"  stop-color="white" stop-opacity="1" />
+      <stop offset="50%" stop-color="white" stop-opacity="0.6" />
+      <stop offset="80%" stop-color="white" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="white" stop-opacity="0" />
+    </linearGradient>
+    <mask id="hexMask">
+      <rect width="1400" height="700" fill="url(#hexFade)" />
+    </mask>
+
+    <!-- 点阵遮罩 -->
+    <linearGradient id="dotFade" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"  stop-color="white" stop-opacity="1" />
+      <stop offset="55%" stop-color="white" stop-opacity="0.5" />
+      <stop offset="85%" stop-color="white" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="white" stop-opacity="0" />
+    </linearGradient>
+    <mask id="dotMask">
+      <rect width="1400" height="700" fill="url(#dotFade)" />
+    </mask>
+
+    <!-- 六边形描边 - 青到蓝 -->
+    <linearGradient id="hexStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#22d3ee" />
+      <stop offset="50%"  stop-color="#0ea5e9" />
+      <stop offset="100%" stop-color="#64748b" />
+    </linearGradient>
+
+    <!-- 威胁描边 - 红到琥珀 -->
+    <linearGradient id="threatStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#dc2626" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+
+    <!-- 电路板/数据流线渐变 -->
+    <linearGradient id="circuitGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#22d3ee" />
+      <stop offset="50%"  stop-color="#0ea5e9" />
+      <stop offset="100%" stop-color="#475569" />
+    </linearGradient>
+
+    <!-- 节点渐变填充 -->
+    <radialGradient id="nodeFill" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#22d3ee" />
+      <stop offset="100%" stop-color="#0891b2" />
+    </radialGradient>
+  </defs>
+
+  <!-- 深色基底 -->
+  <rect width="1400" height="700" fill="url(#mainBg)" />
+  <rect width="1400" height="600" fill="url(#secGlow)" />
+  <rect width="1400" height="400" fill="url(#threatGlow)" />
+
+  <!-- 1. 六边形蜂窝网格 -->
+  <g mask="url(#hexMask)" opacity="0.13">
+    <pattern id="hexPattern" patternUnits="userSpaceOnUse" width="70" height="60.62">
+      <path d="M35,0 L70,17.5 L70,43.12 L35,60.62 L0,43.12 L0,17.5 Z"
+            fill="none" stroke="url(#hexStroke)" stroke-width="0.8" />
+    </pattern>
+    <rect width="1400" height="700" fill="url(#hexPattern)" />
+  </g>
+
+  <!-- 2. 数据流线路（电路板风格） -->
+  <g stroke="url(#circuitGrad)" fill="none" stroke-width="1" opacity="0.3">
+    <!-- 左侧线路群 -->
+    <path d="M0,60 H150 V110 H230 V160 H310 V220" />
+    <path d="M90,60 V130 H170 V190 H250 V330" />
+    <path d="M0,160 H110 V230 H190 V360" />
+    <path d="M70,220 V300 H150 V390" />
+    <path d="M0,310 H90 V400" />
+
+    <!-- 中间核心 -->
+    <path d="M460,40 H590 V90 H690 V140 H790 V230" />
+    <path d="M530,40 V120 H660 V180 H760 V310" />
+    <path d="M610,90 V170 H730 V250 V370" />
+    <path d="M560,210 H690 V290 H790 V410" />
+    <path d="M630,290 V370 H730 V430" />
+
+    <!-- 右侧（部分带红色威胁） -->
+    <path d="M960,50 H1090 V100 H1190 V150 H1290 V250" />
+    <path d="M1030,50 V130 H1160 V190 H1260 V330" />
+    <path d="M1110,100 V180 H1230 V260 H1330 V390" stroke="url(#threatStroke)" opacity="0.25" />
+    <path d="M1060,230 H1190 V310 H1290 V430" />
+    <path d="M1160,310 V390 H1260 V460" stroke="url(#threatStroke)" opacity="0.2" />
+    <path d="M1290,150 V230 H1400" />
+  </g>
+
+  <!-- 3. 数据节点 -->
+  <g fill="url(#nodeFill)" opacity="0.9">
+    <circle cx="150" cy="60"  r="2.8" opacity="0.7" />
+    <circle cx="230" cy="110" r="2.2" opacity="0.5" />
+    <circle cx="310" cy="160" r="2.5" opacity="0.5" />
+    <circle cx="90"  cy="130" r="2.2" opacity="0.5" />
+    <circle cx="170" cy="190" r="2"   opacity="0.35" />
+    <circle cx="110" cy="230" r="2.2" opacity="0.4" />
+    <circle cx="150" cy="300" r="1.8" opacity="0.25" />
+
+    <circle cx="590" cy="40"  r="2.8" opacity="0.7" />
+    <circle cx="690" cy="90"  r="2.2" opacity="0.5" />
+    <circle cx="530" cy="120" r="2.5" opacity="0.55" />
+    <circle cx="660" cy="180" r="2"   opacity="0.35" />
+    <circle cx="730" cy="250" r="2"   opacity="0.28" />
+    <circle cx="690" cy="290" r="1.8" opacity="0.2" />
+
+    <circle cx="1090" cy="50"  r="2.8" opacity="0.6" />
+    <circle cx="1190" cy="100" r="2.2" opacity="0.45" />
+    <circle cx="1030" cy="130" r="2.5" opacity="0.5" />
+    <circle cx="1160" cy="190" r="2"   opacity="0.3" />
+    <circle cx="1290" cy="150" r="2.5" opacity="0.4" />
+    <!-- 威胁红点 -->
+    <circle cx="1330" cy="260" r="2.8" fill="#dc2626" opacity="0.6" />
+    <circle cx="1260" cy="390" r="2.2" fill="#dc2626" opacity="0.45" />
+    <circle cx="1260" cy="310" r="1.8" fill="#d97706" opacity="0.35" />
+  </g>
+
+  <!-- 4. 中心盾牌水印 -->
+  <g transform="translate(700, 170)" opacity="0.07">
+    <path d="M0,-80 C40,-60 72,-48 82,-28 C82,22 62,58 0,82 C-62,58 -82,22 -82,-28 C-72,-48 -40,-60 0,-80 Z"
+          fill="none" stroke="#22d3ee" stroke-width="1.2" />
+    <path d="M0,-56 C30,-42 54,-34 62,-19 C62,17 46,42 0,60 C-46,42 -62,17 -62,-19 C-54,-34 -30,-42 0,-56 Z"
+          fill="none" stroke="#0ea5e9" stroke-width="0.8" />
+    <path d="M-24,-2 L-7,16 L28,-20" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  </g>
+
+  <!-- 5. 左上锁图标 -->
+  <g transform="translate(85, 95)" opacity="0.13">
+    <rect x="-12" y="-4" width="24" height="18" rx="2" fill="none" stroke="#22d3ee" stroke-width="1" />
+    <path d="M-8,-4 V-13 a8,8 0 0,1 16,0 V-4" fill="none" stroke="#22d3ee" stroke-width="1" />
+    <circle cx="0" cy="5" r="2.2" fill="#22d3ee" />
+  </g>
+
+  <!-- 6. 右上准星 -->
+  <g transform="translate(1270, 80)" opacity="0.15">
+    <circle cx="0" cy="0" r="24" fill="none" stroke="#dc2626" stroke-width="0.8" />
+    <circle cx="0" cy="0" r="15" fill="none" stroke="#dc2626" stroke-width="0.6" />
+    <circle cx="0" cy="0" r="5"  fill="none" stroke="#dc2626" stroke-width="0.9" />
+    <circle cx="0" cy="0" r="1.5" fill="#dc2626" />
+    <line x1="-32" y1="0" x2="-27" y2="0" stroke="#dc2626" stroke-width="0.9" />
+    <line x1="27"  y1="0" x2="32"  y2="0" stroke="#dc2626" stroke-width="0.9" />
+    <line x1="0" y1="-32" x2="0" y2="-27" stroke="#dc2626" stroke-width="0.9" />
+    <line x1="0" y1="27"  x2="0" y2="32"  stroke="#dc2626" stroke-width="0.9" />
+  </g>
+
+  <!-- 7. 机械刻度线 -->
+  <g stroke="#22d3ee" stroke-width="1" opacity="0.2">
+    <line x1="0" y1="70"  x2="38" y2="70"  />
+    <line x1="0" y1="120" x2="48" y2="120" />
+    <line x1="0" y1="170" x2="32" y2="170" />
+    <line x1="0" y1="220" x2="42" y2="220" />
+    <line x1="0" y1="270" x2="36" y2="270" />
+    <line x1="0" y1="320" x2="28" y2="320" />
+    <line x1="0" y1="370" x2="32" y2="370" />
+    <line x1="0" y1="420" x2="22" y2="420" />
+
+    <line x1="1362" y1="60"  x2="1400" y2="60"  />
+    <line x1="1352" y1="110" x2="1400" y2="110" />
+    <line x1="1368" y1="160" x2="1400" y2="160" />
+    <line x1="1358" y1="210" x2="1400" y2="210" />
+    <line x1="1366" y1="260" x2="1400" y2="260" />
+    <line x1="1360" y1="310" x2="1400" y2="310" />
+    <line x1="1372" y1="360" x2="1400" y2="360" />
+  </g>
+
+  <!-- 8. 科技装饰矩形 -->
+  <g fill="none" stroke="url(#hexStroke)" stroke-width="0.8" opacity="0.15">
+    <rect x="45" y="45" width="85" height="52" rx="5" />
+    <rect x="58" y="58" width="42" height="22" rx="2.5" />
+    <rect x="1255" y="35" width="105" height="62" rx="5" />
+    <rect x="1275" y="50" width="48" height="26" rx="2.5" />
+  </g>
+
+  <!-- 9. 细密点阵 -->
+  <g mask="url(#dotMask)" opacity="0.12">
+    <pattern id="dotPattern" patternUnits="userSpaceOnUse" width="28" height="28">
+      <circle cx="14" cy="14" r="1" fill="#22d3ee" />
+    </pattern>
+    <rect width="1400" height="700" fill="url(#dotPattern)" />
+  </g>
+
+  <!-- 10. 角落二进制装饰 -->
+  <g font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#22d3ee" opacity="0.18">
+    <text x="32" y="480">01001000 01010100 01010100 01010000</text>
+    <text x="32" y="498">01010011 00100000 01000101 01001110</text>
+    <text x="32" y="516">01000011 01010010 01011001 01010000</text>
+
+    <text x="1030" y="470" fill="#dc2626" opacity="0.22">11000001 10101010 00110011</text>
+    <text x="1030" y="488" fill="#dc2626" opacity="0.18">10110110 11110000 01010101</text>
+    <text x="1030" y="506" fill="#d97706" opacity="0.25">[ALERT] INTRUSION_DETECTED</text>
+    <text x="1030" y="524" fill="#22d3ee" opacity="0.2">[OK] FIREWALL:  BLOCKED</text>
+  </g>
+</svg>

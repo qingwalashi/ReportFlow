@@ -439,11 +439,44 @@
 }
 
 /* ===== 表格 ===== */
+.rf-tpl-sre-platform .rf-tpl-sre-platform-table {
+  margin: 20px 0;
+  background: var(--sre-card-bg);
+  border: 1px solid var(--sre-line-soft);
+  border-radius: 10px;
+  padding: 14px 16px 16px;
+  box-shadow: var(--sre-card-shadow);
+  overflow: hidden;
+}
+.rf-tpl-sre-platform .rf-table-title {
+  font-family: var(--sre-font-mono);
+  font-size: 12.5px;
+  color: var(--sre-primary);
+  margin-bottom: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rf-tpl-sre-platform .rf-table-title::before {
+  content: "";
+  width: 3px;
+  height: 12px;
+  border-radius: 1px;
+  background: linear-gradient(180deg, var(--sre-primary), var(--sre-healthy));
+}
+
+.rf-tpl-sre-platform .rf-table-scroll {
+  max-width: 100%;
+}
+
 .rf-tpl-sre-platform .rf-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 13.5px;
+  table-layout: auto;
 }
 
 .rf-tpl-sre-platform .rf-table thead th {
@@ -452,16 +485,17 @@
   font-weight: 600;
   text-align: left;
   padding: 10px 14px;
-  border-bottom: 2px solid var(--sre-line);
+  border-bottom: 2px solid var(--sre-primary);
   font-family: var(--sre-font-display);
+  white-space: nowrap;
 }
 
 .rf-tpl-sre-platform .rf-table thead th:first-child {
-  border-radius: 8px 0 0 0;
+  border-radius: 6px 0 0 0;
 }
 
 .rf-tpl-sre-platform .rf-table thead th:last-child {
-  border-radius: 0 8px 0 0;
+  border-radius: 0 6px 0 0;
 }
 
 .rf-tpl-sre-platform .rf-table tbody td {
@@ -470,8 +504,47 @@
   color: var(--sre-ink-soft);
 }
 
+.rf-tpl-sre-platform .rf-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
 .rf-tpl-sre-platform .rf-table tbody tr:hover td {
-  background: var(--sre-bg-3);
+  background: var(--sre-bg-1);
+}
+
+.rf-tpl-sre-platform .rf-table tfoot td {
+  padding: 10px 14px;
+  border-top: 2px solid var(--sre-primary);
+  color: var(--sre-ink);
+  font-weight: 600;
+  background: var(--sre-bg-1);
+}
+
+.rf-tpl-sre-platform .rf-table-caption {
+  font-family: var(--sre-font-mono);
+  font-size: 12px;
+  color: var(--sre-muted);
+  margin-top: 10px;
+  text-align: center;
+}
+.rf-tpl-sre-platform .rf-table-caption::before {
+  content: "// ";
+  color: var(--sre-primary);
+  opacity: 0.6;
+}
+
+/* 窄屏：容器横向滚动 */
+@media (max-width: 640px) {
+  .rf-tpl-sre-platform .rf-tpl-sre-platform-table {
+    padding: 10px 12px 12px;
+    border-radius: 8px;
+  }
+  .rf-tpl-sre-platform .rf-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .rf-tpl-sre-platform .rf-table th,
+  .rf-tpl-sre-platform .rf-table td { white-space: nowrap; }
 }
 
 /* 状态标签 */
