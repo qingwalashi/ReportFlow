@@ -98,12 +98,16 @@
           "<meta name='viewport' content='width=device-width,initial-scale=1'>",
           "<title>" + escapeHtml(title) + "</title>",
           "<style>",
-          inlinedCss,
-          // Base overrides (kept in sync with exporter-html.js so preview,
-          // HTML export and PDF share the same layout).
+          // Base fallback (placed BEFORE inlined template CSS so templates can override).
+          // Light themes fall through to these defaults; dark themes (cyber-security,
+          // tech-minimal, supercomputing 等) will provide their own body background/color
+          // via their template stylesheet — previously the hardcoded `background:#fff`
+          // was placed after inlinedCss and always won, making PDF exports of dark themes
+          // lose their brand colors and turn unreadable (light text on white).
           "html,body{margin:0;padding:0;background:#fff;color:#1a1f2c;",
           "font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:1.7;}",
           "#root{box-sizing:border-box;max-width:920px;margin:0 auto;padding:32px 36px;}",
+          inlinedCss,
           // Print-specific rules. @page controls PDF paper + margin; the rest
           // hints the layout engine where it may or may not break pages.
           buildPrintCss(),
@@ -122,10 +126,16 @@
   function buildPrintCss() {
     return [
       "@page{size:A4 portrait;margin:12mm;}",
-      // Let the whole document paint on printed pages (default is white bg on
-      // some engines, which would drop template gradients/hero backgrounds).
+      // Let the whole document paint on printed pages.
+      //
+      // Previously html,body was forced to background:#fff !important, which
+      // blew away dark themes' gradients and left light-on-white text unreadable.
+      // We now let template CSS drive html/body colors, and only set:
+      //   - print-color-adjust: exact (browsers otherwise strip background colors
+      //     for ink saving — we need gradients/hero swatches/chart bars to render)
+      //   - NO forced background/color — the theme owns it.
       "@media print{",
-        "html,body{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}",
+        "html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}",
         "*{-webkit-print-color-adjust:exact;print-color-adjust:exact;}",
         // Widen #root to the printable area — we're already inside a page box
         // whose padding is @page's margin, so extra padding would waste space.

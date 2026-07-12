@@ -132,11 +132,15 @@
         "<meta name='viewport' content='width=device-width,initial-scale=1'>",
         "<title>" + escapeHtml(title) + "</title>",
         "<style>",
-        inlinedCss,
-        // Export-specific overrides — ordered last so they win over template CSS.
+        // Base fallback — placed BEFORE inlined template CSS so themes can override.
+        // Previously this was placed after inlinedCss and always won, which clobbered
+        // dark themes' body gradient & text color (cyber-security, tech-minimal, ...).
         "html,body{margin:0;padding:0;min-height:100%;background:#fff;color:#1a1f2c;",
         "font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:1.7;}",
         "#root{box-sizing:border-box;max-width:920px;margin:0 auto;padding:32px 36px;}",
+        inlinedCss,
+        // Export-specific overrides that don't touch color/background go here
+        // (none at the moment — template CSS remains the source of truth for theme colors).
         // --- export: responsive charts/tables + fullscreen overlay ---
         (window.RF_ExportFullscreen && window.RF_ExportFullscreen.exportCss) || "",
         "</style>",

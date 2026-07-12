@@ -152,16 +152,18 @@
         "<meta name='viewport' content='width=device-width,initial-scale=1'>",
         "<title>" + escapeHtml(title) + "</title>",
         "<style>",
-        // 1) Inline ALL CSS gathered from the preview iframe first (base + template).
-        inlinedCss,
-        // 2) Then our export-specific overrides — ordered last so they win
-        //    against any conflicting rules from the collected sheets.
-        //    Body fills the viewport (so any template background or page color
-        //    extends edge-to-edge), and a centered, max-width #root holds the
-        //    actual report content.
+        // 1) Base fallback (html/body defaults) — placed BEFORE inlined template
+        //    CSS so themes can override. Previously this was placed after inlinedCss
+        //    and forced background:#fff / dark text regardless of theme, which made
+        //    dark themes (cyber-security, tech-minimal, supercomputing, ...) export
+        //    with white backgrounds and unreadable light-on-white text.
         "html,body{margin:0;padding:0;min-height:100%;background:#fff;color:#1a1f2c;",
         "font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:1.7;}",
         "#root{box-sizing:border-box;max-width:920px;margin:0 auto;padding:32px 36px;}",
+        // 2) Inline ALL CSS gathered from the preview iframe (base + template).
+        //    This wins over the fallback above because it comes later.
+        inlinedCss,
+        // 3) Export-specific overrides that don't touch color/background go here.
         // --- export: responsive charts/tables + fullscreen overlay ---
         (window.RF_ExportFullscreen && window.RF_ExportFullscreen.exportCss) || "",
         "</style>",
