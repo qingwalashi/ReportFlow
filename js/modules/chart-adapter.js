@@ -21,7 +21,10 @@
     var common = {
       color: palette,
       textStyle: { color: textColor, fontFamily: fontFamily, fontSize: 12 },
-      grid: { left: 48, right: 24, top: 36, bottom: 32, containLabel: true },
+      // Give the bottom axis extra room so a wrapped 2–3 line x-label doesn't
+      // get clipped below the plot area. containLabel already sizes for one
+      // line; wrapping needs the padding.
+      grid: { left: 48, right: 24, top: 36, bottom: 48, containLabel: true },
       tooltip: { trigger: spec.kind === "pie" ? "item" : "axis", confine: true },
       legend: { type: "scroll", top: 4, textStyle: { color: textColor, fontSize: 12 } },
       animation: !theme.disableAnimation
@@ -35,7 +38,15 @@
         return { name: cat, value: first.data[i] != null ? first.data[i] : 0 };
       });
       return Object.assign({}, common, {
-        legend: Object.assign({}, common.legend, { left: "center" }),
+        legend: Object.assign({}, common.legend, {
+          left: "center",
+          // Wrap long pie legend labels the same way as x-axis categories so
+          // narrow charts don't clip them (legend scroll still handles overflow
+          // in the other dimension). formatter runs per legend item.
+          formatter: function (name) {
+            return wrapLabel(name, pieLegendMaxChars(spec.categories && spec.categories.length));
+          }
+        }),
         series: [{
           type: "pie",
           radius: ["38%", "70%"],
@@ -45,20 +56,45 @@
             borderWidth: theme.pieBorderWidth != null ? theme.pieBorderWidth : 2,
             borderRadius: theme.pieBorderRadius != null ? theme.pieBorderRadius : 4
           },
-          label: { color: textColor, formatter: "{b} {d}%" },
+          // Pie slice labels wrap too — long category names on outer labels
+          // used to run off the SVG viewbox and get cropped.
+          label: {
+            color: textColor,
+            formatter: function (params) {
+              return wrapLabel(params.name, 10) + " " + params.percent + "%";
+            }
+          },
           data: pieData
         }]
       });
     }
 
     // bar / line — share x-axis category, y-axis value
+    var catCount = (spec.categories || []).length || 1;
+    // Rough chars-per-line budget for x-axis labels. Fewer categories → each
+    // gets more horizontal space, so we allow longer lines before wrapping.
+    // These numbers are calibrated for the 720px chart width used in exports
+    // and roughly match what fits in the preview at typical widths.
+    var xCharsPerLine = xAxisCharsPerLine(catCount);
     var axisCommon = {
       xAxis: {
         type: "category",
         data: spec.categories || [],
         axisLine: { lineStyle: { color: splitColor } },
         axisTick: { show: false },
-        axisLabel: { color: axisColor, fontSize: 11 }
+        axisLabel: {
+          color: axisColor,
+          fontSize: 11,
+          // hideOverlap:false + interval:0 forces every category label to
+          // render; wrapping keeps them readable when they'd otherwise
+          // overlap. Wrapped labels grow downward, which the grid.bottom
+          // adjustment below allowances for. maxLines is generous (6) so
+          // long CJK category names actually show in full rather than
+          // being ellipsised on the axis.
+          interval: 0,
+          hideOverlap: false,
+          formatter: function (val) { return wrapLabel(val, xCharsPerLine, 6); }
+        }
       },
       yAxis: {
         type: "value",
@@ -87,7 +123,114 @@
       };
     });
 
+    // 让 x 轴的多行标签不被 grid.bottom 裁掉。containLabel:true 会按标签
+    // 实际渲染尺寸预留空间，但我们把 x 轴 formatter 设成可能拆到 6 行，
+    // 对应的 bottom 需要跟着上调，否则 SVG 导出场景下 (viewBox 固定)
+    // 底部标签仍会被切。经验值：每行 ~16px。
+    var xLines = estimateWrappedLines(spec.categories || [], xCharsPerLine);
+    if (xLines > 1) {
+      common = Object.assign({}, common, {
+        grid: Object.assign({}, common.grid, {
+          bottom: Math.max(common.grid.bottom, 24 + xLines * 16)
+        })
+      });
+    }
+
     return Object.assign({}, common, axisCommon, { series: seriesArr });
+  }
+
+  /** Peek at every category and return the max wrap-line count. */
+  function estimateWrappedLines(categories, perLine) {
+    var max = 1;
+    for (var i = 0; i < categories.length; i++) {
+      var wrapped = wrapLabel(categories[i], perLine, 6);
+      var n = wrapped.split("\n").length;
+      if (n > max) max = n;
+    }
+    return max;
+  }
+
+  /**
+   * Wrap a label string into fixed-width lines separated by "\n" (which
+   * ECharts' rich-text renderer treats as a hard line break in labels).
+   *
+   * Splits on whitespace when present; falls back to character splits for
+   * runs of CJK/other whitespace-less text so a long 类别名称 wraps too.
+   * Caps at `maxLines` (default 3) with a trailing ellipsis on the last
+   * line when content was truncated — the axis band stays bounded and the
+   * reader still gets a signal that more text existed.
+   */
+  function wrapLabel(text, perLine, maxLines) {
+    var s = String(text == null ? "" : text);
+    if (!s || perLine <= 0) return s;
+    var lim = maxLines || 3;
+    var lines = [];
+    var truncated = false;
+
+    if (/\s/.test(s)) {
+      // Whitespace-separated — pack whole words per line.
+      var words = s.split(/\s+/);
+      var buf = "";
+      for (var i = 0; i < words.length; i++) {
+        var w = words[i];
+        if (!buf.length) {
+          buf = w;
+        } else if (buf.length + 1 + w.length <= perLine) {
+          buf += " " + w;
+        } else {
+          lines.push(buf);
+          buf = w;
+          if (lines.length >= lim) { truncated = true; break; }
+        }
+      }
+      if (!truncated && buf) lines.push(buf);
+      if (!truncated && lines.length > lim) {
+        lines = lines.slice(0, lim);
+        truncated = true;
+      }
+    } else {
+      // No whitespace — character-wise wrap (handles CJK).
+      var buf2 = "";
+      for (var k = 0; k < s.length; k++) {
+        buf2 += s.charAt(k);
+        if (buf2.length >= perLine) {
+          lines.push(buf2);
+          buf2 = "";
+          if (lines.length >= lim) {
+            if (k < s.length - 1) truncated = true;
+            break;
+          }
+        }
+      }
+      if (!truncated && buf2 && lines.length < lim) lines.push(buf2);
+    }
+
+    if (truncated && lines.length) {
+      var last = lines[lines.length - 1];
+      if (last.length >= perLine) last = last.slice(0, Math.max(0, perLine - 1));
+      lines[lines.length - 1] = last + "…";
+    }
+    return lines.join("\n");
+  }
+
+  // Heuristic: how many chars fit on ONE line of an x-axis category label
+  // given N categories in a ~720px-wide chart. The plot area (right - left
+  // in `grid`) is ~648px; dividing by 6.5px/char (11px font, mixed CJK/ASCII)
+  // and rounding down keeps a small safety margin.
+  function xAxisCharsPerLine(n) {
+    if (n <= 3) return 14;
+    if (n <= 5) return 10;
+    if (n <= 8) return 7;
+    if (n <= 12) return 5;
+    return 4;
+  }
+
+  // Pie legend items sit in a horizontal scroll strip. Give them a moderate
+  // budget — long names still wrap, short ones stay on one line.
+  function pieLegendMaxChars(n) {
+    if (!n || n <= 4) return 14;
+    if (n <= 8) return 10;
+    return 8;
   }
 
   /**

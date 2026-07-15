@@ -320,7 +320,89 @@
     "});}",
     // ── click delegation ──────────────────────────────────────────────────
     "function busy(btn,on){if(!btn)return;btn.disabled=!!on;}",
+    // Compose a chart PNG blob with the card's title band prepended so the
+    // saved image looks like the card the user sees (title above, chart
+    // below). Reads the title element's computed font/color/alignment/
+    // padding + the card's background so every template's look carries
+    // over without per-template config. Falls back to the raw chart blob
+    // when there's no title or something fails mid-flight.
+    "function composeChartWithTitle(chartBlob,card){",
+    "return new Promise(function(res){",
+    "var titleEl=card.querySelector('.rf-chart-card__title');",
+    "var text=titleEl&&titleEl.textContent&&titleEl.textContent.trim();",
+    "if(!text){res(chartBlob);return;}",
+    "var url=URL.createObjectURL(chartBlob);",
+    "var img=new Image();",
+    "img.onload=function(){",
+    "try{",
+    "var tcs=window.getComputedStyle(titleEl);",
+    // Card background — fall back to body bg then white if transparent
+    // (many dark templates put the color on <body>, not the card).
+    "var cardCs=window.getComputedStyle(card);",
+    "var bodyCs=window.getComputedStyle(document.body);",
+    "function opaque(c){return c&&c!=='transparent'&&c.indexOf('rgba(0, 0, 0, 0)')<0;}",
+    "var bg=opaque(cardCs.backgroundColor)?cardCs.backgroundColor:",
+    "(opaque(bodyCs.backgroundColor)?bodyCs.backgroundColor:'#ffffff');",
+    "var color=tcs.color||'#1a1f2c';",
+    "var fontSize=parseFloat(tcs.fontSize)||16;",
+    "var fontWeight=tcs.fontWeight||'600';",
+    "var fontStyle=tcs.fontStyle||'normal';",
+    "var fontFamily=tcs.fontFamily||'sans-serif';",
+    "var align=tcs.textAlign==='center'?'center':(tcs.textAlign==='right'||tcs.textAlign==='end'?'right':'left');",
+    "var padTop=parseFloat(tcs.paddingTop)||0;",
+    "var padBottom=parseFloat(tcs.paddingBottom)||0;",
+    "var padLeft=parseFloat(tcs.paddingLeft)||0;",
+    "var padRight=parseFloat(tcs.paddingRight)||0;",
+    "var mBottom=parseFloat(tcs.marginBottom)||0;",
+    "var lineH=parseFloat(tcs.lineHeight);",
+    "if(!lineH||isNaN(lineH))lineH=Math.round(fontSize*1.4);",
+    // Rendering scale — match svgToPng/getDataURL's pixelRatio=2 so text
+    // and chart line up crisply at the same DPR. Fall back to 2 when the
+    // card has no measurable width (offscreen/pre-layout).
+    "var cardW=card.getBoundingClientRect().width;",
+    "var s=cardW>0?Math.max(1,img.width/cardW):2;",
+    "var W=img.width;",
+    // Measure how many wrapped lines the title needs at the canvas width.
+    "var probe=document.createElement('canvas').getContext('2d');",
+    "probe.font=fontStyle+' '+fontWeight+' '+(fontSize*s)+'px '+fontFamily;",
+    "var maxW=W-(padLeft+padRight)*s;",
+    "var lines=wrapText(probe,text,maxW);",
+    "var titleBandH=Math.ceil((padTop+padBottom+mBottom)*s+lines.length*lineH*s);",
+    "var canvas=document.createElement('canvas');",
+    "canvas.width=W;canvas.height=titleBandH+img.height;",
+    "var g=canvas.getContext('2d');",
+    "g.fillStyle=bg;g.fillRect(0,0,canvas.width,canvas.height);",
+    "g.fillStyle=color;",
+    "g.font=fontStyle+' '+fontWeight+' '+(fontSize*s)+'px '+fontFamily;",
+    "g.textAlign=align;g.textBaseline='middle';",
+    "var x=align==='center'?W/2:(align==='right'?W-padRight*s:padLeft*s);",
+    "var y=padTop*s+lineH*s/2;",
+    "for(var i=0;i<lines.length;i++){g.fillText(lines[i],x,y);y+=lineH*s;}",
+    "g.drawImage(img,0,titleBandH);",
+    "URL.revokeObjectURL(url);",
+    "canvas.toBlob(function(b){res(b||chartBlob);},'image/png');",
+    "}catch(e){URL.revokeObjectURL(url);res(chartBlob);}",
+    "};",
+    "img.onerror=function(){URL.revokeObjectURL(url);res(chartBlob);};",
+    "img.src=url;",
+    "});}",
+    // Naive word/char wrapper: prefer word boundaries, fall back to char
+    // splits so a single very long CJK-run doesn't overflow the canvas.
+    "function wrapText(ctx,text,maxW){",
+    "if(!text)return [''];if(ctx.measureText(text).width<=maxW)return [text];",
+    "var out=[];var cur='';var chars=text.split('');",
+    "for(var i=0;i<chars.length;i++){",
+    "var next=cur+chars[i];",
+    "if(ctx.measureText(next).width>maxW&&cur){out.push(cur);cur=chars[i];}",
+    "else cur=next;",
+    "}if(cur)out.push(cur);return out;",
+    "}",
     "function downloadChart(card,btn){",
+    "function finish(blob){",
+    "composeChartWithTitle(blob,card).then(function(final){",
+    "trigger(final,safeName(chartName(card))+'.png');busy(btn,false);",
+    "},function(){trigger(blob,safeName(chartName(card))+'.png');busy(btn,false);});",
+    "}",
     // 1) prefer echarts (canvas renderer in preview): use its own toolbox path.
     "var body=card.querySelector('.rf-chart-card__body');",
     "if(body&&window.echarts&&window.echarts.getInstanceByDom){",
@@ -328,16 +410,13 @@
     "if(inst&&inst.getDataURL){",
     "try{",
     "var url=inst.getDataURL({type:'png',pixelRatio:2,backgroundColor:'#fff'});",
-    "fetch(url).then(function(r){return r.blob();}).then(function(b){",
-    "trigger(b,safeName(chartName(card))+'.png');busy(btn,false);",
-    "}).catch(function(){busy(btn,false);});return;",
+    "fetch(url).then(function(r){return r.blob();}).then(finish)",
+    ".catch(function(){busy(btn,false);});return;",
     "}catch(e){}}}",
     // 2) fallback: inline SVG rasterised via canvas.
     "var svg=card.querySelector('.rf-chart-card__body svg');",
     "if(!svg){busy(btn,false);return;}",
-    "svgToPng(svg,2).then(function(b){",
-    "trigger(b,safeName(chartName(card))+'.png');busy(btn,false);",
-    "}).catch(function(){busy(btn,false);});",
+    "svgToPng(svg,2).then(finish).catch(function(){busy(btn,false);});",
     "}",
     "function chartName(card){",
     "var t=card.querySelector('.rf-chart-card__title');return (t&&t.textContent)||'chart';",
@@ -420,8 +499,12 @@
     "var stage=document.createElement('div');stage.className='rf-export-fs__stage';",
     // Wrap the SVG in a mini rf-chart-card so the delegated download click
     // handler (which walks up to .rf-chart-card) can find the SVG again.
+    // Also clone the title so download-from-overlay carries it and users
+    // reading the fullscreen chart still see the label.
     "var host=document.createElement('div');host.className='rf-chart-card';",
     "host.style.cssText='position:relative;width:100%;background:transparent;';",
+    "var titleSrc=card.querySelector('.rf-chart-card__title');",
+    "if(titleSrc)host.appendChild(titleSrc.cloneNode(true));",
     "var body=document.createElement('div');body.className='rf-chart-card__body';",
     "body.appendChild(svg.cloneNode(true));",
     "host.appendChild(body);host.appendChild(makeOvDl('chart'));",
