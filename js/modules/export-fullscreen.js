@@ -234,9 +234,18 @@
     "(function(){",
     // ── helpers ────────────────────────────────────────────────────────────
     "function safeName(s){return String(s||'chart').replace(/[\\\\/:*?\"<>|]+/g,'-').replace(/\\s+/g,'-').slice(0,60)||'image';}",
+    // Chromium blocks anchor.click() downloads originating from srcdoc /
+    // opaque-origin iframes — the click just navigates to the blob URL
+    // instead of saving. When we're inside such an iframe, hand the blob
+    // to the parent window so the anchor click happens in the top-level
+    // document. Same-origin (srcdoc inherits parent origin) so this call
+    // is legal. In the exported HTML this path is skipped (no parent).
     "function trigger(blob,name){",
+    "try{if(window.parent&&window.parent!==window&&typeof window.parent.RF_DownloadBlob==='function'){",
+    "window.parent.RF_DownloadBlob(blob,name);return;",
+    "}}catch(e){}",
     "var url=URL.createObjectURL(blob);var a=document.createElement('a');",
-    "a.href=url;a.download=name;document.body.appendChild(a);a.click();",
+    "a.href=url;a.download=name;a.rel='noopener';document.body.appendChild(a);a.click();",
     "document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url);},1000);",
     "}",
     // Serialize an SVG element to a data URL a browser Image() can decode.
@@ -475,5 +484,26 @@
     exportScript: EXPORT_SCRIPT,
     previewCss: PREVIEW_CSS,
     previewScript: PREVIEW_SCRIPT
+  };
+
+  // Parent-side helper the preview iframe calls to trigger a download.
+  // Chromium blocks anchor.click() saves that originate from srcdoc /
+  // opaque-origin iframes; running the click on the top-level document
+  // sidesteps that. Exposed on window so DOWNLOAD_SCRIPT can find it via
+  // window.parent.RF_DownloadBlob. Also fine to call from other host code.
+  window.RF_DownloadBlob = function (blob, name) {
+    try {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = name || "image.png";
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    } catch (e) {
+      if (window.RF_Log) window.RF_Log.warn("download blob failed: " + (e && e.message));
+    }
   };
 })();
