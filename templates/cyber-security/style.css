@@ -466,11 +466,11 @@
   flex-shrink: 0;
 }
 
-/* 状态控制点：绝对定位于卡片右上角 */
+/* 状态控制点：绝对定位于卡片右上角，避开 rf-dl-btn / rf-export-fs-btn 角标 */
 .rf-tpl-cyber-security .rf-chart-card__ctrl {
   position: absolute;
   top: 20px;
-  right: 22px;
+  right: 76px;
   display: flex;
   gap: 6px;
   align-items: center;

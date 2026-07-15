@@ -148,7 +148,7 @@
         ".rf-section,.rf-chart-card,.rf-img,figure,table{break-inside:avoid;page-break-inside:avoid;}",
         "h1,h2,h3,h4{break-after:avoid;page-break-after:avoid;}",
         // Hide anything that only makes sense on screen.
-        ".rf-export-fs-btn,.rf-export-fs,button,[data-rf-hide-print]{display:none!important;}",
+        ".rf-export-fs-btn,.rf-dl-btn,.rf-export-fs,button,[data-rf-hide-print]{display:none!important;}",
         // Anchors should print as text, not the underlined blue web style.
         "a{color:inherit;text-decoration:none;}",
       "}"

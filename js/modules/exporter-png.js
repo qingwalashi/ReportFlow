@@ -61,6 +61,13 @@
     var srcRoot = snap.doc.getElementById("root");
     var rootClone = srcRoot.cloneNode(true);
 
+    // Preview iframe decorates chart/image/table with corner buttons
+    // (下载图片 / 全屏查看). Strip them from the PNG so the rasterised image
+    // shows only the report content — same reason the PDF print CSS hides
+    // them via display:none.
+    var cornerBtns = rootClone.querySelectorAll(".rf-export-fs-btn, .rf-dl-btn");
+    cornerBtns.forEach(function (b) { if (b.parentNode) b.parentNode.removeChild(b); });
+
     // Replace ECharts canvases with SVG (disableAnimation so we capture the
     // settled frame, not an opening tween — same trick as PDF/ZIP exporters).
     var blockSpecs = [];

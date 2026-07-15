@@ -99,9 +99,19 @@
       ".rf-hl{border-radius:2px;padding:0 2px;color:inherit;}",
       ".rf-hl--num{background:#fff1a8;}",
       ".rf-hl--text{background:#c8f2d4;}",
+      // Corner buttons (下载图片 / 全屏查看) — same styling as exported HTML.
+      // Kept in sync with export-fullscreen.js's BASE_CSS. Injected here so
+      // buttons decorated onto the live #root have layout the moment they
+      // appear (no CSS-late flash).
+      (window.RF_ExportFullscreen && window.RF_ExportFullscreen.previewCss) || "",
       "</style>",
       "<script src='libs/echarts.min.js'></scr" + "ipt>",
       "<script src='libs/marked.min.js'></scr" + "ipt>",
+      // Delegated click handler for .rf-dl-btn — rasterises live echarts
+      // canvases, image sources, and table figures to PNG on click.
+      "<script>",
+      (window.RF_ExportFullscreen && window.RF_ExportFullscreen.previewScript) || "",
+      "</scr" + "ipt>",
       "</head><body><div id='root'></div></body></html>"
     ].join("");
   }
@@ -190,6 +200,20 @@
     }
 
     bus.emit("preview:rendered", { templateId: tplId });
+
+    // Decorate the live #root with the "下载图片" corner button. Charts are
+    // inserted via requestAnimationFrame inside templates, so the
+    // .rf-chart-card__body may still be empty right now — schedule on the
+    // same rAF tick as chart insertion so the button attaches after the
+    // body exists. Idempotent — safe to run more than once per render.
+    // (Fullscreen inside the preview iframe uses the top-shell button,
+    // so we don't add a per-chart fullscreen button here.)
+    if (window.RF_ExportFullscreen) {
+      requestAnimationFrame(function () {
+        try { window.RF_ExportFullscreen.decoratePreviewRoot(root, doc); }
+        catch (e) { console.warn("[preview] decorate failed", e); }
+      });
+    }
   }
 
   function buildIframeCtx(win, doc, /* root */ root) {
